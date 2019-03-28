@@ -6,12 +6,12 @@ Created on Sun Mar 24 16:38:24 2019
 @author: mvb
 """
 import preprocess as prep
+import dataIO as dio
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 import sys, os
-import pandas as pd
 
 from pyqtgraph.dockarea import DockArea, Dock
 from pyqtgraph.parametertree import Parameter, ParameterTree
@@ -32,11 +32,11 @@ class Clarity(QtGui.QMainWindow):
     def __init__(self):
         super(Clarity, self).__init__()
         self.pathRootData = '/home/mvb/0_ETH/MasterThesis/Logs_GoKart/LogData/dynamics'
-        testDays = self.getDirectories(self.pathRootData)
+        testDays = dio.getDirectories(self.pathRootData)
         testDays.sort()
         defaultDay = testDays[-1]
         self.pathTestDay = self.pathRootData + '/' + defaultDay
-        LogNrs = self.getDirectories(self.pathTestDay)
+        LogNrs = dio.getDirectories(self.pathTestDay)
         LogNrs.sort()
         defaultLogNr = LogNrs[21]
         self.pathLogNr = self.pathTestDay + '/' + defaultLogNr
@@ -62,14 +62,9 @@ class Clarity(QtGui.QMainWindow):
         
         self.dataList.itemSelectionChanged.connect(self.dataSelectionChanged)
         
-        samplingRate = 10 #Hz
-        self.timeStep = 1./samplingRate
         self.availableData = []
         self.plotDataList = []
         self.createUI()
-        
-        self.xrangefix = [0,0]
-        self.yrangefix = [0,0]
         
     def createUI(self):
         dockArea = DockArea()
@@ -122,7 +117,7 @@ class Clarity(QtGui.QMainWindow):
         
         value = param.value()
         self.pathTestDay = self.pathRootData + '/' + value
-        LogNrs = self.getDirectories(self.pathTestDay)
+        LogNrs = dio.getDirectories(self.pathTestDay)
         LogNrs.sort()
         self.p.param('Log Nr.').remove()
         child = Parameter.create(name='Log Nr.', type='list', values = LogNrs, value=LogNrs[0])
@@ -335,7 +330,7 @@ class Clarity(QtGui.QMainWindow):
         rawDataNames = []
         for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
             rawDataNames.append(name)
-            dataFrame = self.getCSV(fileName)
+            dataFrame = dio.getCSV(fileName)
             xRaw = dataFrame.iloc[:,timeIndex]
             yRaw = dataFrame.iloc[:,dataIndex]
             item = QtGui.QListWidgetItem(name)
@@ -386,16 +381,6 @@ class Clarity(QtGui.QMainWindow):
         self.dataList.sortItems()
         
         self.updateData(rawDataNames)
-
-
-    def getCSV(self, filePath):
-        dataFrame = pd.read_csv(str(filePath))
-        return dataFrame
-    
-    
-    def getDirectories(self, path):
-        folders = [f.name for f in os.scandir(path) if f.is_dir()]
-        return folders
 
         
 def main():

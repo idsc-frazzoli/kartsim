@@ -7,9 +7,7 @@ Created on Wed Mar 27 08:37:23 2019
 """
 from pyqtgraph.Qt import QtCore
 import numpy as np
-import math
 from scipy.interpolate import interp1d
-from scipy.ndimage.filters import gaussian_filter1d
 
 
 def interpolation(self, x, y, timeStep):
