@@ -320,9 +320,9 @@ class Clarity(QtGui.QMainWindow):
                 groups.append(['motor rot rate left', 0,2, name, True, 0.1, 1, 0, 1])
                 groups.append(['motor rot rate right', 0,9, name, True, 0.1, 1, 0, 1])
             elif 'vmu931' in name:
-                groups.append(['accel x (forward)', 0,2, name, True, 70, 700, 0, 1])
-                groups.append(['accel y (left)', 0,3, name, True, 70, 700, 0, 1])
-                groups.append(['accel theta', 0,4, name, True, 5, 50, 0, 1])
+                groups.append(['vmu ax (forward)', 0,2, name, True, 70, 700, 0, 1])
+                groups.append(['vmu ay (left)', 0,3, name, True, 70, 700, 0, 1])
+                groups.append(['vmu vtheta', 0,4, name, True, 5, 50, 0, 1])
             
         
         self.dataList.clear()
