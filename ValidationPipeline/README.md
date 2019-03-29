@@ -15,4 +15,6 @@ python setup.py install
   ```ruby
   python setup.py install --prefix="anacondaPath"
   ```
-
+Then go to 
+https://ch.mathworks.com/help/matlab/matlab_external/get-started-with-matlab-engine-for-python.html 
+for further instructions
