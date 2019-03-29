@@ -36,14 +36,14 @@ class Clarity(QtGui.QMainWindow):
         testDays.sort()
         defaultDay = testDays[-1]
         self.pathTestDay = self.pathRootData + '/' + defaultDay
-        LogNrs = dio.getDirectories(self.pathTestDay)
-        LogNrs.sort()
-        defaultLogNr = LogNrs[21]
+        logNrs = dio.getDirectories(self.pathTestDay)
+        logNrs.sort()
+        defaultLogNr = logNrs[21]
         self.pathLogNr = self.pathTestDay + '/' + defaultLogNr
         
         params = [
                 {'name': 'Testing day', 'type': 'list', 'values': testDays, 'value': defaultDay},
-                {'name': 'Log Nr.', 'type': 'list', 'values': LogNrs, 'value': defaultLogNr},
+                {'name': 'Log Nr.', 'type': 'list', 'values': logNrs, 'value': defaultLogNr},
                 {'name': 'Add to plot -->', 'type': 'action'},
                 ScalableGroup(name='Data in Plot')
         ]
@@ -117,13 +117,13 @@ class Clarity(QtGui.QMainWindow):
         
         value = param.value()
         self.pathTestDay = self.pathRootData + '/' + value
-        LogNrs = dio.getDirectories(self.pathTestDay)
-        LogNrs.sort()
+        logNrs = dio.getDirectories(self.pathTestDay)
+        logNrs.sort()
         self.p.param('Log Nr.').remove()
-        child = Parameter.create(name='Log Nr.', type='list', values = LogNrs, value=LogNrs[0])
+        child = Parameter.create(name='Log Nr.', type='list', values = logNrs, value=logNrs[0])
         self.p.insertChild(1,child)
         self.p.param('Log Nr.').sigValueChanged.connect(self.logNrChange)
-        self.pathLogNr = self.pathTestDay + '/' + LogNrs[0]
+        self.pathLogNr = self.pathTestDay + '/' + logNrs[0]
 
     def logNrChange(self, param):
         self.plotfield.clear()
@@ -342,7 +342,7 @@ class Clarity(QtGui.QMainWindow):
                     if yRaw[i] > np.pi:
                         yRaw[i] = yRaw[i] - 2*np.pi
             if name in ['accel x (forward)', 'accel y (left)', 'accel theta']:
-                xRaw, yRaw = prep.interpolation(self,xRaw,yRaw,0.001)
+                xRaw, yRaw = prep.interpolation(xRaw,yRaw,0.001)
             
             item.data = [xRaw, yRaw] #item.data = [x_data, y_data]
             item.info = [vis, sig, wid, order, scale]#item.info = [visible, filter_sigma, filter_width, order, scale]

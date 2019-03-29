@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-def interpolation(self, x, y, timeStep):
+def interpolation(x, y, timeStep):
     interp = interp1d(x,y)
     
     if x[0]%timeStep != 0:
@@ -33,7 +33,10 @@ def preProcessing(self, name):
     if name in differentiate:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0][0]
-        t, dydt = derivative_X_dX(self, nameDependency, name)
+        index = availableDataList.index(nameDependency)
+        x = self.availableData[index][1]
+        y = self.availableData[index][2]
+        t, dydt = derivative_X_dX(name, x, y)
         if name in availableDataList:
             index = availableDataList.index(name)
             self.availableData[index][2] = dydt
@@ -89,10 +92,10 @@ def preProcessing(self, name):
         vy = self.availableData[availableDataList.index(nameDependency[6])][2]
         vtheta = self.availableData[availableDataList.index(nameDependency[1])][2]
         if name == 'vehicle ax total':
-            t, dydt = derivative_X_dX(self, nameDependency[5], name)
+            t, dydt = derivative_X_dX(name, x, vx)
             y = dydt - (vtheta * vy)[:-1]
         else:
-            t, dydt = derivative_X_dX(self, nameDependency[6], name)
+            t, dydt = derivative_X_dX(name, x, vy)
             y = dydt + (vtheta * vx)[:-1]
         
         if name in availableDataList:
@@ -119,20 +122,10 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, x, y])
     
-def derivative_X_dX(self, nameSource, nameProduct):
-    availableDataList = [item[0] for item in self.availableData]
-    index = availableDataList.index(nameSource)
-    x = self.availableData[index][1]
-    y = self.availableData[index][2]
-    if nameSource == 'pose theta':
+def derivative_X_dX(name, x, y):
+    if name == 'pose vtheta':
         dydx = np.diff(y)/np.diff(x)
         lim = 4
-#        while max(dydx) > 2.0 or min(dydx) < 2.0:
-#        for j in range(100):
-#            print(max(dydx), min(dydx))
-#            for i in range(len(dydx)-1):
-#                if dydx[i]>2.0 or dydx[i]<-2.0:
-#                    dydx[i] = (dydx[i-1] + dydx[i+1])/2.0
         for i in range(len(dydx)-1):
             if dydx[i]>lim or dydx[i]<-lim:
                 k=1
