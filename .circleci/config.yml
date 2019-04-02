@@ -14,7 +14,7 @@ jobs:
       - checkout
       - run:
           name: Install deps
-          working_directory: .
+          working_directory: ~/repo
           command: |
             pip3 install --user --upgrade -r requirements.txt
             python3 setup.py develop --user --no-deps
