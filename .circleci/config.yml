@@ -26,9 +26,11 @@ jobs:
           command: |
             python3 -m unittest discover -s ./tests -p "*_test.py"
 
-  kartsim-test-3.7: *test-template
+  kartsim-test-3.7:
+    <<: *test-template
     docker:
       - image: python:3.7
-  kartsim-test-3.5: *test-template
+  kartsim-test-3.5:
+    <<: *test-template
     docker:
       - image: python:3.5
