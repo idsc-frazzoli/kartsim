@@ -1,2 +1,11 @@
+# General
+.catkin_tools/
+.idea
 
-DataAnalysis/pyqtgraph/__pycache__/
+# Python
+*/__pychache__/
+*.pyc
+
+# Python Packaging
+*.egg-info/
+/dist/
