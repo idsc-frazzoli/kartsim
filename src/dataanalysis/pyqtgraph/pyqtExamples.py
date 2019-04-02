@@ -7,7 +7,6 @@ as well as some customized parameter types
 
 """
 
-
-
 import pyqtgraph.examples
+
 pyqtgraph.examples.run()

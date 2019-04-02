@@ -9,6 +9,7 @@ Created on Thu Mar 28 13:25:01 2019
 import pandas as pd
 import os
 
+
 def getCSV(filePath):
     dataFrame = pd.read_csv(str(filePath))
     return dataFrame
