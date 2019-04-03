@@ -11,12 +11,12 @@ D1 = 0.8*D;
 D2 = D;
 maxA = D*0.9;
 param = [B1,C1,D1,B2,C2,D2,Cf,maxA];
-modelDx(1,0,0,0.5,0,0, param)
+[res11, res12, res13] = modelDx(1,2,0,0.5,0,0, param)
 %VELX,VELY,VELROTZ,BETA,AB,TV
-modelDx(1,-1,0,0,0,0, param)
+[res21,res22,res23] = modelDx(1,-1,0,0,0,0, param)
 close all
 % VELROTZ,BETA,AB,TV,param
-plotAcceleration(0,0,0,0,param)
-plotAcceleration(0,0,1,0,param)
-plotAcceleration(0,0,0,1,param)
-plotAcceleration(0,1,0,0,param)
+% plotAcceleration(0,0,0,0,param)
+% plotAcceleration(0,0,1,0,param)
+% plotAcceleration(0,0,0,1,param)
+% plotAcceleration(0,1,0,0,param)
