@@ -33,18 +33,18 @@ def MATLABvehicleModel (vx,vy,vrot,beta,accRearAxle,tv):
 def odeIntegrator (X0, vizStep, simStep):
     
     def dx_dt (X,t):
-        theta = float(X[3])
-        vx = float(X[4])
-        vy = float(X[5])
-        vrot = float(X[6])
-        beta = float(X[7])
-        accRearAxle = float(X[8])
-        tv = float(X[9])
+        theta = float(X[2])
+        vx = float(X[3])
+        vy = float(X[4])
+        vrot = float(X[5])
+        beta = float(X[6])
+        accRearAxle = float(X[7])
+        tv = float(X[8])
 #        [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)
         [accX,accY,accRot] = MATLABvehicleModel(vx,vy,vrot,beta,accRearAxle,tv)
         vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
         vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
-        return [1,vxAbs,vyAbs,vrot,accX,accY,accRot,0,0,0]
+        return [vxAbs,vyAbs,vrot,accX,accY,accRot,0,0,0]
     ts = np.linspace(0,vizStep,int(vizStep/simStep)+1)
     X1 = odeint(dx_dt, X0, ts)
     
