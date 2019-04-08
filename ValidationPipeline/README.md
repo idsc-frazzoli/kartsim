@@ -1,20 +1,14 @@
 # Validation Pipeline
 
-# Setting up Matlab for Python Environment
+# Launching Kartsim
 
-- In Matlab enter: 
+- Go to folder "ValidationPipeline" and execute: 
 ```ruby 
-matlabroot 
+./startKartsim.sh
 ``` 
-- take the returned rootPath and in a system console enter:
+This will start a server containing the vehicle model as well as a time integration scheme, a client for logging the data generated during simulation and a second client for the visualization during simulation.
+
+- You can then send a message to the server containing the current state of the vehicle including the inputs to the system and a time step defining the simulation duration. An example for such a client in python is shown in basicSimulationClient.py and can be launched from the "ValidationPipeline" folder in your terminal using:
 ```ruby
-cd /rootPath/extern/engines/python
-python setup.py install
+python basicSimulationClient.py
 ```
-  - if you are using Anaconda use the following command, where anacondaPath is the path to your anaconda directory in your environment
-  ```ruby
-  python setup.py install --prefix="anacondaPath"
-  ```
-Then go to 
-https://ch.mathworks.com/help/matlab/matlab_external/get-started-with-matlab-engine-for-python.html 
-for further instructions
