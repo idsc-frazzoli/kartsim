@@ -7,25 +7,46 @@ Created on Wed Mar 27 08:37:23 2019
 """
 from pyqtgraph.Qt import QtCore
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, interp2d
+import pandas as pd
+import pickle
 
+def interpolation(x, y, xBegin, xStop, timeStep):
+    if isinstance(y,pd.Series):
+        interp = interp1d(x, y)
+    
+        if xBegin % timeStep != 0:
+            xBegin = (timeStep - xBegin % timeStep) + xBegin
+        else:
+            pass
+    
+        if xStop % timeStep != 0:
+            xStop = xStop - xStop % timeStep
+        else:
+            pass
+        
+        xInterp = np.arange(xBegin, xStop, timeStep)
+        yInterp = interp(xInterp)
 
-def interpolation(x, y, timeStep):
-    interp = interp1d(x, y)
+        return xInterp, yInterp
+    
+    elif isinstance(y,list):
+        interp = interp1d(x, y)
+    
+        if xBegin % timeStep != 0:
+            xBegin = (timeStep - xBegin % timeStep) + xBegin
+        else:
+            pass
+    
+        if xStop % timeStep != 0:
+            xStop = xStop - xStop % timeStep
+        else:
+            pass
+    
+        xInterp = np.arange(xBegin, xStop, timeStep)
+        yInterp = interp(xInterp)
 
-    if x[0] % timeStep != 0:
-        xBegin = (timeStep - x[0] % timeStep) + x[0]
-    else:
-        xBegin = x[0]
-
-    if x.iloc[-1] % timeStep != 0:
-        xStop = x.iloc[-1] - x.iloc[-1] % timeStep
-    else:
-        xStop = x.iloc[-1]
-
-    xInterp = np.arange(xBegin, xStop, timeStep)
-    yInterp = interp(xInterp)
-    return xInterp, yInterp
+        return xInterp, yInterp
 
 
 def preProcessing(self, name):
@@ -44,6 +65,19 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, t, dydt])
 
+    if name == 'xy trace':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[0])][2]
+        y = self.availableData[availableDataList.index(nameDependency[1])][2]
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][1] = x
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+    
     if name == 'vehicle slip angle':
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
@@ -122,7 +156,113 @@ def preProcessing(self, name):
             self.availableData[index][2] = y
         else:
             self.availableData.append([name, x, y])
+            
+    if name in ['MH power accel rimo left', 'MH power accel rimo right']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = list(self.availableData[availableDataList.index(nameDependency[0])][1].values)
+        motorPower = list(self.availableData[availableDataList.index(nameDependency[0])][2])
+        velocity_t = self.availableData[availableDataList.index(nameDependency[4])][1]
+        velocity = self.availableData[availableDataList.index(nameDependency[4])][2]
 
+        while x[0] < velocity_t.iloc[0]:
+            x.pop(0)
+            motorPower.pop(0)
+        while x[-1] > velocity_t.iloc[-1]:
+            x.pop()
+            motorPower.pop()
+        interp = interp1d(velocity_t, velocity)
+        velocity = interp(x)
+
+        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/lookup_cur_vel_to_acc.pkl'   #lookupTable file
+        try:
+            with open(lookupFilePath, 'rb') as f:
+                lookupTable = pickle.load(f)
+            print('lookup_cur_vel_to_acc file for preprocessing located and opened.')
+        except:
+            print('lookup_cur_vel_to_acc file for preprocessing does not exist. Creating file...')
+            lookupTable = pd.DataFrame()
+        interp = interp2d(lookupTable.columns, lookupTable.index, lookupTable.values)
+        powerAcceleration = [float(interp(XX,YY)) for XX,YY in zip(velocity,motorPower)]
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = powerAcceleration
+        else:
+            self.availableData.append([name, x, powerAcceleration])
+    
+    if name == 'MH AB':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[5])][1]
+        powerAccelL = self.availableData[availableDataList.index(nameDependency[5])][2]
+        powerAccelR = self.availableData[availableDataList.index(nameDependency[6])][2]
+        brakePos_t = self.availableData[availableDataList.index(nameDependency[0])][1]
+        brakePos = self.availableData[availableDataList.index(nameDependency[0])][2]
+        powerAccel = np.dstack((powerAccelL,powerAccelR))
+        
+        AB_rimo = np.mean(powerAccel, axis=2)
+        
+        while x[0] < brakePos_t.iloc[0]:
+            x.pop(0)
+        while x[-1] > brakePos_t.iloc[-1]:
+            x.pop()
+            
+        interp1 = interp1d(brakePos_t, brakePos)
+        brakePos = interp1(x)
+        
+        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/staticBrakeFunction.pkl'   #static brake function file
+        try:
+            with open(staticBrakeFunctionFilePath, 'rb') as f:
+                staticBrakeFunction = pickle.load(f)
+            print('staticBrakeFunction file for preprocessing located and opened.')
+        except:
+            print('staticBrakeFunction file for preprocessing does not exist. Creating file...')
+            staticBrakeFunction = pd.DataFrame()
+        
+        interp2 = interp1d(staticBrakeFunction['brake pos'], staticBrakeFunction['deceleration'])
+        deceleration = interp2(brakePos)
+        
+        AB_brake = -deceleration
+        
+        AB_tot = AB_rimo + AB_brake
+        
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = AB_tot[0,:]
+        else:
+            self.availableData.append([name, x, AB_tot[0,:]])
+            
+    if name == 'MH TV':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[4])][1]
+        powerAccelL = self.availableData[availableDataList.index(nameDependency[4])][2]
+        powerAccelR = self.availableData[availableDataList.index(nameDependency[5])][2]
+        
+        TV = np.subtract(powerAccelR, powerAccelL)/2.0
+        print(TV)
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = TV
+        else:
+            self.availableData.append([name, x, TV])
+            
+    if name == 'MH BETA':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[0])][1]
+        steerCal = self.availableData[availableDataList.index(nameDependency[0])][2]
+        
+        print(-0.63*steerCal[0]*steerCal[0]*steerCal[0]+0.94*steerCal[0])
+        
+        beta = -0.63*steerCal*steerCal*steerCal+0.94*steerCal
+        
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = beta
+        else:
+            self.availableData.append([name, x, beta])
 
 def derivative_X_dX(name, x, y):
     if name == 'pose vtheta':

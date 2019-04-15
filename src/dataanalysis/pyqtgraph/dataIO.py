@@ -14,6 +14,10 @@ def getCSV(filePath):
     dataFrame = pd.read_csv(str(filePath))
     return dataFrame
 
+def getPKL(filePath):
+    dataFrame = pd.read_pickle(str(filePath))
+    return dataFrame
+
 
 def getDirectories(path):
     folders = [f.name for f in os.scandir(path) if f.is_dir()]

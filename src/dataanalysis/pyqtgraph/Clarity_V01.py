@@ -34,7 +34,7 @@ class Clarity(QtGui.QMainWindow):
 
     def __init__(self):
         super(Clarity, self).__init__()
-        self.pathRootData = '/home/mvb/0_ETH/MasterThesis/Logs_GoKart/LogData/dynamics'
+        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics'
         testDays = dio.getDirectories(self.pathRootData)
         testDays.sort()
         defaultDay = testDays[-1]
@@ -59,6 +59,7 @@ class Clarity(QtGui.QMainWindow):
         self.dataList = QtGui.QListWidget()
         self.dataList.setSelectionMode(self.dataList.ExtendedSelection)
         self.plotfield = pg.PlotWidget()
+        self.histogramfield = pg.PlotWidget()
         self.legend = pg.LegendItem()
         self.tree = ParameterTree(showHeader=False)
         self.tree.setParameters(self.p, showTop=False)
@@ -80,12 +81,14 @@ class Clarity(QtGui.QMainWindow):
         pg.setConfigOptions(antialias=True)
 
         d1 = Dock("Display Data", size=(windowWidth / 3., windowHeight / 3.))
-        d2 = Dock("Plot 1", size=(windowWidth * 2 / 3., windowHeight))
+        d2 = Dock("Plot 1", size=(windowWidth * 2 / 3., windowHeight*2./3.))
         d3 = Dock("Parameter Tree", size=(windowWidth / 3., windowHeight * 2. / 3))
+        d4 = Dock("Histogram 1", size=(windowWidth * 2 / 3., windowHeight/3.))
 
         dockArea.addDock(d1, 'left')
         dockArea.addDock(d2, 'right')
         dockArea.addDock(d3, 'bottom', d1)
+        dockArea.addDock(d4, 'bottom', d2)
 
         item = QtGui.QListWidgetItem(self.dataList)
         item.setText('helloworld')
@@ -96,6 +99,8 @@ class Clarity(QtGui.QMainWindow):
 
         self.setListItems()
         d3.addWidget(self.tree)
+        
+        d4.addWidget(self.histogramfield)
 
         self.show()
 
@@ -213,6 +218,7 @@ class Clarity(QtGui.QMainWindow):
                         dataNames = dataNames[:index] + [depend] + dataNames[index:]
         print('dataNames', dataNames)
         for name in dataNames:
+            print(name)
             if name in self.needsPreprocessing:
                 prep.preProcessing(self, name)
                 availableDataList = [item[0] for item in self.availableData]
@@ -221,8 +227,11 @@ class Clarity(QtGui.QMainWindow):
                     width = item.info[2]
                 index = availableDataList.index(name)
                 yOld = self.availableData[index][2]
-                trunc = (((width - 1) / 2) - 0.5) / sigma
-                yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
+                if sigma == 0:
+                    yNew = yOld
+                else:
+                    trunc = (((width - 1) / 2) - 0.5) / sigma
+                    yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
                 self.availableData[index][2] = yNew
             else:
                 for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
@@ -230,8 +239,11 @@ class Clarity(QtGui.QMainWindow):
                     width = item.info[2]
                     xOld = item.data[0]
                     yOld = item.data[1]
-                trunc = (((width - 1) / 2) - 0.5) / sigma
-                yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
+                if sigma == 0:
+                    yNew = yOld
+                else:
+                    trunc = (((width - 1) / 2) - 0.5) / sigma
+                    yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
                 if name in availableDataList:
                     index = availableDataList.index(name)
                     self.availableData[index][2] = yNew
@@ -241,6 +253,7 @@ class Clarity(QtGui.QMainWindow):
     def updatePlot(self):
         self.plotfield.removeItem(self.legend)
         self.plotfield.clear()
+        self.histogramfield.clear()
         self.legend = pg.LegendItem()
         #        self.plotfield.addLegend()
         sel = list([str(item.text()) for item in self.dataList.selectedItems()])
@@ -266,8 +279,8 @@ class Clarity(QtGui.QMainWindow):
         colorIndex = 0
         print('plotNow', plotNow)
         availableDataList = [item[0] for item in self.availableData]
-        for item in self.p.param('Data in Plot').children():
-            name = item.name()
+        for child in self.p.param('Data in Plot').children():
+            name = child.name()
             for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
                 visible = item.info[0]
                 scale = item.info[4]
@@ -276,12 +289,23 @@ class Clarity(QtGui.QMainWindow):
                 c = self.plotfield.plot(self.availableData[index][1],
                                         self.availableData[index][2] * scale, pen=(colorIndex),
                                         name=name)
+            #histogram
+                y,x = np.histogram(self.availableData[index][2], bins=100)
+                _ = self.histogramfield.plot(x, y, stepMode=True, fillLevel=0, brush=(0,0,255,150),name=name)
+                
                 self.legend.addItem(c, name=c.opts['name'])
                 colorIndex += 1
         if sel[0] not in plotNow:
             index = availableDataList.index(sel[0])
             c = self.plotfield.plot(self.availableData[index][1], self.availableData[index][2],
                                     pen=(0.5), name=self.availableData[index][0])
+        #histogram 
+            y,x = np.histogram(self.availableData[index][2], bins=100)
+            _ = self.histogramfield.plot(x, y, stepMode=True, fillLevel=0, brush=(0,0,255,150),name=self.availableData[index][0])
+            self.histogramfield.addLine(x = np.mean(self.availableData[index][2]), y = None, pen=pg.mkPen('r', width=3))
+            self.histogramfield.addLine(x = np.mean(self.availableData[index][2]) +np.std(self.availableData[index][2]) , y = None, pen=pg.mkPen(color = (200,200,200), width=1))
+            self.histogramfield.addLine(x = np.mean(self.availableData[index][2]) -np.std(self.availableData[index][2]) , y = None, pen=pg.mkPen(color = (200,200,200), width=1))
+            
             self.legend.addItem(c, name=c.opts['name'])
         axX = self.plotfield.getAxis('bottom')
         axY = self.plotfield.getAxis('left')
@@ -305,26 +329,26 @@ class Clarity(QtGui.QMainWindow):
 
         for name in files:
             if 'pose.smooth' in name:
-                groups.append(['pose x', 0, 1, name, True, 0.1, 1, 0, 1])
-                groups.append(['pose y', 0, 2, name, True, 0.1, 1, 0, 1])
-                groups.append(['pose theta', 0, 3, name, True, 0.1, 1, 0, 1])
+                groups.append(['pose x', 0, 1, name, True, 0, 0, 0, 1])
+                groups.append(['pose y', 0, 2, name, True, 0, 0, 0, 1])
+                groups.append(['pose theta', 0, 3, name, True, 0, 0, 0, 1])
             elif 'steer.put' in name:
-                groups.append(['steer torque cmd', 0, 2, name, True, 0.1, 1, 0, 1])
+                groups.append(['steer torque cmd', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
-                groups.append(['steer torque eff', 0, 5, name, True, 0.1, 1, 0, 1])
-                groups.append(['steer position raw', 0, 8, name, True, 0.1, 1, 0, 1])
+                groups.append(['steer torque eff', 0, 5, name, True, 0, 0, 0, 1])
+                groups.append(['steer position raw', 0, 8, name, True, 0, 0, 0, 1])
             elif 'status.get' in name:
-                groups.append(['steer position cal', 0, 1, name, True, 0.1, 1, 0, 1])
+                groups.append(['steer position cal', 0, 1, name, True, 0, 0, 0, 1])
             elif 'linmot.put' in name:
-                groups.append(['brake position cmd', 0, 1, name, True, 0.1, 1, 0, 1])
+                groups.append(['brake position cmd', 0, 1, name, True, 0, 0, 0, 1])
             elif 'linmot.get' in name:
-                groups.append(['brake position effective', 0, 1, name, True, 0.1, 1, 0, 1])
+                groups.append(['brake position effective', 0, 1, name, True, 0, 0, 0, 1])
             elif 'rimo.put' in name:
-                groups.append(['motor torque cmd left', 0, 1, name, True, 0.1, 1, 0, 1])
-                groups.append(['motor torque cmd right', 0, 2, name, True, 0.1, 1, 0, 1])
+                groups.append(['motor torque cmd left', 0, 1, name, True, 0, 0, 0, 1])
+                groups.append(['motor torque cmd right', 0, 2, name, True, 0, 0, 0, 1])
             elif 'rimo.get' in name:
-                groups.append(['motor rot rate left', 0, 2, name, True, 0.1, 1, 0, 1])
-                groups.append(['motor rot rate right', 0, 9, name, True, 0.1, 1, 0, 1])
+                groups.append(['motor rot rate left', 0, 2, name, True, 0, 0, 0, 1])
+                groups.append(['motor rot rate right', 0, 9, name, True, 0, 0, 0, 1])
             elif 'vmu931' in name:
                 groups.append(['vmu ax (forward)', 0, 2, name, True, 70, 700, 0, 1])
                 groups.append(['vmu ay (left)', 0, 3, name, True, 70, 700, 0, 1])
@@ -335,23 +359,30 @@ class Clarity(QtGui.QMainWindow):
         rawDataNames = []
         for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
             rawDataNames.append(name)
-            dataFrame = dio.getCSV(fileName)
-            xRaw = dataFrame.iloc[:, timeIndex]
-            yRaw = dataFrame.iloc[:, dataIndex]
+            try:
+                dataFrame = dio.getCSV(fileName)
+                xRaw = dataFrame.iloc[:, timeIndex]
+                yRaw = dataFrame.iloc[:, dataIndex]
+                
+                if name == 'pose theta':
+                    for i in range(len(yRaw)):
+                        if yRaw[i] < -np.pi:
+                            yRaw[i] = yRaw[i] + 2 * np.pi
+                        if yRaw[i] > np.pi:
+                            yRaw[i] = yRaw[i] - 2 * np.pi
+                if name in ['vmu ax (forward)', 'vmu ay (left)', 'vmu vtheta']:
+                    xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
+            except:
+                print('EmptyDataError: could not read data from file ', fileName)
+                xRaw = [0]
+                yRaw = [0]
+
             item = QtGui.QListWidgetItem(name)
             item.setText(name)
-            if name == 'pose theta':
-                for i in range(len(yRaw)):
-                    if yRaw[i] < -np.pi:
-                        yRaw[i] = yRaw[i] + 2 * np.pi
-                    if yRaw[i] > np.pi:
-                        yRaw[i] = yRaw[i] - 2 * np.pi
-            if name in ['accel x (forward)', 'accel y (left)', 'accel theta']:
-                xRaw, yRaw = prep.interpolation(xRaw, yRaw, 0.001)
+            
 
             item.data = [xRaw, yRaw]  # item.data = [x_data, y_data]
-            item.info = [vis, sig, wid, order, scale]  # item.info = [visible, filter_sigma,
-            # filter_width, order, scale]
+            item.info = [vis, sig, wid, order, scale]  # item.info = [visible, filter_sigma, filter_width, order, scale]
             item = self.dataList.addItem(item)
         #            self.availableData.append([name,xRaw, yRaw])
 
@@ -362,30 +393,45 @@ class Clarity(QtGui.QMainWindow):
 
         # Add Preprocessed Data
         groups = []
+        
+        groups.append(['xy trace', ['pose x', 'pose y'], True, 0, 0, 1, 1])
         groups.append(['pose vx', ['pose x'], True, 1, 10, 1, 1])
         groups.append(['pose vy', ['pose y'], True, 1, 10, 1, 1])
-        groups.append(['pose vtheta', ['pose theta'], True, 0.1, 1, 1, 1])
-        groups.append(['pose ax', ['pose vx'], True, 0.1, 1, 2, 1])
-        groups.append(['pose ay', ['pose vy'], True, 0.1, 1, 2, 1])
-        groups.append(['pose atheta', ['pose vtheta'], True, 0.1, 1, 2, 1])
+        groups.append(['pose vtheta', ['pose theta'], True, 0, 0, 1, 1])
+        groups.append(['pose ax', ['pose vx'], True, 0, 0, 2, 1])
+        groups.append(['pose ay', ['pose vy'], True, 0, 0, 2, 1])
+        groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])
         groups.append(
-                ['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0.1, 1, 2, 1])
+                ['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
         groups.append(
-                ['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0.1, 1, 3, 1])
+                ['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
         groups.append(
-                ['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0.1, 1, 3, 1])
+                ['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
         groups.append(['vehicle ax total',
                        ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
                         'vehicle vx', 'vehicle vy'], True, 5, 50, 3, 1])
         groups.append(['vehicle ay total',
                        ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
-                        'vehicle vx', 'vehicle vy'], True, 0.1, 1, 3, 1])
+                        'vehicle vx', 'vehicle vy'], True, 0, 0, 3, 1])
         groups.append(['vehicle ax only transl',
-                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0.1, 1, 3,
-                       1])
+                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
         groups.append(['vehicle ay only transl',
-                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0.1, 1, 3,
-                       1])
+                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
+        groups.append(['MH power accel rimo left',
+                       ['motor torque cmd left', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                       True, 0, 0, 4, 1])
+        groups.append(['MH power accel rimo right',
+                       ['motor torque cmd right', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                       True, 0, 0, 4, 1])
+        groups.append(['MH AB',
+                       ['brake position cmd', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                       True, 0, 1, 5, 1])
+        groups.append(['MH TV',
+                       ['pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                       True, 0, 1, 5, 1])
+        groups.append(['MH BETA',
+                       ['steer position cal'], 
+                       True, 0, 1, 1, 1])
 
         self.needsPreprocessing = []
         for name, dep, vis, sig, wid, order, scale in groups:

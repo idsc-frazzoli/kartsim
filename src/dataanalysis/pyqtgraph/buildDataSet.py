@@ -5,49 +5,205 @@ Created on Thu Mar 28 13:20:04 2019
 
 @author: mvb
 """
-import dataIO as dio
-import preprocess as prep
+import dataanalysis.pyqtgraph.dataIO as dio
+import dataanalysis.pyqtgraph.preprocess as prep
 
 import os
 import numpy as np
+import pandas as pd
+import pickle
 from scipy.ndimage.filters import gaussian_filter1d
-from collections import defaultdict
+from scipy.interpolate import interp1d, interp2d
+
 import time
+import datetime
 
 
 def main():
     t = time.time()
-
-    pathRootData = '/home/mvb/0_ETH/MasterThesis/Logs_GoKart/LogData/dynamics'
+    
+    #__User parameters
+    
+    pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics' #path where all the raw logfiles are
+    #preprocess data and compute inferred data from raw logs
+    preprocessData = True
+#    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)', 
+#                    'vmu ay (left)', 'pose atheta', 'steer torque cmd', 'brake position cmd', 'motor torque cmd left', 
+#                    'motor torque cmd right', ] #list of required raw log parameters
+    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)', 
+                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
+    saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData'
+    datasetTag = 'test_MarcsModel_oneDayOnly'
+    #check logs for missing or incomplete data
+    sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete
+    sortOutDataOverwrite = False                                                #if True: all data in preproParams-file will be overwritten
+    preproParamsFileName = 'preproParams' 
+    preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.pkl'   #file where all the information about missing/incomplete data is stored
+    
+    #______________^^^_________________
+    
+    
+    try:
+        with open(preproParamsFilePath, 'rb') as f:
+            preproParams = pickle.load(f)
+        print('Parameter file for preprocessing located and opened.')
+    except:
+        print('Parameter file for preprocessing does not exist. Creating file...')
+        preproParams = {}
+    
+    if sortOutData:
+        #tag logs with missing data
+        preproParams = sortOut(pathRootData, preproParams, sortOutDataOverwrite)
+        #save information to file
+        with open(preproParamsFilePath, 'wb') as f:
+            pickle.dump(preproParams, f, pickle.HIGHEST_PROTOCOL)
+        print('preproParams saved to ', preproParamsFilePath)
+#    print(preproParams)
+    if preprocessData:
+        kartDataAll = stirData(pathRootData, preproParams, requiredList)
+        print('data preprocessing done.\n')
+        currentDT = datetime.datetime.now()
+        folderName = currentDT.strftime("%Y%m%d-%H%M%S")
+        folderPath = saveDatasetPath + '/' + folderName + '_' + datasetTag
+        
+        try:
+            if not os.path.exists(folderPath):
+                os.makedirs(folderPath)
+        except OSError:
+            print('Error: Creating directory: ', folderPath)
+        print('now writing to file...')
+        for key in kartDataAll:
+            filePathName = folderPath + '/' + key + '.pkl'
+            try:
+                with open(filePathName, 'wb') as f:
+                    pickle.dump(kartDataAll[key], f, pickle.HIGHEST_PROTOCOL)
+                print(key + '.pkl',' done')
+            except:
+                print('Could not save ', key + '.pkl' ,' to file.')
+        
+    print('Total computing time: ', time.time() - t)
+      
+    
+    
+def stirData(pathRootData, preproParams, requiredList):
+    preproParams
+    for day in preproParams:
+        for log in preproParams[day]:
+            for topic in preproParams[day][log]:
+                if topic in requiredList and preproParams[day][log][topic] == 0:
+                    preproParams[day][log]['goodData'] = 0
+                    break
+                else:
+                    preproParams[day][log]['goodData'] = 1
+#    i = 0
+#    for day in preproParams:
+#        for log in preproParams[day]:
+#            i = i + preproParams[day][log]['goodData']
+#            print(log, i)
+    
     testDays = dio.getDirectories(pathRootData)
     testDays.sort()
-    pathTestDay = ''
-    pathLogNr = ''
-
-    # print(testDays)
-    # print(logNrs)
-    j = 0
-    i = 0
-    for day in testDays:
-        pathTestDay = pathRootData + '/' + day
+    kartDataAll = {}
+    j  = 0
+    skipCount = 0
+    for testDay in testDays[0:1]:
+        pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
-        j += 1
+    
+        for logNr in logNrs[11:12]:
+            if preproParams[testDay][logNr]['goodData']:
+                if skipCount > 0:
+                    print(skipCount,'logs skipped')
+                    skipCount = 0
+                pathLogNr = pathTestDay + '/' + logNr
+                kartData, allDataNames = setListItems(pathLogNr)
+                kartData = updateData(kartData, allDataNames)
+                
+                delTopics = []
+                for topic in kartData:
+                    if topic not in requiredList:
+                        delTopics.append(topic)
+                    else:
+                        kartData[topic] = kartData[topic]['data']
+                for delTopic in delTopics:
+                    kartData.pop(delTopic,None)
+                
+                kartDataAll[logNr] = kartData
+                print(logNr, 'done. Nr of signals: ',len(kartDataAll[logNr]), j)
+                j = j + 1
+            else:
+                skipCount += 1
+    return kartDataAll
 
-        for log in logNrs:
-            print(log, j, i)
-            i += 1
-            pathLogNr = pathTestDay + '/' + log
 
-    pathTestDay = pathRootData + '/' + testDays[-1]
-    logNrs = dio.getDirectories(pathTestDay)
-    logNrs.sort()
-    pathLogNr = pathTestDay + '/' + logNrs[21]
+def sortOut(pathRootData, preproParams, redo):
+    testDays = dio.getDirectories(pathRootData)
+    testDays.sort()
+    
+    for testDay in testDays:
+#        if testDay in preproParams and not redo:
+#            print(testDay, ' already done. Continuing with next testDay')
+#            continue
+        if testDay not in preproParams:
+            preproParams[testDay] = {}
+        pathTestDay = pathRootData + '/' + testDay
+        logNrs = dio.getDirectories(pathTestDay)
+        logNrs.sort()
+    
+        for logNr in logNrs:
+            preproParams[testDay][logNr]['goodData'] = 1
+            if logNr in preproParams[testDay] and not redo:
+                print(logNr, ' already done. Continuing with next logNr')
+                continue
+            if logNr not in preproParams[testDay]:
+                preproParams[testDay][logNr] = {}
+            statusInfo = logNr + ':  '
+            pathLogNr = pathTestDay + '/' + logNr
+            
+            kartData, allDataNames = setListItems(pathLogNr)
+            
+            lenSteerCmd = len(kartData['steer torque cmd']['data'][1])
+#            print (kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)].count(0)/len(kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)]))
+            if kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)].count(0)/len(kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)]) > 0.05:
+                statusInfo = statusInfo + 'steering cmd data: too many zeros...,  '
+                preproParams[testDay][logNr]['steer torque cmd'] = 0
+            elif np.abs(np.mean(kartData['steer torque cmd']['data'][1])) < 0.01 and np.std(kartData['steer torque cmd']['data'][1]) < 0.1:
+                statusInfo = statusInfo + 'steering cmd data missing or insufficient,  '
+                preproParams[testDay][logNr]['steer torque cmd'] = 0
+            else:
+                preproParams[testDay][logNr]['steer torque cmd'] = 1
+                
+            if np.abs(np.mean(kartData['brake position cmd']['data'][1])) < 0.005 or np.std(kartData['brake position cmd']['data'][1]) < 0.001:
+                statusInfo = statusInfo + 'brake position cmd data missing or insufficient,  '
+                preproParams[testDay][logNr]['brake position cmd'] = 0
+            else:
+                preproParams[testDay][logNr]['brake position cmd'] = 1
+                
+            if np.abs(np.mean(kartData['vmu ax (forward)']['data'][1])) < 0.01 and np.std(kartData['vmu ax (forward)']['data'][1]) < 0.01:
+                statusInfo = statusInfo + 'vmu ax (forward) data missing or insufficient,  '
+                preproParams[testDay][logNr]['vmu ax (forward)'] = 0
+            else:
+                preproParams[testDay][logNr]['vmu ax (forward)'] = 1
+            
+            if np.abs(np.mean(kartData['vmu ay (left)']['data'][1])) < 0.01 and np.std(kartData['vmu ay (left)']['data'][1]) < 0.05:
+                statusInfo = statusInfo + 'vmu ay (left) data missing or insufficient,  '
+                preproParams[testDay][logNr]['vmu ay (left)'] = 0
+            else:
+                preproParams[testDay][logNr]['vmu ay (left)'] = 1
+                
+            if np.abs(np.mean(kartData['vmu vtheta']['data'][1])) < 0.01 and np.std(kartData['vmu vtheta']['data'][1]) < 0.05:
+                statusInfo = statusInfo + 'vmu vtheta data missing or insufficient,  '
+                preproParams[testDay][logNr]['vmu vtheta'] = 0
+            else:
+                preproParams[testDay][logNr]['vmu vtheta'] = 1
+        
+            statusInfo = statusInfo + 'done'
+            print(statusInfo)
+            print('')
 
-    kartData = setListItems(pathLogNr)
-    printTree(kartData)
-    print(time.time() - t)
-
+            
+    return preproParams
 
 def printTree(kartData):
     for key, value in kartData.items():
@@ -68,100 +224,125 @@ def setListItems(pathLogNr):
 
     for name in files:
         if 'pose.smooth' in name:
-            groups.append(['pose x', 0, 1, name, True, 0.1, 1, 0, 1])
-            groups.append(['pose y', 0, 2, name, True, 0.1, 1, 0, 1])
-            groups.append(['pose theta', 0, 3, name, True, 0.1, 1, 0, 1])
+            groups.append(['pose x', 0, 1, name, True, 0, 0, 0, 1])
+            groups.append(['pose y', 0, 2, name, True, 0, 0, 0, 1])
+            groups.append(['pose theta', 0, 3, name, True, 0, 0, 0, 1])
         elif 'steer.put' in name:
-            groups.append(['steer torque cmd', 0, 2, name, True, 0.1, 1, 0, 1])
+            groups.append(['steer torque cmd', 0, 2, name, True, 5, 50, 0, 1])
         elif 'steer.get' in name:
-            groups.append(['steer torque eff', 0, 5, name, True, 0.1, 1, 0, 1])
-            groups.append(['steer position raw', 0, 8, name, True, 0.1, 1, 0, 1])
+            groups.append(['steer torque eff', 0, 5, name, True, 5, 50, 0, 1])
+            groups.append(['steer position raw', 0, 8, name, True, 0, 0, 0, 1])
         elif 'status.get' in name:
-            groups.append(['steer position cal', 0, 1, name, True, 0.1, 1, 0, 1])
+            groups.append(['steer position cal', 0, 1, name, True, 0, 0, 0, 1])
         elif 'linmot.put' in name:
-            groups.append(['brake position cmd', 0, 1, name, True, 0.1, 1, 0, 1])
+            groups.append(['brake position cmd', 0, 1, name, True, 0, 0, 0, 1])
         elif 'linmot.get' in name:
-            groups.append(['brake position effective', 0, 1, name, True, 0.1, 1, 0, 1])
+            groups.append(['brake position effective', 0, 1, name, True, 0, 0, 0, 1])
         elif 'rimo.put' in name:
-            groups.append(['motor torque cmd left', 0, 1, name, True, 0.1, 1, 0, 1])
-            groups.append(['motor torque cmd right', 0, 2, name, True, 0.1, 1, 0, 1])
+            groups.append(['motor torque cmd left', 0, 1, name, True, 0, 0, 0, 1])
+            groups.append(['motor torque cmd right', 0, 2, name, True, 0, 0, 0, 1])
         elif 'rimo.get' in name:
-            groups.append(['motor rot rate left', 0, 2, name, True, 0.1, 1, 0, 1])
-            groups.append(['motor rot rate right', 0, 9, name, True, 0.1, 1, 0, 1])
+            groups.append(['motor rot rate left', 0, 2, name, True, 0, 0, 0, 1])
+            groups.append(['motor rot rate right', 0, 9, name, True, 0, 0, 0, 1])
         elif 'vmu931' in name:
-            groups.append(['accel x (forward)', 0, 2, name, True, 70, 700, 0, 1])
-            groups.append(['accel y (left)', 0, 3, name, True, 70, 700, 0, 1])
-            groups.append(['accel theta', 0, 4, name, True, 5, 50, 0, 1])
+            groups.append(['vmu ax (forward)', 0, 2, name, True, 70, 700, 0, 1])
+            groups.append(['vmu ay (left)', 0, 3, name, True, 70, 700, 0, 1])
+            groups.append(['vmu vtheta', 0, 4, name, True, 5, 50, 0, 1])
 
     groups.sort()
     allDataNames = []
-    kartData = defaultdict(dict)
+    kartData = {}
     for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
         allDataNames.append(name)
-        dataFrame = dio.getCSV(fileName)
-        xRaw = dataFrame.iloc[:, timeIndex]
-        yRaw = dataFrame.iloc[:, dataIndex]
-        if name == 'pose theta':
-            for i in range(len(yRaw)):
-                if yRaw[i] < -np.pi:
-                    yRaw[i] = yRaw[i] + 2 * np.pi
-                if yRaw[i] > np.pi:
-                    yRaw[i] = yRaw[i] - 2 * np.pi
-        if name in ['accel x (forward)', 'accel y (left)', 'accel theta']:
-            xRaw, yRaw = prep.interpolation(xRaw, yRaw, 0.001)
+        try:
+            dataFrame = dio.getCSV(fileName)
+            xRaw = dataFrame.iloc[:, timeIndex]
+            yRaw = dataFrame.iloc[:, dataIndex]
+            
+            if name == 'pose theta':
+                for i in range(len(yRaw)):
+                    if yRaw[i] < -np.pi:
+                        yRaw[i] = yRaw[i] + 2 * np.pi
+                    if yRaw[i] > np.pi:
+                        yRaw[i] = yRaw[i] - 2 * np.pi
+            if name in ['vmu ax (forward)', 'vmu ay (left)', 'vmu vtheta']:
+                xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
+        except:
+            print('EmptyDataError for ', name, ': could not read data from file ', fileName)
+            xRaw = [0]
+            yRaw = [0]
+        
+        kartData[name] = {}
         kartData[name]['data'] = [list(xRaw), list(yRaw)]  # item.data = [x_data, y_data]
         kartData[name]['info'] = [vis, sig, wid, order, scale]  # item.info = [visible,
         # filter_sigma, filter_width, order, scale]
 
     if len(groups) == 16:
-        print('Data status: complete')
+        pass
+#        print('Data status: complete')
     else:
-        print('ACHTUNG! Missing Data!')
+        print('ACHTUNG! Missing Data in ', pathLogNr)
 
     # Add Preprocessed Data
     groups = []
     groups.append(['pose vx', ['pose x'], True, 1, 10, 1, 1])
     groups.append(['pose vy', ['pose y'], True, 1, 10, 1, 1])
-    groups.append(['pose vtheta', ['pose theta'], True, 0.1, 1, 1, 1])
-    groups.append(['pose ax', ['pose vx'], True, 0.1, 1, 2, 1])
-    groups.append(['pose ay', ['pose vy'], True, 0.1, 1, 2, 1])
-    groups.append(['pose atheta', ['pose vtheta'], True, 0.1, 1, 2, 1])
-    groups.append(['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0.1, 1, 2, 1])
-    groups.append(['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0.1, 1, 3, 1])
-    groups.append(['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0.1, 1, 3, 1])
+    groups.append(['pose vtheta', ['pose theta'], True, 0, 0, 1, 1])
+    groups.append(['pose ax', ['pose vx'], True, 0, 0, 2, 1])
+    groups.append(['pose ay', ['pose vy'], True, 0, 0, 2, 1])
+    groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])
+    groups.append(['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
+    groups.append(['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
+    groups.append(['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
     groups.append(['vehicle ax total',
-                   ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
-                    'vehicle vx', 'vehicle vy'], True, 5, 50, 3, 1])
+                   ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle','vehicle vx', 'vehicle vy'], 
+                   True, 5, 50, 3, 1])
     groups.append(['vehicle ay total',
-                   ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
-                    'vehicle vx', 'vehicle vy'], True, 0.1, 1, 3, 1])
-    groups.append(
-            ['vehicle ax only transl', ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'],
-             True, 0.1, 1, 3, 1])
-    groups.append(
-            ['vehicle ay only transl', ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'],
-             True, 0.1, 1, 3, 1])
+                   ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'vehicle vy'], 
+                   True, 0, 0, 3, 1])
+    groups.append(['vehicle ax only transl', 
+             ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'],
+             True, 0, 0, 3, 1])
+    groups.append(['vehicle ay only transl', 
+             ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'],
+             True, 0, 0, 3, 1])
+    groups.append(['MH power accel rimo left',
+                   ['motor torque cmd left', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                   True, 0, 0, 4, 1])
+    groups.append(['MH power accel rimo right',
+                   ['motor torque cmd right', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                   True, 0, 0, 4, 1])
+    groups.append(['MH AB',
+                   ['pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                   True, 0, 0, 5, 1])
+    groups.append(['MH TV',
+                   ['pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                   True, 0, 0, 5, 1])
+    groups.append(['MH BETA',
+                   ['steer position cal'], 
+                   True, 0, 0, 1, 1])
 
     for name, dep, vis, sig, wid, order, scale in groups:
         allDataNames.append(name)
+        kartData[name] = {}
         kartData[name]['data'] = [[], []]
         kartData[name]['info'] = [vis, sig, wid, order, scale]  # item.info = [visible,
         # filter_sigma, filter_width, order, scale]
 
-    kartData = updateData(kartData, allDataNames)
-    return kartData
+    return kartData, allDataNames
 
 
 def updateData(kartData, dataNames):
-    print('dataNames', dataNames)
     for name in dataNames:
-        #        printTree(kartData)
         kartData = preProcessing(kartData, name)
         sigma = kartData[name]['info'][1]
         width = kartData[name]['info'][2]
         yOld = kartData[name]['data'][1]
-        trunc = (((width - 1) / 2) - 0.5) / sigma
-        yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
+        if sigma == 0:
+            yNew = yOld
+        else:
+            trunc = (((width - 1) / 2) - 0.5) / sigma
+            yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
         kartData[name]['data'][1] = yNew
     return kartData
 
@@ -169,6 +350,7 @@ def updateData(kartData, dataNames):
 def preProcessing(kartData, name):
     differentiate = 'pose vx', 'pose vy', 'pose vtheta', 'pose ax', 'pose ay', 'pose atheta'
     differentiateFrom = 'pose x', 'pose y', 'pose theta', 'pose vx', 'pose vy', 'pose vtheta'
+    
     if name in differentiate:
         index = differentiate.index(name)
         nameFrom = differentiateFrom[index]
@@ -210,16 +392,27 @@ def preProcessing(kartData, name):
         vx = kartData['vehicle vx']['data'][1]
         vy = kartData['vehicle vy']['data'][1]
         vtheta = kartData['pose vtheta']['data'][1]
+        
         if name == 'vehicle ax total':
             nameFrom = 'vehicle vx'
             t, dydt = prep.derivative_X_dX(name, kartData[nameFrom]['data'][0],
                                            kartData[nameFrom]['data'][1])
-            y = dydt - (vtheta * vy)[:-1]
+            while len(dydt) < len(vtheta):
+                vtheta = vtheta[:-1]
+            while len(dydt) < len(vy):
+                vy = vy[:-1]
+
+            y = dydt - (vtheta * vy)
         else:
             nameFrom = 'vehicle vy'
             t, dydt = prep.derivative_X_dX(name, kartData[nameFrom]['data'][0],
                                            kartData[nameFrom]['data'][1])
-            y = dydt + (vtheta * vx)[:-1]
+            while len(dydt) < len(vtheta):
+                vtheta = vtheta[:-1]
+            while len(dydt) < len(vx):
+                vx = vx[:-1]
+                
+            y = dydt + (vtheta * vx)
 
         kartData[name]['data'] = [x[:-1], y]
 
@@ -234,6 +427,92 @@ def preProcessing(kartData, name):
             y = ay * np.cos(theta[:-2]) - ax * np.sin(theta[:-2])
 
         kartData[name]['data'] = [x, y]
+        
+    elif name in ['MH power accel rimo left', 'MH power accel rimo right']:
+        if name == 'MH power accel rimo left':
+            x = kartData['motor torque cmd left']['data'][0]
+            motorPower = kartData['motor torque cmd left']['data'][1]
+        else:
+            x = kartData['motor torque cmd right']['data'][0]
+            motorPower = kartData['motor torque cmd right']['data'][1]
+        velocity_t = kartData['vehicle vx']['data'][0]
+        velocity = kartData['vehicle vx']['data'][1]
+
+        while x[0] < velocity_t[0]:
+            x = np.delete(x,0)
+            motorPower= np.delete(motorPower,0)
+        while x[-1] > velocity_t[-1]:
+            x = np.delete(x,-1)
+            motorPower= np.delete(motorPower,-1)
+        interp = interp1d(velocity_t, velocity)
+        velocity = interp(x)
+
+        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/lookup_cur_vel_to_acc.pkl'   #lookupTable file
+        try:
+            with open(lookupFilePath, 'rb') as f:
+                lookupTable = pickle.load(f)
+            print('Parameter file for preprocessing located and opened.')
+        except:
+            print('Parameter file for preprocessing does not exist. Creating file...')
+            lookupTable = pd.DataFrame()
+        interp = interp2d(lookupTable.columns, lookupTable.index, lookupTable.values)
+        powerAcceleration = [float(interp(XX,YY)) for XX,YY in zip(velocity,motorPower)]
+
+        kartData[name]['data'] = [x, powerAcceleration]
+    
+    elif name == 'MH AB':
+        x = kartData['MH power accel rimo left']['data'][0]
+        powerAccelL = kartData['MH power accel rimo left']['data'][1]
+        powerAccelR = kartData['MH power accel rimo right']['data'][1]
+        brakePos_t = kartData['brake position cmd']['data'][0]
+        brakePos = kartData['brake position cmd']['data'][1]
+        
+        powerAccel = np.dstack((powerAccelL,powerAccelR))
+        
+        AB_rimo = np.mean(powerAccel, axis=2)
+        
+        while x[0] < brakePos_t[0]:
+            x = np.delete(x,0)
+        while x[-1] > brakePos_t[-1]:
+            x = np.delete(x,-1)
+            
+        interp1 = interp1d(brakePos_t, brakePos)
+        brakePos = interp1(x)
+        
+        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/staticBrakeFunction.pkl'   #static brake function file
+        try:
+            with open(staticBrakeFunctionFilePath, 'rb') as f:
+                staticBrakeFunction = pickle.load(f)
+            print('staticBrakeFunction file for preprocessing located and opened.')
+        except:
+            print('staticBrakeFunction file for preprocessing does not exist. Creating file...')
+            staticBrakeFunction = pd.DataFrame()
+        
+        interp2 = interp1d(staticBrakeFunction['brake pos'], staticBrakeFunction['deceleration'])
+        deceleration = interp2(brakePos)
+        
+        AB_brake = -deceleration
+        
+        AB_tot = AB_rimo + AB_brake
+        
+        kartData[name]['data'] = [x, AB_tot[0,:]]
+            
+    elif name == 'MH TV':
+        x = kartData['MH power accel rimo left']['data'][0]
+        powerAccelL = kartData['MH power accel rimo left']['data'][1]
+        powerAccelR = kartData['MH power accel rimo right']['data'][1]
+        
+        TV = np.subtract(powerAccelR, powerAccelL)/2.0
+
+        kartData[name]['data'] = [x, TV]
+            
+    elif name == 'MH BETA':
+        x = kartData['steer position cal']['data'][0]
+        steerCal = np.array(kartData['steer position cal']['data'][1])
+                
+        BETA = -0.63*steerCal*steerCal*steerCal+0.94*steerCal
+        
+        kartData[name]['data'] = [x, BETA]
     return kartData
 
 
