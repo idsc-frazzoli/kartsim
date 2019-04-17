@@ -25,7 +25,7 @@ def interpolation(x, y, xBegin, xStop, timeStep):
         else:
             pass
         
-        xInterp = np.arange(xBegin, xStop, timeStep)
+        xInterp = np.linspace(xBegin, xStop, int((xStop-xBegin)/timeStep))
         yInterp = interp(xInterp)
 
         return xInterp, yInterp
@@ -43,7 +43,7 @@ def interpolation(x, y, xBegin, xStop, timeStep):
         else:
             pass
     
-        xInterp = np.arange(xBegin, xStop, timeStep)
+        xInterp = np.linspace(xBegin, xStop, int((xStop-xBegin)/timeStep))
         yInterp = interp(xInterp)
 
         return xInterp, yInterp
