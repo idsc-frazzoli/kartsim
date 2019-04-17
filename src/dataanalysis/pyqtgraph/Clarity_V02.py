@@ -183,14 +183,14 @@ class Clarity(QtGui.QMainWindow):
         print('dataselection changed')
         selected = self.dataList.selectedItems()
         
-        if len(selected) > 2:
-            self.dataList.blockSignals(True)
-            try:
-                for item in selected[1:-1]:
-                    item.setSelected(False)
-            finally:
-                self.dataList.blockSignals(False)
-        if len(selected) > 1:
+        # if len(selected) > 2:
+        #     self.dataList.blockSignals(True)
+        #     try:
+        #         for item in selected[1:-1]:
+        #             item.setSelected(False)
+        #     finally:
+        #         self.dataList.blockSignals(False)
+        if len(selected) == 2:
             self.btn_addToScatter.setEnabled(True)
             self.btn_addToScatter.setText('Add to Scatter Plot')
         else:
@@ -244,30 +244,32 @@ class Clarity(QtGui.QMainWindow):
 
     def addToPlot(self):
         sel = list([str(item.text()) for item in self.dataList.selectedItems()])
-        dispName = 0
-        if len(sel) == 1:
-            dispName = sel[0]
-        if len(sel) == 2:
-            print('press \'Add to scatter plot\'!')
-
-        if (not (any([item.name() == dispName for item in
-                      self.p.param('Data in plot').children()])) and dispName != 0):
-            self.p.param('Data in plot').addNew(dispName)
-            sigma = self.kartData[dispName]['info'][1]
-            scale = self.kartData[dispName]['info'][3]
-            OptionVars = [
-                {'name': 'sigma', 'type': 'float', 'value': sigma, 'step': 0.1},
-                {'name': 'scale', 'type': 'float', 'value': scale, 'step': 0.1},
-            ]
-            #            child = Parameter.create(name='Gaussian Filter', type='group', children
-            #            = filterVars)
-            self.p.param('Data in plot').param(dispName).addChildren(OptionVars)
-            self.p.param('Data in plot').param(dispName).sigTreeStateChanged.connect(
-                self.filterChange)
-        elif dispName == 0:
+        # dispName = 0
+        # if len(sel) == 1:
+        #     dispName = sel[0]
+        # if len(sel) == 2:
+        #     print('press \'Add to scatter plot\'!')
+        if len(sel) == 0:
             print('No Data Selected!')
-        else:
-            print(dispName + ' is already plotted!')
+        for dispName in sel:
+            if (not (any([item.name() == dispName for item in
+                          self.p.param('Data in plot').children()])) and dispName != 0):
+                self.p.param('Data in plot').addNew(dispName)
+                sigma = self.kartData[dispName]['info'][1]
+                scale = self.kartData[dispName]['info'][3]
+                OptionVars = [
+                    {'name': 'sigma', 'type': 'float', 'value': sigma, 'step': 0.1},
+                    {'name': 'scale', 'type': 'float', 'value': scale, 'step': 0.1},
+                ]
+                #            child = Parameter.create(name='Gaussian Filter', type='group', children
+                #            = filterVars)
+                self.p.param('Data in plot').param(dispName).addChildren(OptionVars)
+                self.p.param('Data in plot').param(dispName).sigTreeStateChanged.connect(
+                    self.filterChange)
+            elif len(sel) == 0:
+                print('No Data Selected!')
+            else:
+                print(dispName + ' is already plotted!')
 
 #    def updateData(self):
 #        for topic in self.kartData:
@@ -393,7 +395,7 @@ class Clarity(QtGui.QMainWindow):
                 if len(timeTopic) != 0:
                     for topic in dataFrame.columns:
                         if topic != timeTopic:
-                            if not 'MH' in topic and not 'vehicle' in topic:
+                            if not 'MH' in topic and not 'vehicle' in topic and 'pose' not in topic:
                                 self.dataNames.append(topic)
                             if topic == 'pose theta':
                                 for i in range(len(dataFrame[topic].values)):
@@ -449,7 +451,7 @@ class Clarity(QtGui.QMainWindow):
                         break
                 for topic in dataFrame.columns:
                     if topic != timeTopic:
-                        if 'MH' not in topic and 'vehicle' not in topic:
+                        if 'MH' not in topic and 'vehicle' not in topic and 'vmu' not in topic and 'pose' not in topic:
                             self.dataNames.append(topic)
                         rawData[topic] = {}
                         rawData[topic]['data'] = [dataFrame[timeTopic].values, dataFrame[topic].values]

@@ -14,14 +14,15 @@ import sys
 
 def main():
     savePath = sys.argv[1]
-    fileName = 'kartsimlog.csv'
+    fileNames = sys.argv[2]
+    fileNames = fileNames.split(',')[:-1]
+    print('fileNames', fileNames)
     # simTag = 'validation'
-    simTag = sys.argv[2]
-
+    fileNameIndex = 0
     # currentDT = datetime.datetime.now()
     # folderName = currentDT.strftime("%Y%m%d-%H%M%S")
     # folderPath = savePath + '/' + folderName + '_' + simTag
-    savePathName = savePath + '/' + fileName
+    savePathName = savePath + '/' + fileNames[fileNameIndex][:-9] + '_sim.csv'
     # try:
     #     if not os.path.exists(folderPath):
     #         os.makedirs(folderPath)
@@ -44,7 +45,7 @@ def main():
                 Xall = np.concatenate((Xall,X1))
         else:
             print('kill logger')
-
+            fileNameIndex+=1
 #            print('Xall: ',Xall[:30,0])
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
 #            print(dataFrame)

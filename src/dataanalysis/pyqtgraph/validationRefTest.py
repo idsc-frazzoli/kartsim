@@ -17,7 +17,7 @@ def main():
     simfolders.sort()
     defaultsim = simfolders[-1]
     pathsimdata = pathrootsimdata + '/' + defaultsim
-
+    print('Reading data from ', pathsimdata)
     validationhorizon = 1      #[s] time horizon for which simulation runs until initial conditions are reset to values from log data
 
     csvfiles = []
@@ -71,7 +71,7 @@ def main():
         print(evalrefdata[['vehicle vx', 'vehicle vy', 'pose vtheta']][:part])
         print(evalrefdata[['pose x', 'pose y', 'pose theta']][:part])
 
-        savePathName = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190415-163242_validation/valrefdata.csv'
+        savePathName = pathsimdata + '/' + pklfiles[index][1][:-4] + '_valrefdata.csv'
 
         evalrefdata.to_csv(savePathName, index=False,
                          header=['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',

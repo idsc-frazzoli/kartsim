@@ -11,15 +11,14 @@ import numpy as np
 import pandas as pd
 import datetime
 
-import preprocess as prep
+import dataanalysis.pyqtgraph.preprocess as prep
 
 def main():
     #__user input
     
-    pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190411-133023_test_MarcsModel_oneDayOnly' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190416-152207_test_MarcsModel_oneDayOnly' #path where all the raw, sorted data is that you want to sample and or batch and or split
     pathSaveData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
     datasetTag = 'MarcsModel'
-    datasetName = 'dataset'
     samplingTimeStep = 0.01
     
 #    dataSpecificMarcsModel = True
@@ -30,7 +29,7 @@ def main():
     for r, d, f in os.walk(pathLoadData):
         for file in f:
             if '.pkl' in file:
-                files.append(os.path.join(r, file))
+                files.append([os.path.join(r, file), file])
                 
 #    if dataSpecificMarcsModel:
 #        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/TrashFiles/forward/lookup_cur_vel_to_acc.pkl'   #file where all the information about missing/incomplete data is stored
@@ -43,9 +42,10 @@ def main():
 #            lookupTable = pd.DataFrame()
     
     dataSet = []
-    for file in files[0:1]:
+    for file, fileName in files[0:1]:
         dataSetLog = getSampledData(file, samplingTimeStep)
 #        dataForMarcsModel(dataSetLog, lookupTable)
+        datasetName = fileName
         if len(dataSet) < 1:
             dataSet = dataSetLog
         else:
@@ -64,7 +64,7 @@ def main():
     except OSError:
         print('Error: Creating directory: ', folderPath)
     print('now writing to file...')
-    filePathName = folderPath + '/' + datasetName + '.pkl'
+    filePathName = folderPath + '/' + datasetName[:-4] + '_samp.pkl'
     try:
         with open(filePathName, 'wb') as f:
             pickle.dump(dataSet, f, pickle.HIGHEST_PROTOCOL)

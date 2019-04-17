@@ -11,14 +11,18 @@ from multiprocessing.connection import Listener
 from threading import Thread, active_count
 import numpy as np
 import time
-
+import sys
 
 def main():
     global runThread
     
     #simulation default parameters
     simIncrement = 0.01  #s underlying time step for integration
-    visualization = True
+    visualization = sys.argv[1]
+    if visualization == 'true':
+        visualization = True
+    else:
+        visualization = False
     logging = True
     clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
@@ -36,7 +40,6 @@ def main():
             noThread = False
             
             if visualization and vizConn is None:
-                print(visualization)
                 print("waiting for visualization connection at", visualizationAddress)
                 vizConn = visualizationListener.accept()
                 print('visualization connection accepted from', visualizationListener.last_accepted)

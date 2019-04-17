@@ -30,8 +30,8 @@ def main():
 #    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)', 
 #                    'vmu ay (left)', 'pose atheta', 'steer torque cmd', 'brake position cmd', 'motor torque cmd left', 
 #                    'motor torque cmd right', ] #list of required raw log parameters
-    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)', 
-                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
+    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax',
+                    'vmu ay', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
     saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData'
     datasetTag = 'test_MarcsModel_oneDayOnly'
     #check logs for missing or incomplete data
@@ -106,12 +106,12 @@ def stirData(pathRootData, preproParams, requiredList):
     kartDataAll = {}
     j  = 0
     skipCount = 0
-    for testDay in testDays[0:1]:
+    for testDay in testDays[10:11]:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
     
-        for logNr in logNrs[11:12]:
+        for logNr in logNrs[21:22]:
             if preproParams[testDay][logNr]['goodData']:
                 if skipCount > 0:
                     print(skipCount,'logs skipped')
@@ -224,8 +224,8 @@ def setListItems(pathLogNr):
 
     for name in files:
         if 'pose.smooth' in name:
-            groups.append(['pose x', 0, 1, name, True, 0, 0, 0, 1])
-            groups.append(['pose y', 0, 2, name, True, 0, 0, 0, 1])
+            groups.append(['pose x atvmu', 0, 1, name, True, 0, 0, 0, 1])
+            groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
             groups.append(['pose theta', 0, 3, name, True, 0, 0, 0, 1])
         elif 'steer.put' in name:
             groups.append(['steer torque cmd', 0, 2, name, True, 5, 50, 0, 1])
@@ -245,8 +245,8 @@ def setListItems(pathLogNr):
             groups.append(['motor rot rate left', 0, 2, name, True, 0, 0, 0, 1])
             groups.append(['motor rot rate right', 0, 9, name, True, 0, 0, 0, 1])
         elif 'vmu931' in name:
-            groups.append(['vmu ax (forward)', 0, 2, name, True, 70, 700, 0, 1])
-            groups.append(['vmu ay (left)', 0, 3, name, True, 70, 700, 0, 1])
+            groups.append(['vmu ax atvmu (forward)', 0, 2, name, True, 70, 700, 0, 1])
+            groups.append(['vmu ay atvmu (left)', 0, 3, name, True, 70, 700, 0, 1])
             groups.append(['vmu vtheta', 0, 4, name, True, 5, 50, 0, 1])
 
     groups.sort()
@@ -285,6 +285,8 @@ def setListItems(pathLogNr):
 
     # Add Preprocessed Data
     groups = []
+    groups.append(['pose x', ['pose x atvmu'], True, 1, 10, 1, 1])
+    groups.append(['pose y', ['pose y atvmu'], True, 1, 10, 1, 1])
     groups.append(['pose vx', ['pose x'], True, 1, 10, 1, 1])
     groups.append(['pose vy', ['pose y'], True, 1, 10, 1, 1])
     groups.append(['pose vtheta', ['pose theta'], True, 0, 0, 1, 1])
@@ -292,6 +294,8 @@ def setListItems(pathLogNr):
     groups.append(['pose ay', ['pose vy'], True, 0, 0, 2, 1])
     groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])
     groups.append(['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
+    groups.append(['vmu ax', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 3, 1])
+    groups.append(['vmu ay', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 3, 1])
     groups.append(['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
     groups.append(['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
     groups.append(['vehicle ax total',
@@ -348,6 +352,8 @@ def updateData(kartData, dataNames):
 
 
 def preProcessing(kartData, name):
+    vmu_cog = 0.48 #[m] displacement of cog to vmu wrt vmu
+    
     differentiate = 'pose vx', 'pose vy', 'pose vtheta', 'pose ax', 'pose ay', 'pose atheta'
     differentiateFrom = 'pose x', 'pose y', 'pose theta', 'pose vx', 'pose vy', 'pose vtheta'
     
@@ -358,7 +364,22 @@ def preProcessing(kartData, name):
                                        kartData[nameFrom]['data'][1])
         kartData[name]['data'] = [list(t), list(dydt)]
 
+    if name in ['pose x', 'pose y']:
+        
+        theta = kartData['pose theta']['data'][1]
 
+        if name == 'pose x':
+            x = kartData['pose x atvmu']['data'][0]
+            y = kartData['pose x atvmu']['data'][1]
+            y = y + vmu_cog * np.cos(theta)
+        else:
+            x = kartData['pose y atvmu']['data'][0]
+            y = kartData['pose y atvmu']['data'][1]
+            y = y + vmu_cog * np.sin(theta)
+
+        kartData[name]['data'] = [x, y]
+    
+    
     elif name == 'vehicle slip angle':
         x = kartData['pose vx']['data'][0]
         vx = kartData['pose vx']['data'][1]
@@ -371,6 +392,29 @@ def preProcessing(kartData, name):
                 y[i] = y[i] + 2 * np.pi
             if y[i] > np.pi:
                 y[i] = y[i] - 2 * np.pi
+
+        kartData[name]['data'] = [x, y]
+        
+    elif name in ['vmu ax', 'vmu ay']:
+        x = kartData['vmu ax atvmu (forward)']['data'][0]
+        a = kartData['vmu ax atvmu (forward)']['data'][1]
+        atheta_t = kartData['pose atheta']['data'][0]
+        atheta = kartData['pose atheta']['data'][1]
+
+        while x[0] < atheta_t[0]:
+            x = np.delete(x, 0)
+            a = np.delete(a, 0)
+        while x[-1] > atheta_t[-1]:
+            x = np.delete(x, -1)
+            a = np.delete(a, -1)
+
+        interp = interp1d(atheta_t, atheta)
+        atheta = interp(x)
+
+        if name == 'vmu ax':
+            y = a
+        else:
+            y = a - atheta * vmu_cog
 
         kartData[name]['data'] = [x, y]
 

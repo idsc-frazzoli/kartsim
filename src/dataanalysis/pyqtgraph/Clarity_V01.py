@@ -234,6 +234,7 @@ class Clarity(QtGui.QMainWindow):
                     yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
                 self.availableData[index][2] = yNew
             else:
+                print(name)
                 for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
                     sigma = item.info[1]
                     width = item.info[2]
@@ -329,8 +330,8 @@ class Clarity(QtGui.QMainWindow):
 
         for name in files:
             if 'pose.smooth' in name:
-                groups.append(['pose x', 0, 1, name, True, 0, 0, 0, 1])
-                groups.append(['pose y', 0, 2, name, True, 0, 0, 0, 1])
+                groups.append(['pose x atvmu', 0, 1, name, True, 0, 0, 0, 1])
+                groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta', 0, 3, name, True, 0, 0, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd', 0, 2, name, True, 0, 0, 0, 1])
@@ -350,8 +351,8 @@ class Clarity(QtGui.QMainWindow):
                 groups.append(['motor rot rate left', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['motor rot rate right', 0, 9, name, True, 0, 0, 0, 1])
             elif 'vmu931' in name:
-                groups.append(['vmu ax (forward)', 0, 2, name, True, 70, 700, 0, 1])
-                groups.append(['vmu ay (left)', 0, 3, name, True, 70, 700, 0, 1])
+                groups.append(['vmu ax atvmu (forward)', 0, 2, name, True, 70, 700, 0, 1])
+                groups.append(['vmu ay atvmu (left)', 0, 3, name, True, 70, 700, 0, 1])
                 groups.append(['vmu vtheta', 0, 4, name, True, 5, 50, 0, 1])
 
         self.dataList.clear()
@@ -363,19 +364,23 @@ class Clarity(QtGui.QMainWindow):
                 dataFrame = dio.getCSV(fileName)
                 xRaw = dataFrame.iloc[:, timeIndex]
                 yRaw = dataFrame.iloc[:, dataIndex]
-                
+
                 if name == 'pose theta':
                     for i in range(len(yRaw)):
                         if yRaw[i] < -np.pi:
                             yRaw[i] = yRaw[i] + 2 * np.pi
                         if yRaw[i] > np.pi:
                             yRaw[i] = yRaw[i] - 2 * np.pi
-                if name in ['vmu ax (forward)', 'vmu ay (left)', 'vmu vtheta']:
+                    for i in range(len(yRaw)-1):
+                        if np.abs(yRaw[i + 1] - yRaw[i]) > 1:
+                            yRaw[i + 1:] = yRaw[i + 1:] - np.sign((yRaw[i + 1] - yRaw[i])) * 2 * np.pi
+                if name in ['vmu ax atvmu (forward)', 'vmu ay atvmu (left)', 'vmu vtheta']:
                     xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
             except:
-                print('EmptyDataError: could not read data from file ', fileName)
+                print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
                 xRaw = [0]
                 yRaw = [0]
+                raise
 
             item = QtGui.QListWidgetItem(name)
             item.setText(name)
@@ -393,41 +398,42 @@ class Clarity(QtGui.QMainWindow):
 
         # Add Preprocessed Data
         groups = []
-        
+        groups.append(['pose x', ['pose x atvmu', 'pose theta'], True, 0, 0, 1, 1])
+        groups.append(['pose y', ['pose y atvmu', 'pose theta'], True, 0, 0, 1, 1])
         groups.append(['xy trace', ['pose x', 'pose y'], True, 0, 0, 1, 1])
+        groups.append(['xy trace atvmu', ['pose x atvmu', 'pose y atvmu'], True, 0, 0, 1, 1])
         groups.append(['pose vx', ['pose x'], True, 1, 10, 1, 1])
         groups.append(['pose vy', ['pose y'], True, 1, 10, 1, 1])
         groups.append(['pose vtheta', ['pose theta'], True, 0, 0, 1, 1])
-        groups.append(['pose ax', ['pose vx'], True, 0, 0, 2, 1])
-        groups.append(['pose ay', ['pose vy'], True, 0, 0, 2, 1])
+        groups.append(['pose ax', ['pose x', 'pose vx'], True, 0, 0, 2, 1])
+        groups.append(['pose ay', ['pose y', 'pose vy'], True, 0, 0, 2, 1])
         groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])
-        groups.append(
-                ['vehicle slip angle', ['pose theta', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
-        groups.append(
-                ['vehicle vx', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
-        groups.append(
-                ['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
+        groups.append(['vehicle slip angle', ['pose theta', 'pose x', 'pose y', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
+        groups.append(['vmu ax', ['vmu ax atvmu (forward)', 'pose theta','pose vtheta','pose atheta'], True, 0, 0, 3, 1])
+        groups.append(['vmu ay', ['vmu ay atvmu (left)', 'pose theta','pose vtheta','pose atheta'], True, 0, 0, 3, 1])
+        groups.append(['vehicle vx', ['pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
+        groups.append(['vehicle vy', ['pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
         groups.append(['vehicle ax total',
-                       ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
+                       ['pose theta', 'pose x', 'pose y', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
                         'vehicle vx', 'vehicle vy'], True, 5, 50, 3, 1])
         groups.append(['vehicle ay total',
-                       ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
+                       ['pose theta', 'pose x', 'pose y', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle',
                         'vehicle vx', 'vehicle vy'], True, 0, 0, 3, 1])
         groups.append(['vehicle ax only transl',
-                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
+                       ['pose theta', 'pose x', 'pose y', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
         groups.append(['vehicle ay only transl',
-                       ['pose theta', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
+                       ['pose theta', 'pose x', 'pose y', 'pose vx', 'pose vy', 'pose ax', 'pose ay'], True, 0, 0, 3, 1])
         groups.append(['MH power accel rimo left',
-                       ['motor torque cmd left', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                       ['motor torque cmd left', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'],
                        True, 0, 0, 4, 1])
         groups.append(['MH power accel rimo right',
-                       ['motor torque cmd right', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'], 
+                       ['motor torque cmd right', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'],
                        True, 0, 0, 4, 1])
         groups.append(['MH AB',
-                       ['brake position cmd', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                       ['brake position cmd', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
                        True, 0, 1, 5, 1])
         groups.append(['MH TV',
-                       ['pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'], 
+                       ['pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
                        True, 0, 1, 5, 1])
         groups.append(['MH BETA',
                        ['steer position cal'], 

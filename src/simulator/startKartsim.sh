@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 #Created on Mon Apr  8 12:55:56 2019
 #
@@ -14,26 +14,41 @@ FOLDERNAME=$(date +"%Y%m%d-%H%M%S")
 FOLDERPATH=$SAVEPATH/$FOLDERNAME
 SIMTAG="_validation"
 SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
+SIMLOGFILENAMES=()
+for i in $PREPROFOLDERPATH/*.pkl; do SIMLOGFILENAMES+="$(basename "$i"),"; done;
+#SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
+echo $SIMLOGFILENAMES
+#VISUALIZATION=true
+VISUALIZATION=false
+
 mkdir $SAVEFOLDERPATH
 
 cp $PREPROFOLDERPATH/* $SAVEFOLDERPATH
 
-python basicKartsimServer.py &
+python basicKartsimServer.py $VISUALIZATION &
 SRVPID=$!
-python basicVisualizationClient.py &
-VIZPID=$!
-python basicLoggerClient.py $SAVEFOLDERPATH $SIMTAG &
+if [ $VISUALIZATION = true ]
+then
+    python basicVisualizationClient.py &
+    VIZPID=$!
+fi
+python basicLoggerClient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 LOGPID=$!
-#python basicSimulationClient.py &
-python validationClient.py $PREPROFOLDERPATH &
+python basicSimulationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
+#python validationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
 SIMPID=$!
+
 exit_script() {
     echo " "
     echo "Kill server, visualization and logger"
     trap - INT # clear the trap
     kill ${SRVPID}
-    kill ${VIZPID}
+    if [ $VISUALIZATION = true ]
+    then
+        kill ${VIZPID}
+    fi
     kill ${LOGPID}
+
     kill ${SIMPID}
 
 }

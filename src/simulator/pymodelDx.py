@@ -19,22 +19,22 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     
     reg = 0.5
     
-    def magic (s,B,C,D):
+    def magic(s,B,C,D):
         return D * np.sin(C * np.arctan(B * s))
     
-    def capfactor (taccx):
+    def capfactor(taccx):
         return(1-satfun((taccx/D2)**2))**(1/2)
 
-    def simpleslip (VELY,VELX,taccx):
+    def simpleslip(VELY,VELX,taccx):
         return -(1/capfactor(taccx))*VELY/(VELX+reg)
 
-    def simplediraccy (VELY,VELX,taccx):
+    def simplediraccy(VELY,VELX,taccx):
         return magic(simpleslip(VELY,VELX,taccx),B2,C2,D2)
 
-    def simpleaccy (VELY,VELX,taccx):
+    def simpleaccy(VELY,VELX,taccx):
         return capfactor(taccx)*simplediraccy(VELY,VELX,taccx)
 
-    def simplefaccy (VELY,VELX):
+    def simplefaccy(VELY,VELX):
         return magic(-VELY/(VELX+reg),B1,C1,D1)
 
     
@@ -44,7 +44,7 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     f1n = l2/l
     f2n = l1/l
     w = 1
-    def rotmat (beta):
+    def rotmat(beta):
         return np.array([[np.cos(beta),np.sin(beta)],[-np.sin(beta), np.cos(beta)]])
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
@@ -58,9 +58,8 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
     F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n
     TVTrq = TV*w
-    
-    
-    ACCROTZ = (TVTrq + F1y*l1 -F2y*l2)/Ic
+
+    ACCROTZ = (TVTrq + F1y * l1 - F2y * l2) / Ic
 #    %ACCROTZ = TVTrq + F1y*l1;
     ACCX = F1x+F2x+VELROTZ*VELY
     ACCY = F1y+F2y1+F2y2-VELROTZ*VELX
@@ -78,7 +77,8 @@ def satfun(x):
             d = (1+r-x)/r;
             y = 1-1/4*r*d**2;
         else:
-            y = 1;
+            # y = 1;
+            y = 0.999;
     else:
         print('ERROR: x in satfun(x) is not float!')
     return y

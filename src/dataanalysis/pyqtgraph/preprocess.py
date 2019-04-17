@@ -51,13 +51,45 @@ def interpolation(x, y, xBegin, xStop, timeStep):
 
 def preProcessing(self, name):
     availableDataList = [item[0] for item in self.availableData]
-    differentiate = 'pose vx', 'pose vy', 'pose vtheta', 'pose ax', 'pose ay', 'pose atheta'
+    vmu_cog = 0.48 #[m] displacement of cog to vmu wrt vmu
+
+    if name in ['pose x', 'pose y']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[0])][1]
+        y = self.availableData[availableDataList.index(nameDependency[0])][2]
+        theta = self.availableData[availableDataList.index(nameDependency[1])][2]
+
+        if name == 'pose x':
+            y = y + vmu_cog * np.cos(theta)
+        else:
+            y = y + vmu_cog * np.sin(theta)
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+
+    differentiate = 'pose vx', 'pose vy', 'pose vtheta', 'pose atheta'
     if name in differentiate:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0][0]
         index = availableDataList.index(nameDependency)
         x = self.availableData[index][1]
         y = self.availableData[index][2]
+        t, dydt = derivative_X_dX(name, x, y)
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = dydt
+        else:
+            self.availableData.append([name, t, dydt])
+
+    if name in ['pose ax', 'pose ay']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[1])][1]
+        y = self.availableData[availableDataList.index(nameDependency[1])][2]
         t, dydt = derivative_X_dX(name, x, y)
         if name in availableDataList:
             index = availableDataList.index(name)
@@ -77,14 +109,27 @@ def preProcessing(self, name):
             self.availableData[index][2] = y
         else:
             self.availableData.append([name, x, y])
+
+    if name == 'xy trace atvmu':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[0])][2]
+        y = self.availableData[availableDataList.index(nameDependency[1])][2]
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][1] = x
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
     
     if name == 'vehicle slip angle':
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
-        x = self.availableData[availableDataList.index(nameDependency[1])][1]
-        vx = self.availableData[availableDataList.index(nameDependency[1])][2]
+        x = self.availableData[availableDataList.index(nameDependency[3])][1]
+        vx = self.availableData[availableDataList.index(nameDependency[3])][2]
         theta = self.availableData[availableDataList.index(nameDependency[0])][2]
-        vy = self.availableData[availableDataList.index(nameDependency[2])][2]
+        vy = self.availableData[availableDataList.index(nameDependency[4])][2]
 
         y = theta[:-1] - np.arctan2(vy, vx)
 
@@ -100,13 +145,44 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, x, y])
 
-    if name in ['vehicle vx', 'vehicle vy']:
+    if name in ['vmu ax', 'vmu ay']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
         x = self.availableData[availableDataList.index(nameDependency[0])][1]
-        vx = self.availableData[availableDataList.index(nameDependency[0])][2]
-        vy = self.availableData[availableDataList.index(nameDependency[1])][2]
-        slipAngle = self.availableData[availableDataList.index(nameDependency[2])][2]
+        a = self.availableData[availableDataList.index(nameDependency[0])][2]
+        atheta_t = self.availableData[availableDataList.index(nameDependency[3])][1]
+        atheta = self.availableData[availableDataList.index(nameDependency[3])][2]
+
+        while x[0] < atheta_t.iloc[0]:
+            # x.pop(0)
+            x = np.delete(x, 0)
+            a = np.delete(a, 0)
+        while x[-1] > atheta_t.iloc[-1]:
+            # x.pop()
+            x = np.delete(x, -1)
+            a = np.delete(a, -1)
+
+        interp = interp1d(atheta_t, atheta)
+        atheta = interp(x)
+
+        if name == 'vmu ax':
+            y = a
+        else:
+            y = a - atheta * vmu_cog
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+
+    if name in ['vehicle vx', 'vehicle vy']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[2])][1]
+        vx = self.availableData[availableDataList.index(nameDependency[2])][2]
+        vy = self.availableData[availableDataList.index(nameDependency[3])][2]
+        slipAngle = self.availableData[availableDataList.index(nameDependency[4])][2]
 
         if name == 'vehicle vx':
             y = np.sqrt(vx ** 2 + vy ** 2) * np.cos(slipAngle)
@@ -122,10 +198,10 @@ def preProcessing(self, name):
     if name in ['vehicle ax total', 'vehicle ay total']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
-        x = self.availableData[availableDataList.index(nameDependency[5])][1]
-        vx = self.availableData[availableDataList.index(nameDependency[5])][2]
-        vy = self.availableData[availableDataList.index(nameDependency[6])][2]
-        vtheta = self.availableData[availableDataList.index(nameDependency[1])][2]
+        x = self.availableData[availableDataList.index(nameDependency[7])][1]
+        vx = self.availableData[availableDataList.index(nameDependency[7])][2]
+        vy = self.availableData[availableDataList.index(nameDependency[8])][2]
+        vtheta = self.availableData[availableDataList.index(nameDependency[3])][2]
         if name == 'vehicle ax total':
             t, dydt = derivative_X_dX(name, x, vx)
             y = dydt - (vtheta * vy)[:-1]
@@ -142,9 +218,9 @@ def preProcessing(self, name):
     if name in ['vehicle ax only transl', 'vehicle ay only transl']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
-        x = self.availableData[availableDataList.index(nameDependency[3])][1]
-        ax = self.availableData[availableDataList.index(nameDependency[3])][2]
-        ay = self.availableData[availableDataList.index(nameDependency[4])][2]
+        x = self.availableData[availableDataList.index(nameDependency[5])][1]
+        ax = self.availableData[availableDataList.index(nameDependency[5])][2]
+        ay = self.availableData[availableDataList.index(nameDependency[6])][2]
         theta = self.availableData[availableDataList.index(nameDependency[0])][2]
         if name == 'vehicle ax only transl':
             y = ax * np.cos(theta[:-2]) + ay * np.sin(theta[:-2])
@@ -162,8 +238,8 @@ def preProcessing(self, name):
             nameDependency = item.dependencies[0]
         x = list(self.availableData[availableDataList.index(nameDependency[0])][1].values)
         motorPower = list(self.availableData[availableDataList.index(nameDependency[0])][2])
-        velocity_t = self.availableData[availableDataList.index(nameDependency[4])][1]
-        velocity = self.availableData[availableDataList.index(nameDependency[4])][2]
+        velocity_t = self.availableData[availableDataList.index(nameDependency[6])][1]
+        velocity = self.availableData[availableDataList.index(nameDependency[6])][2]
 
         while x[0] < velocity_t.iloc[0]:
             x.pop(0)
@@ -194,9 +270,9 @@ def preProcessing(self, name):
     if name == 'MH AB':
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
-        x = self.availableData[availableDataList.index(nameDependency[5])][1]
-        powerAccelL = self.availableData[availableDataList.index(nameDependency[5])][2]
-        powerAccelR = self.availableData[availableDataList.index(nameDependency[6])][2]
+        x = self.availableData[availableDataList.index(nameDependency[7])][1]
+        powerAccelL = self.availableData[availableDataList.index(nameDependency[7])][2]
+        powerAccelR = self.availableData[availableDataList.index(nameDependency[8])][2]
         brakePos_t = self.availableData[availableDataList.index(nameDependency[0])][1]
         brakePos = self.availableData[availableDataList.index(nameDependency[0])][2]
         powerAccel = np.dstack((powerAccelL,powerAccelR))
@@ -236,9 +312,9 @@ def preProcessing(self, name):
     if name == 'MH TV':
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
-        x = self.availableData[availableDataList.index(nameDependency[4])][1]
-        powerAccelL = self.availableData[availableDataList.index(nameDependency[4])][2]
-        powerAccelR = self.availableData[availableDataList.index(nameDependency[5])][2]
+        x = self.availableData[availableDataList.index(nameDependency[6])][1]
+        powerAccelL = self.availableData[availableDataList.index(nameDependency[6])][2]
+        powerAccelR = self.availableData[availableDataList.index(nameDependency[7])][2]
         
         TV = np.subtract(powerAccelR, powerAccelL)/2.0
         print(TV)
@@ -269,12 +345,15 @@ def derivative_X_dX(name, x, y):
         dydx = np.diff(y) / np.diff(x)
         lim = 4
         for i in range(len(dydx) - 1):
-            if dydx[i] > lim or dydx[i] < -lim:
-                k = 1
-                while dydx[i + k] > lim or dydx[i + k] < -lim:
-                    k += 1
-                for l in range(k):
-                    dydx[i + l] = (dydx[i + l - 1] + dydx[i + k]) / 2.0
+            if dydx[i] > lim:
+                dydx[i] = (y[i + 1] - y[i] - 2 * np.pi) / (x[i + 1] - x[i])
+            elif dydx[i] < -lim:
+                dydx[i] = (y[i + 1] - y[i] + 2 * np.pi) / (x[i + 1] - x[i])
+                # k = 1
+                # while dydx[i + k] > lim or dydx[i + k] < -lim:
+                #     k += 1
+                # for l in range(k):
+                #     dydx[i + l] = (dydx[i + l - 1] + dydx[i + k]) / 2.0
 
     else:
         dydx = np.diff(y) / np.diff(x)

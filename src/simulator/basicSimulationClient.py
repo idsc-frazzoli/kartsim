@@ -11,13 +11,15 @@ import time
 import os
 import pickle
 import pandas as pd
+import numpy as np
+import sys
 
 def main():
     #___user inputs
     #initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
 #    X0 = [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-
-    pathSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    pathsavedata = sys.argv[1]
+    pathSimData = sys.argv[2] #path where all the raw, sorted data is that you want to sample and or batch and or split
 
     simData = getsimdata(pathSimData)
     
@@ -27,8 +29,34 @@ def main():
     simTime = simData['time'].iloc[-1]                              #[s] Total simulation time
     print(dataStep, simStep, simTime, int(simTime/simStep))
     #initial state
-    X0 = [simData['time'][0] , simData['pose x'][0], simData['pose y'][0], simData['pose theta'][0], simData['vehicle vx'][0], simData['vehicle vy'][0], simData['pose vtheta'][0], simData['MH BETA'][0], simData['MH AB'][0], simData['MH TV'][0]]
+    # X0 = [simData['time'][0] , simData['pose x'][0], simData['pose y'][0], simData['pose theta'][0], simData['vehicle vx'][0], simData['vehicle vy'][0], simData['pose vtheta'][0], simData['MH BETA'][0], simData['MH AB'][0], simData['MH TV'][0]]
+    X0 = [0, 0, 0,0,0,0,0, 0, 1, 2]
     # ______^^^______
+
+    try:
+        _ = open(pathsavedata + '/simulationinfo.txt', 'r')
+        os.remove(pathsavedata + '/simulationinfo.txt')
+        with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            the_file.write('simulation mode:                    normal simulation' + '\n')
+            the_file.write('source folder:                      ' + pathSimData + '\n')
+            the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+            the_file.write('total simulation time:              ' + str(simTime) + 's\n')
+            the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+            the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
+            for item in X0[1:]:
+                the_file.write('                                    ' + str(item) + '\n')
+        print('Simulation info saved to file: ', pathsavedata + '/simulationinfo.txt')
+    except FileNotFoundError:
+        with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            the_file.write('simulation mode:                    normal simulation' + '\n')
+            the_file.write('source folder:                      ' + pathSimData + '\n')
+            the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+            the_file.write('total simulation time:              ' + str(simTime) + 's\n')
+            the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+            the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
+            for item in X0[1:]:
+                the_file.write('                                    ' + str(item) + '\n')
+        print('Simulation info saved to file', pathsavedata + '/simulationinfo.txt')
     
     address = ('localhost', 6000)
     conn = Client(address, authkey=b'kartSim2019')
@@ -39,9 +67,9 @@ def main():
         for i in range(0,int(simTime/simStep)):
             if i > 0:
                 currIndex = int(round(i * simStep/dataStep))
-                X0[7] = simData['MH BETA'][currIndex]
-                X0[8] = simData['MH AB'][currIndex]
-                X0[9] = simData['MH TV'][currIndex]
+            #     X0[7] = simData['MH BETA'][currIndex]
+            #     X0[8] = simData['MH AB'][currIndex]
+            #     X0[9] = simData['MH TV'][currIndex]
             else:
                 tgo = time.time()
                 tint = tgo

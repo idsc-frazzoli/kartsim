@@ -24,10 +24,11 @@ def main():
     # preprofolders.sort()
     # defaultprepro = preprofolders[-1]
     # pathpreprodata = pathrootpreprodata + '/' + defaultprepro
-    pathpreprodata = sys.argv[1]
+    pathsavedata = sys.argv[1]
+    pathpreprodata = sys.argv[2]
     # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
-    validation = False
+    validation = True
     validationhorizon = 1      #[s] time horizon for which simulation runs until initial conditions are reset to values from log data
 
     preprodata = getpreprodata(pathpreprodata)
@@ -38,9 +39,43 @@ def main():
     simTime = preprodata['time'].iloc[-1]                              #[s] Total simulation time
     print(dataStep, simStep, simTime, int(simTime/simStep))
     #initial state
-    # X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
-    X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
+    X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
+    # X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
     # ______^^^______
+
+    #generate simulation info file and store it in target folder
+    try:
+        _ = open(pathsavedata + '/simulationinfo.txt', 'r')
+        os.remove(pathsavedata + '/simulationinfo.txt')
+        with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            if validation:
+                the_file.write('simulation mode:                    evaluation' + '\n')
+                the_file.write('initial condition reset interval:   ' + str(validationhorizon) + 's\n')
+            else:
+                the_file.write('simulation mode:                    normal simulation' + '\n')
+            the_file.write('source folder:                      ' + pathpreprodata + '\n')
+            the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+            the_file.write('total simulation time:              ' + str(simTime) + 's\n')
+            the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+            the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
+            for item in X0[1:]:
+                the_file.write('                                    ' + str(item) + '\n')
+        print('Simulation info saved to file: ', pathsavedata + '/simulationinfo.txt')
+    except FileNotFoundError:
+        with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            if validation:
+                the_file.write('simulation mode:                    evaluation' + '\n')
+                the_file.write('initial condition reset interval:   ' + str(validationhorizon) + 's\n')
+            else:
+                the_file.write('simulation mode:                    normal simulation' + '\n')
+            the_file.write('source folder:                      ' + pathpreprodata + '\n')
+            the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+            the_file.write('total simulation time:              ' + str(simTime) + 's\n')
+            the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+            the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
+            for item in X0[1:]:
+                the_file.write('                                    ' + str(item) + '\n')
+        print('Simulation info saved to file', pathsavedata + '/simulationinfo.txt')
     
     address = ('localhost', 6000)
     conn = Client(address, authkey=b'kartSim2019')

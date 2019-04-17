@@ -47,6 +47,29 @@ def main():
         diff_pose = rawvaldata[start:start+part] - simvaldata[start:start+part]
         # print(np.square(diff))
         rmse = np.sqrt(np.sum(np.square(diff_pose)) / len(rawdataframe[start:start+part]))
+
+        try:
+            fh = open(pathsimdata +'/evaluationresults.txt', 'r')
+            if index == 0:
+                os.remove(pathsimdata +'/evaluationresults.txt')
+            with open(pathsimdata + '/evaluationresults.txt', 'a') as the_file:
+                the_file.write('_____________________________________\n')
+                the_file.write('Evaluation for ' + csvfiles[index][1] + '\n')
+                the_file.write('Parameter      RMSE' + '\n')
+                the_file.write(str(rmse.to_string()) + '\n')
+                the_file.write('Overall score: ' + str(rmse.sum()) + '\n\n')
+            print('Results saved to file', pathsimdata +'/evaluationresults.txt')
+        except FileNotFoundError:
+            with open(pathsimdata + '/evaluationresults.txt', 'a') as the_file:
+                the_file.write('_____________________________________\n')
+                the_file.write('Evaluation for ' + csvfiles[index][1] + '\n')
+                the_file.write('Signal         RMSE' + '\n')
+                the_file.write(str(rmse.to_string()) + '\n')
+                the_file.write('Overall score: ' + str(rmse.sum()) + '\n\n')
+            print('Results saved to file', pathsimdata + '/evaluationresults.txt')
+            # Keep preset values
+
+
         print('Evaluation for ', csvfiles[index][1])
         print(rmse)
         print('Overall score: ', rmse.sum(),'\n')

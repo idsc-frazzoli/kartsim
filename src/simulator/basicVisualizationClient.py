@@ -54,6 +54,10 @@ win.nextRow()
 
 p6 = win.addPlot(title="slip angle")
 
+p7 = win.addPlot(title="AB")
+
+p8 = win.addPlot(title="TV")
+
 kart_l = 1.5
 kart_w = 1. 
 
@@ -63,7 +67,7 @@ r1 = pg.QtGui.QGraphicsRectItem(-0.75, -0.5, 1.5, 1)
 r1.setPen(pg.mkPen(None))
 r1.setBrush(pg.mkBrush('r'))
 #p1.setRange(xRange = [-2.5,2.5], yRange = [-2.5,2.5])
-p1.enableAutoRange('xy', False)
+# p1.enableAutoRange('xy', False)
 #p1.setRange(QtCore.QRect(23, 25, 37, 40))
 
 runSimulation = True
@@ -106,6 +110,8 @@ def updatePlot(X1):
     vy = X1[:,5]
     vrot = X1[:,6]
     beta = X1[-1,7]
+    accRearAxle = X1[:,8]
+    tv = X1[:,9]
     p1.clear()
     r1 = pg.QtGui.QGraphicsRectItem(-kart_l/2., -kart_w/2., kart_l, kart_w)
     r1.setPen(pg.mkPen(None))
@@ -119,18 +125,20 @@ def updatePlot(X1):
     axY1 = p1.getAxis('left')
     axX11 = p11.getAxis('bottom')
     axY11 = p11.getAxis('left')
-    p1.setRange(QtCore.QRect(40, 30, 10, 25))
+    # p1.setRange(QtCore.QRect(40, 30, 10, 25))
     
-    if axX11.range[0] < axX1.range[0] or axX11.range[1] > axX1.range[1] or axY11.range[0] < axY11.range[0] or axY11.range[1] > axY11.range[1]:
-#        p1.setRange(xRange = axX.range, yRange = axY.range)
-        p1.setRange(QtCore.QRect(axX11.range[0], axY11.range[0], axX11.range[1]-axX11.range[0], axY11.range[1]-axY11.range[0]))
+#     if axX11.range[0] < axX1.range[0] or axX11.range[1] > axX1.range[1] or axY11.range[0] < axY11.range[0] or axY11.range[1] > axY11.range[1]:
+# #        p1.setRange(xRange = axX.range, yRange = axY.range)
+#         p1.setRange(QtCore.QRect(axX11.range[0], axY11.range[0], axX11.range[1]-axX11.range[0], axY11.range[1]-axY11.range[0]))
     posFL = [x[-1]+kart_l/2.*np.cos(theta[-1])-kart_w/2.*np.sin(theta[-1]), y[-1]+kart_w/2.*np.cos(theta[-1])+kart_l/2.*np.sin(theta[-1])]
     posFR = [x[-1]+kart_l/2.*np.cos(theta[-1])+kart_w/2.*np.sin(theta[-1]), y[-1]-kart_w/2.*np.cos(theta[-1])+kart_l/2.*np.sin(theta[-1])]
     wheel_l = 0.2
     p1.plot([posFL[0] - wheel_l * np.cos(theta[-1] + beta), posFL[0] + wheel_l * np.cos(theta[-1] + beta)],[posFL[1] - wheel_l * np.sin(theta[-1] + beta), posFL[1] + wheel_l * np.sin(theta[-1] + beta)])
     p1.plot([posFR[0] - wheel_l * np.cos(theta[-1] + beta), posFR[0] + wheel_l * np.cos(theta[-1] + beta)],[posFR[1] - wheel_l * np.sin(theta[-1] + beta), posFR[1] + wheel_l * np.sin(theta[-1] + beta)])
 #    p1.setRange(QtCore.QRect(23, 25, 37, 40))
-    
+    p1.plot(x[-30:], y[-30:], pen=(255, 255, 255))
+
+
     p11.clear()
     p11.plot(x,y, pen=(255,255,255))
     
@@ -148,6 +156,12 @@ def updatePlot(X1):
     
     p6.clear()
     p6.plot(simTime,np.arctan2(vy,vx), pen=(255,255,255))
+
+    p7.clear()
+    p7.plot(simTime,accRearAxle, pen=(255,255,255))
+
+    p8.clear()
+    p8.plot(simTime, tv, pen=(255, 255, 255))
         
 if __name__ == '__main__':
 #    main()
