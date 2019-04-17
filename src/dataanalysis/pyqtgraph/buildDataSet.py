@@ -27,13 +27,13 @@ def main():
     pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics' #path where all the raw logfiles are
     #preprocess data and compute inferred data from raw logs
     preprocessData = True
-#    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)', 
-#                    'vmu ay (left)', 'pose atheta', 'steer torque cmd', 'brake position cmd', 'motor torque cmd left', 
+#    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax ',
+#                    'vmu ay', 'pose atheta', 'steer torque cmd', 'brake position cmd', 'motor torque cmd left',
 #                    'motor torque cmd right', ] #list of required raw log parameters
     requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax',
                     'vmu ay', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
     saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData'
-    datasetTag = 'test_MarcsModel_oneDayOnly'
+    datasetTag = 'test_MarcsModel_allData'
     #check logs for missing or incomplete data
     sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete
     sortOutDataOverwrite = False                                                #if True: all data in preproParams-file will be overwritten
@@ -60,8 +60,8 @@ def main():
         print('preproParams saved to ', preproParamsFilePath)
 #    print(preproParams)
     if preprocessData:
-        kartDataAll = stirData(pathRootData, preproParams, requiredList)
-        print('data preprocessing done.\n')
+        kartDataAll, comp_tot = stirData(pathRootData, preproParams, requiredList)
+        print('Data preprocessing completed.')
         currentDT = datetime.datetime.now()
         folderName = currentDT.strftime("%Y%m%d-%H%M%S")
         folderPath = saveDatasetPath + '/' + folderName + '_' + datasetTag
@@ -71,51 +71,68 @@ def main():
                 os.makedirs(folderPath)
         except OSError:
             print('Error: Creating directory: ', folderPath)
-        print('now writing to file...')
+        print('Now writing to file at', folderPath)
+        comp_count = 0
         for key in kartDataAll:
             filePathName = folderPath + '/' + key + '.pkl'
             try:
                 with open(filePathName, 'wb') as f:
                     pickle.dump(kartDataAll[key], f, pickle.HIGHEST_PROTOCOL)
-                print(key + '.pkl',' done')
+                # print(key + '.pkl',' done')
+                print(str(int(comp_count / comp_tot * 100)),
+                      '% completed.   current file:', key + '.pkl', end='\r')
             except:
                 print('Could not save ', key + '.pkl' ,' to file.')
+            comp_count += 1
         
     print('Total computing time: ', time.time() - t)
       
     
     
 def stirData(pathRootData, preproParams, requiredList):
-    preproParams
+
+
+    loggoodcount = 0
+    logtotcount = 0
     for day in preproParams:
         for log in preproParams[day]:
+            loggoodcount += 1
+            logtotcount += 1
             for topic in preproParams[day][log]:
                 if topic in requiredList and preproParams[day][log][topic] == 0:
                     preproParams[day][log]['goodData'] = 0
+                    loggoodcount -= 1
                     break
-                else:
-                    preproParams[day][log]['goodData'] = 1
-#    i = 0
-#    for day in preproParams:
-#        for log in preproParams[day]:
-#            i = i + preproParams[day][log]['goodData']
-#            print(log, i)
-    
+    print(loggoodcount, 'of', logtotcount, 'logs are used for creating this dataset.')
+
+    comp_tot = 0
     testDays = dio.getDirectories(pathRootData)
     testDays.sort()
+    for testDay in testDays[0:5]:
+        pathTestDay = pathRootData + '/' + testDay
+        logNrs = dio.getDirectories(pathTestDay)
+        logNrs.sort()
+        for logNr in logNrs:
+            if preproParams[testDay][logNr]['goodData']:
+                comp_tot += 1
+
     kartDataAll = {}
-    j  = 0
     skipCount = 0
-    for testDay in testDays[10:11]:
+    comp_count = 0
+    for testDay in testDays[0:5]:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
     
-        for logNr in logNrs[21:22]:
+        for logNr in logNrs:
             if preproParams[testDay][logNr]['goodData']:
+
                 if skipCount > 0:
-                    print(skipCount,'logs skipped')
+                    print(str(int(comp_count / comp_tot * 100)), '% completed.   current log:', logNr, '  ', skipCount, 'logs skipped', end='\r')
                     skipCount = 0
+                else:
+                    print(str(int(comp_count / comp_tot * 100)), '% completed.   current log:', logNr, end='\r')
+
                 pathLogNr = pathTestDay + '/' + logNr
                 kartData, allDataNames = setListItems(pathLogNr)
                 kartData = updateData(kartData, allDataNames)
@@ -130,17 +147,26 @@ def stirData(pathRootData, preproParams, requiredList):
                     kartData.pop(delTopic,None)
                 
                 kartDataAll[logNr] = kartData
-                print(logNr, 'done. Nr of signals: ',len(kartDataAll[logNr]), j)
-                j = j + 1
+                comp_count += 1
+
             else:
                 skipCount += 1
-    return kartDataAll
+    return kartDataAll, comp_tot
 
 
 def sortOut(pathRootData, preproParams, redo):
     testDays = dio.getDirectories(pathRootData)
     testDays.sort()
-    
+
+    comp_tot = 0
+    for testDay in testDays:
+        pathTestDay = pathRootData + '/' + testDay
+        logNrs = dio.getDirectories(pathTestDay)
+        logNrs.sort()
+        for logNr in logNrs:
+            comp_tot += 1
+
+    comp_count = 0
     for testDay in testDays:
 #        if testDay in preproParams and not redo:
 #            print(testDay, ' already done. Continuing with next testDay')
@@ -171,26 +197,32 @@ def sortOut(pathRootData, preproParams, redo):
             elif np.abs(np.mean(kartData['steer torque cmd']['data'][1])) < 0.01 and np.std(kartData['steer torque cmd']['data'][1]) < 0.1:
                 statusInfo = statusInfo + 'steering cmd data missing or insufficient,  '
                 preproParams[testDay][logNr]['steer torque cmd'] = 0
+                preproParams[testDay][logNr]['MH BETA'] = 0
             else:
                 preproParams[testDay][logNr]['steer torque cmd'] = 1
+                preproParams[testDay][logNr]['MH BETA'] = 1
                 
             if np.abs(np.mean(kartData['brake position cmd']['data'][1])) < 0.005 or np.std(kartData['brake position cmd']['data'][1]) < 0.001:
                 statusInfo = statusInfo + 'brake position cmd data missing or insufficient,  '
                 preproParams[testDay][logNr]['brake position cmd'] = 0
+                preproParams[testDay][logNr]['MH AB'] = 0
+                preproParams[testDay][logNr]['MH TV'] = 0
             else:
                 preproParams[testDay][logNr]['brake position cmd'] = 1
+                preproParams[testDay][logNr]['MH AB'] = 1
+                preproParams[testDay][logNr]['MH TV'] = 1
                 
-            if np.abs(np.mean(kartData['vmu ax (forward)']['data'][1])) < 0.01 and np.std(kartData['vmu ax (forward)']['data'][1]) < 0.01:
-                statusInfo = statusInfo + 'vmu ax (forward) data missing or insufficient,  '
-                preproParams[testDay][logNr]['vmu ax (forward)'] = 0
+            if np.abs(np.mean(kartData['vmu ax']['data'][1])) < 0.01 and np.std(kartData['vmu ax']['data'][1]) < 0.01:
+                statusInfo = statusInfo + 'vmu ax data missing or insufficient,  '
+                preproParams[testDay][logNr]['vmu ax'] = 0
             else:
-                preproParams[testDay][logNr]['vmu ax (forward)'] = 1
+                preproParams[testDay][logNr]['vmu ax'] = 1
             
-            if np.abs(np.mean(kartData['vmu ay (left)']['data'][1])) < 0.01 and np.std(kartData['vmu ay (left)']['data'][1]) < 0.05:
-                statusInfo = statusInfo + 'vmu ay (left) data missing or insufficient,  '
-                preproParams[testDay][logNr]['vmu ay (left)'] = 0
+            if np.abs(np.mean(kartData['vmu ay']['data'][1])) < 0.01 and np.std(kartData['vmu ay']['data'][1]) < 0.05:
+                statusInfo = statusInfo + 'vmu ay data missing or insufficient,  '
+                preproParams[testDay][logNr]['vmu ay'] = 0
             else:
-                preproParams[testDay][logNr]['vmu ay (left)'] = 1
+                preproParams[testDay][logNr]['vmu ay'] = 1
                 
             if np.abs(np.mean(kartData['vmu vtheta']['data'][1])) < 0.01 and np.std(kartData['vmu vtheta']['data'][1]) < 0.05:
                 statusInfo = statusInfo + 'vmu vtheta data missing or insufficient,  '
@@ -200,8 +232,8 @@ def sortOut(pathRootData, preproParams, redo):
         
             statusInfo = statusInfo + 'done'
             print(statusInfo)
-            print('')
-
+            comp_count += 1
+            print(str(int(comp_count/comp_tot*100)),'% completed.')
             
     return preproParams
 
@@ -265,7 +297,7 @@ def setListItems(pathLogNr):
                         yRaw[i] = yRaw[i] + 2 * np.pi
                     if yRaw[i] > np.pi:
                         yRaw[i] = yRaw[i] - 2 * np.pi
-            if name in ['vmu ax (forward)', 'vmu ay (left)', 'vmu vtheta']:
+            if name in ['vmu ax atvmu (forward)', 'vmu ay atvmu (left)', 'vmu vtheta']:
                 xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
         except:
             print('EmptyDataError for ', name, ': could not read data from file ', fileName)
@@ -495,9 +527,9 @@ def preProcessing(kartData, name):
         try:
             with open(lookupFilePath, 'rb') as f:
                 lookupTable = pickle.load(f)
-            print('Parameter file for preprocessing located and opened.')
+            # print('Lookup Table file for preprocessing located and opened.')
         except:
-            print('Parameter file for preprocessing does not exist. Creating file...')
+            print('Lookup Table file for preprocessing does not exist. Creating file...')
             lookupTable = pd.DataFrame()
         interp = interp2d(lookupTable.columns, lookupTable.index, lookupTable.values)
         powerAcceleration = [float(interp(XX,YY)) for XX,YY in zip(velocity,motorPower)]
@@ -527,7 +559,7 @@ def preProcessing(kartData, name):
         try:
             with open(staticBrakeFunctionFilePath, 'rb') as f:
                 staticBrakeFunction = pickle.load(f)
-            print('staticBrakeFunction file for preprocessing located and opened.')
+            # print('staticBrakeFunction file for preprocessing located and opened.')
         except:
             print('staticBrakeFunction file for preprocessing does not exist. Creating file...')
             staticBrakeFunction = pd.DataFrame()
