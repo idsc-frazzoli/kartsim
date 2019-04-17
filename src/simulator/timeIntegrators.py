@@ -8,7 +8,7 @@ Created on Tue Apr  2 16:24:25 2019
 from scipy.integrate import odeint
 import numpy as np
 
-from pymodelDx import pymodelDx
+from simulator.pymodelDx import pymodelDx
 
 
 def MATLABvehicleModel (vx,vy,vrot,beta,accRearAxle,tv):

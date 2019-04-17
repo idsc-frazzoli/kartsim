@@ -93,7 +93,6 @@ def updateData():
             X1 = np.concatenate((X1,[X[-1,:]]))
         updatePlot(X1)
 
-
 t1 = time.time()
 timerdata = QtCore.QTimer()
 timerdata.timeout.connect(updateData)
@@ -166,9 +165,10 @@ def updatePlot(X1):
 if __name__ == '__main__':
 #    main()
     import sys
-    
-    try:
-        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-            QtGui.QApplication.instance().exec_()
-    except:
-        print('Plotting GUI doesn\'t exist \n')
+
+    while True:
+        try:
+            if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+                QtGui.QApplication.instance().exec_()
+        except:
+            print('Plotting GUI doesn\'t exist \n')

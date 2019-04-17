@@ -16,13 +16,17 @@ def main():
     savePath = sys.argv[1]
     fileNames = sys.argv[2]
     fileNames = fileNames.split(',')[:-1]
-    print('fileNames', fileNames)
-    # simTag = 'validation'
     fileNameIndex = 0
+    while True:
+        logClient(savePath, fileNames, fileNameIndex)
+        fileNameIndex += 1
+
+def logClient(savePath, fileNames, fileNameIndex):
+
     # currentDT = datetime.datetime.now()
     # folderName = currentDT.strftime("%Y%m%d-%H%M%S")
     # folderPath = savePath + '/' + folderName + '_' + simTag
-    savePathName = savePath + '/' + fileNames[fileNameIndex][:-9] + '_sim.csv'
+    savePathName = savePath + '/' + fileNames[fileNameIndex][:-12] + '_sim.csv'
     # try:
     #     if not os.path.exists(folderPath):
     #         os.makedirs(folderPath)

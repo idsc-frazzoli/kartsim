@@ -17,25 +17,27 @@ SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
 SIMLOGFILENAMES=()
 for i in $PREPROFOLDERPATH/*.pkl; do SIMLOGFILENAMES+="$(basename "$i"),"; done;
 #SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
-echo $SIMLOGFILENAMES
-#VISUALIZATION=true
-VISUALIZATION=false
+#echo $SIMLOGFILENAMES
+VISUALIZATION=true
+#VISUALIZATION=false
 
 mkdir $SAVEFOLDERPATH
-
 cp $PREPROFOLDERPATH/* $SAVEFOLDERPATH
 
 python basicKartsimServer.py $VISUALIZATION &
 SRVPID=$!
+
 if [ $VISUALIZATION = true ]
 then
     python basicVisualizationClient.py &
     VIZPID=$!
 fi
+
 python basicLoggerClient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 LOGPID=$!
-python basicSimulationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
-#python validationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
+
+#python basicSimulationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
+python validationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
 SIMPID=$!
 
 exit_script() {
