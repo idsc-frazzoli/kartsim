@@ -31,7 +31,7 @@ def main():
     dataStep = preprodata['time'].iloc[1]-preprodata['time'].iloc[0]       #[s] Log data sampling time step
     simStep = 0.01                                                   #[s] Simulation time step
     simTime = preprodata['time'].iloc[-1]                              #[s] Total simulation time
-    print(dataStep, simStep, simTime, int(simTime/simStep), len(preprodata['time']))
+    # print(dataStep, simStep, simTime, int(simTime/simStep), len(preprodata['time']))
 
     #initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
     X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
@@ -103,7 +103,7 @@ def main():
         dataStep = preprodata['time'].iloc[1] - preprodata['time'].iloc[0]  # [s] Log data sampling time step
         simStep = 0.01  # [s] Simulation time step
         simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
-        print(dataStep, simStep, simTime, int(simTime / simStep), len(preprodata['MH BETA']))
+        # print(dataStep, simStep, simTime, int(simTime / simStep), len(preprodata['MH BETA']))
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
         X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
@@ -136,7 +136,6 @@ def main():
                         X0[6] = preprodata['pose vtheta'][currIndex]
                 else:
                     tgo = time.time()
-                    tint = tgo
                 conn.send([X0,simStep])
 
                 X1 = conn.recv()
@@ -144,8 +143,7 @@ def main():
                 X0 = list(X1[-1,:])
 
                 if i%int(simTime/simStep/20) == 0.0:
-                    print(int(round(i/(simTime/simStep)*100)), '% done, time: ', time.time()-tint, end='\r')
-                    tint = time.time()
+                    print(int(round(i/(simTime/simStep)*100)), '% done, time: ', time.time()-tgo, end='\r')
     #            time.sleep(1)
             runSimulation = False
             conn.close()

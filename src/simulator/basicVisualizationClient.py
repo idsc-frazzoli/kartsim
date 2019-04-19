@@ -79,9 +79,10 @@ def updateData():
 #    print('waiting for msg')
     X = conn.recv()
     if X[0,0] == 'finished':
-        print('kill visualization')
+        # print('kill visualization')
         print('timeOverall = ' + str(time.time() - t1))
-        timerdata.stop()
+        # timerdata.stop()
+
     elif X[0,0] == 'init':
         X1 = []
 #        updatePlot(X1)
@@ -165,10 +166,8 @@ def updatePlot(X1):
 if __name__ == '__main__':
 #    main()
     import sys
-
-    while True:
-        try:
-            if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-                QtGui.QApplication.instance().exec_()
-        except:
-            print('Plotting GUI doesn\'t exist \n')
+    try:
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            QtGui.QApplication.instance().exec_()
+    except:
+        print('Plotting GUI doesn\'t exist \n')

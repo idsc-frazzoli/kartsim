@@ -17,24 +17,29 @@ def main():
     fileNames = sys.argv[2]
     fileNames = fileNames.split(',')[:-1]
     fileNameIndex = 0
+
+
+
+    logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
+    logConn = Client(logAddress, authkey=b'kartSim2019')
     while True:
-        logClient(savePath, fileNames, fileNameIndex)
+        savePathName = savePath + '/' + fileNames[fileNameIndex][:-12] + '_sim.csv'
+        logClient(savePathName, logConn)
         fileNameIndex += 1
 
-def logClient(savePath, fileNames, fileNameIndex):
+def logClient(savePathName, logConn):
 
     # currentDT = datetime.datetime.now()
     # folderName = currentDT.strftime("%Y%m%d-%H%M%S")
     # folderPath = savePath + '/' + folderName + '_' + simTag
-    savePathName = savePath + '/' + fileNames[fileNameIndex][:-12] + '_sim.csv'
+
     # try:
     #     if not os.path.exists(folderPath):
     #         os.makedirs(folderPath)
     # except OSError:
     #     print('Error: Creating directory: ', folderPath)
 
-    logAddress = ('localhost', 6002)     # family is deduced to be 'AF_INET'
-    logConn = Client(logAddress, authkey=b'kartSim2019')
+
     Xall = np.array([[]])
     
     runLogger = True
@@ -49,13 +54,12 @@ def logClient(savePath, fileNames, fileNameIndex):
                 Xall = np.concatenate((Xall,X1))
         else:
             print('kill logger')
-            fileNameIndex+=1
 #            print('Xall: ',Xall[:30,0])
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
 #            print(dataFrame)
             dataFrame.to_csv(savePathName, index = False, header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'MH BETA', 'MH AB', 'MH TV'])
             print('Simulation data saved to ', savePathName)
-            Xall = np.array([[]])
+            runLogger = False
 
 #            pd.DataFrame.to_csv(dataFrame,)
             
