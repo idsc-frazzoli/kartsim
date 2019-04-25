@@ -275,7 +275,10 @@ def preProcessing(self, name):
         powerAccelR = self.availableData[availableDataList.index(nameDependency[8])][2]
         brakePos_t = self.availableData[availableDataList.index(nameDependency[0])][1]
         brakePos = self.availableData[availableDataList.index(nameDependency[0])][2]
+        velx_t = self.availableData[availableDataList.index(nameDependency[6])][1]
+        velx = self.availableData[availableDataList.index(nameDependency[6])][2]
         powerAccel = np.dstack((powerAccelL,powerAccelR))
+
         
         AB_rimo = np.mean(powerAccel, axis=2)
         
@@ -283,9 +286,15 @@ def preProcessing(self, name):
             x.pop(0)
         while x[-1] > brakePos_t.iloc[-1]:
             x.pop()
-            
-        interp1 = interp1d(brakePos_t, brakePos)
-        brakePos = interp1(x)
+        while x[0] < velx_t.iloc[0]:
+            x.pop(0)
+        while x[-1] > velx_t.iloc[-1]:
+            x.pop()
+
+        interp1B = interp1d(brakePos_t, brakePos)
+        brakePos = interp1B(x)
+        interp1V = interp1d(velx_t, velx)
+        velx = interp1V(x)
         
         staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/staticBrakeFunction.pkl'   #static brake function file
         try:
@@ -298,11 +307,17 @@ def preProcessing(self, name):
         
         interp2 = interp1d(staticBrakeFunction['brake pos'], staticBrakeFunction['deceleration'])
         deceleration = interp2(brakePos)
+
+        print('lencomp ', len(velx), len(deceleration))
+        for i in range(len(deceleration)):
+            if velx[i] <= 0:
+                deceleration[i] = 0
         
         AB_brake = -deceleration
         
+        # AB_tot = AB_rimo + AB_brake
         AB_tot = AB_rimo + AB_brake
-        
+
         if name in availableDataList:
             index = availableDataList.index(name)
             self.availableData[index][2] = AB_tot[0,:]
