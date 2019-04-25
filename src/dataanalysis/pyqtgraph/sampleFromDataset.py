@@ -13,13 +13,18 @@ import datetime
 import time
 
 import dataanalysis.pyqtgraph.preprocess as prep
+import dataanalysis.pyqtgraph.dataIO as dio
 
 def main():
     #__user input
-    
-    pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190417-154009_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    pathRootSortedData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/'
+    simFolders = dio.getDirectories(pathRootSortedData)
+    simFolders.sort()
+    defaultSim = simFolders[-1]
+    pathLoadData = pathRootSortedData + '/' + defaultSim
+    # pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190423-155633_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
     pathSaveData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    datasetTag = 'test_MarcsModel_allLogs'
+    datasetTag = 'test_MarcsModel_allData'
     samplingTimeStep = 0.01
     
 #    dataSpecificMarcsModel = True
@@ -50,20 +55,12 @@ def main():
     starttime = time.time()
     for file, fileName in files:
         print(str(int(comp_count / comp_tot * 100)),
-              '% completed.   current file:', fileName[:-4] + '_sampled.pkl   elapsed time:', int(time.time() - starttime), 's', end='\r')
+              '% completed.   current file:', fileName[:-4] + '_sampledlogdata.pkl   elapsed time:', int(time.time() - starttime), 's', end='\r')
 
         dataSet = getSampledData(file, samplingTimeStep)
 
-        # if len(dataSet) < 1:
-        #     dataSet = dataSetLog
-        # else:
-        #     dataSet = dataSet.append(dataSetLog)
-        # print(dataSet.columns)
-        # print(dataSet.head())
-        # print(dataSet.tail())
-        # print('now writing to file at', folderPath)
+        filePathName = folderPath + '/' + fileName[:-4] + '_sampledlogdata.pkl'
 
-        filePathName = folderPath + '/' + fileName[:-4] + '_sampled.pkl'
         try:
             with open(filePathName, 'wb') as f:
                 pickle.dump(dataSet, f, pickle.HIGHEST_PROTOCOL)
