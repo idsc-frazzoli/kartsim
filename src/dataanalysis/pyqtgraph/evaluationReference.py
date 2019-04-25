@@ -18,7 +18,7 @@ def main():
     defaultsim = simfolders[-1]
     pathsimdata = pathrootsimdata + '/' + defaultsim
     print('Reading data from ', pathsimdata)
-    validationhorizon = 1      #[s] time horizon for which simulation runs until initial conditions are reset to values from log data
+    evaluationhorizon = 1      #[s] time horizon for which simulation runs until initial conditions are reset to values from log data
 
     csvfiles = []
     pklfiles = []
@@ -42,7 +42,7 @@ def main():
                                  'MH BETA', 'MH AB', 'MH TV']].copy(deep=True)
         for i in range(len(rawdataframe)):
         # for i in range(350):
-            if i * dt % validationhorizon < dt:
+            if i * dt % evaluationhorizon < dt:
                 vxRel = rawdataframe['vehicle vx'][i]
                 vyRel = rawdataframe['vehicle vy'][i]
                 vtheta = rawdataframe['pose vtheta'][i]
@@ -67,11 +67,8 @@ def main():
                 evalrefdata['vehicle vx'][i] = vxRel
                 evalrefdata['vehicle vy'][i] = vyRel
                 evalrefdata['pose vtheta'][i] = vtheta
-        part = 30
-        print(evalrefdata[['vehicle vx', 'vehicle vy', 'pose vtheta']][:part])
-        print(evalrefdata[['pose x', 'pose y', 'pose theta']][:part])
 
-        savePathName = pathsimdata + '/' + pklfiles[index][1][:-4] + '_valrefdata.csv'
+        savePathName = pathsimdata + '/' + pklfiles[index][1][:-19] + '_evaluationreference.csv'
 
         evalrefdata.to_csv(savePathName, index=False,
                          header=['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',
