@@ -5,8 +5,8 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import preprocess as prep
-import dataIO as dio
+import dataanalysis.pyqtgraph.preprocess as prep
+import dataanalysis.pyqtgraph.dataIO as dio
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -37,11 +37,11 @@ class Clarity(QtGui.QMainWindow):
         self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics'
         testDays = dio.getDirectories(self.pathRootData)
         testDays.sort()
-        defaultDay = testDays[-1]
+        defaultDay = testDays[2]
         self.pathTestDay = self.pathRootData + '/' + defaultDay
         logNrs = dio.getDirectories(self.pathTestDay)
         logNrs.sort()
-        defaultLogNr = logNrs[21]
+        defaultLogNr = logNrs[19]
         self.pathLogNr = self.pathTestDay + '/' + defaultLogNr
 
         params = [

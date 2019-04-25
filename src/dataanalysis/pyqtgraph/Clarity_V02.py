@@ -40,17 +40,26 @@ class Clarity(QtGui.QMainWindow):
         simFolders.sort()
         defaultSim = simFolders[-1]
         self.pathSimData = self.pathRootSimData + '/' + defaultSim
+        print('Loading data from', self.pathSimData)
+
+        logNrs = []
+        for r, d, f in os.walk(self.pathSimData):
+            for file in f:
+                if '.pkl' in file:
+                    logNrs.append(file[:-19])
+        defaultLogNr = logNrs[0]
+        self.prefix = defaultLogNr
 
         params = [
 #            {'name': 'Testing day', 'type': 'list', 'values': testDays, 'value': defaultDay},
-#            {'name': 'Log Nr.', 'type': 'list', 'values': logNrs, 'value': defaultLogNr},
+           {'name': 'Log Nr.', 'type': 'list', 'values': logNrs, 'value': defaultLogNr},
 #            {'name': 'Add to plot -->', 'type': 'action'},
             ScalableGroup(name='Data in plot'),
             ScalableGroup(name='Data in scatter plot'),
         ]
         self.p = Parameter.create(name='params', type='group', children=params)
 #        self.p.param('Testing day').sigValueChanged.connect(self.testDayChange)
-#        self.p.param('Log Nr.').sigValueChanged.connect(self.logNrChange)
+        self.p.param('Log Nr.').sigValueChanged.connect(self.logNrChange)
 #        self.p.param('Add to plot -->').sigActivated.connect(self.addToPlot)
         self.p.param('Data in plot').sigTreeStateChanged.connect(self.treeChange)
         self.p.param('Data in scatter plot').sigTreeStateChanged.connect(self.treeChange)
@@ -135,12 +144,13 @@ class Clarity(QtGui.QMainWindow):
     def filterChange(self, group, param):
         print('filter changed!')
         for param, value, data in param:
-            if param.name() == 'sigma':
-                self.kartData[group.name()]['info'][1] = data
-                self.kartData[group.name()]['info'][2] = 10 * data
-            if param.name() == 'scale':
-                self.kartData[group.name()]['info'][3] = data
-        self.updatePlot()
+            if value != 'parent':
+                if param.name() == 'sigma':
+                    self.kartData[group.name()]['info'][1] = data
+                    self.kartData[group.name()]['info'][2] = 10 * data
+                if param.name() == 'scale':
+                    self.kartData[group.name()]['info'][3] = data
+                self.updatePlot()
 
 #    def testDayChange(self, param):
 #        self.plotfield.clear()
@@ -157,27 +167,28 @@ class Clarity(QtGui.QMainWindow):
 #        self.p.param('Log Nr.').sigValueChanged.connect(self.logNrChange)
 #        self.pathLogNr = self.pathTestDay + '/' + logNrs[0]
 #
-#    def logNrChange(self, param):
-#        self.plotfield.clear()
-#        self.p.param('Data in plot').clearChildren()
-#        self.availableData = []
-#        value = param.value()
-#        if value != None:
-#            self.pathLogNr = self.pathTestDay + '/' + value
-#        self.setListItems()
+    def logNrChange(self, param):
+       self.p.param('Data in plot').clearChildren()
+       self.p.param('Data in scatter plot').clearChildren()
+
+       value = param.value()
+       self.prefix = value
+       self.setListItems()
 
     def treeChange(self, group, param):
         print('Tree changed!')
         for param, value, data in param:
-            print('  action:', value)
-            if param.name() == 'Data in plot':
-                self.updatePlot()
-            if param.name() == 'Data in scatter plot':
-                self.updatePlot()
-            elif value == 'value':
-                for item in self.dataList.findItems(param.name(), QtCore.Qt.MatchExactly):
-                    self.kartData[param.name()]['info'][0] = data
-                self.updatePlot()
+            if value != 'parent':
+                if param.name() == 'Data in plot':
+                    if value != 'childRemoved':
+                        self.updatePlot()
+                if param.name() == 'Data in scatter plot':
+                    if value != 'childRemoved':
+                        self.updatePlot()
+                elif value == 'value':
+                    for item in self.dataList.findItems(param.name(), QtCore.Qt.MatchExactly):
+                        self.kartData[param.name()]['info'][0] = data
+                    self.updatePlot()
 
     def dataSelectionChanged(self):
         print('dataselection changed')
@@ -377,13 +388,14 @@ class Clarity(QtGui.QMainWindow):
         self.kartData = {}
         for r, d, f in os.walk(self.pathSimData):
             for file in f:
-                if '.csv' in file:
+                if '.csv' in file and self.prefix in file:
                     csvFiles.append([os.path.join(r, file),file])
-                if '.pkl' in file:
+                if '.pkl' in file and self.prefix in file:
                     pklFiles.append([os.path.join(r, file),file])
+
+        print(csvFiles)
         self.dataNames = []
         timeTopic = ''
-        csvfileName = ''
         for csvfile, csvfileName in csvFiles:
             print(csvfileName)
             try:
@@ -397,12 +409,13 @@ class Clarity(QtGui.QMainWindow):
                         if topic != timeTopic:
                             if not 'MH' in topic and not 'vehicle' in topic and 'pose' not in topic:
                                 self.dataNames.append(topic)
-                            if topic == 'pose theta':
-                                for i in range(len(dataFrame[topic].values)):
-                                    if dataFrame[topic].values[i] < -np.pi:
-                                        dataFrame[topic].values[i:] = dataFrame[topic].values[i:] + 2 * np.pi
-                                    if dataFrame[topic].values[i] > np.pi:
-                                        dataFrame[topic].values[i:] = dataFrame[topic].values[i:] - 2 * np.pi
+                            # if topic == 'pose theta':
+                            #     for i in range(len(dataFrame[topic].values)):
+                            #         if dataFrame[topic].values[i] < -np.pi:
+                            #             dataFrame[topic].values[i:] = dataFrame[topic].values[i:] + 2 * np.pi
+                            #         if dataFrame[topic].values[i] > np.pi:
+                            #             dataFrame[topic].values[i:] = dataFrame[topic].values[i:] - 2 * np.pi
+                            print(topic)
                             rawData[topic] = {}
                             rawData[topic]['data'] = [dataFrame[timeTopic].values, dataFrame[topic].values]
                             rawData[topic]['info'] = [1, 0, 0, 1]
@@ -413,7 +426,7 @@ class Clarity(QtGui.QMainWindow):
                 print('EmptyDataError: could not read data from file ', csvfile)
                 raise
                 
-            preproTopics = ['pose vx', 'pose vy', 'pose vtheta', 'pose ax',
+            preproTopics = ['pose vx', 'pose vy', 'pose ax',
                                   'pose ay', 'pose atheta', 'vehicle slip angle',
                                   'vehicle ax total', 'vehicle ay total',
                                   'vehicle ax only transl', 'vehicle ay only transl']
@@ -422,7 +435,7 @@ class Clarity(QtGui.QMainWindow):
                 rawData[topic]['data'] = []
                 rawData[topic]['info'] = [1, 0, 0, 1]
                 self.dataNames.append(topic)
-            
+
             rawData = bd.updateData(rawData,self.dataNames)
 
             for topic in rawData:
@@ -441,7 +454,6 @@ class Clarity(QtGui.QMainWindow):
         
         self.dataNames = []
         rawData = {}
-        pklfileName = ''
         for pklfile , pklfileName in pklFiles:
             try:
                 dataFrame = dio.getPKL(pklfile)
@@ -459,7 +471,7 @@ class Clarity(QtGui.QMainWindow):
             except:
                 print('EmptyDataError: could not read data from file ', pklfile)
                 raise
-            
+
             rawData = bd.updateData(rawData,self.dataNames)
 
             for topic in rawData:

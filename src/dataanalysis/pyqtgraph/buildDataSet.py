@@ -38,14 +38,16 @@ def main():
     sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete
     sortOutDataOverwrite = False                                                #if True: all data in preproParams-file will be overwritten
     preproParamsFileName = 'preproParams' 
-    preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.pkl'   #file where all the information about missing/incomplete data is stored
-    
+    # preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.pkl'   #file where all the information about missing/incomplete data is stored
+    preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.csv'   #file where all the information about missing/incomplete data is stored
+
     #______________^^^_________________
     
     
     try:
-        with open(preproParamsFilePath, 'rb') as f:
-            preproParams = pickle.load(f)
+        # with open(preproParamsFilePath, 'rb') as f:
+        #     preproParams = pickle.load(f)
+        preproParams = readDictFromCSV(preproParamsFilePath)
         print('Parameter file for preprocessing located and opened.')
     except:
         print('Parameter file for preprocessing does not exist. Creating file...')
@@ -55,8 +57,9 @@ def main():
         #tag logs with missing data
         preproParams = sortOut(pathRootData, preproParams, sortOutDataOverwrite)
         #save information to file
-        with open(preproParamsFilePath, 'wb') as f:
-            pickle.dump(preproParams, f, pickle.HIGHEST_PROTOCOL)
+        # with open(preproParamsFilePath, 'wb') as f:
+        #     pickle.dump(preproParams, f, pickle.HIGHEST_PROTOCOL)
+        writeDictToCSV(preproParamsFilePath, preproParams)
         print('preproParams saved to ', preproParamsFilePath)
 #    print(preproParams)
     if preprocessData:
@@ -87,7 +90,39 @@ def main():
         
     print('Total computing time: ', time.time() - t)
       
-    
+def writeDictToCSV(filePath, dict):
+    with open(filePath, 'w') as f:
+        for day in sorted(dict):
+            f.write("%s\n"%(day))
+            for log in sorted(dict[day]):
+                f.write(",%s\n" % (log))
+                for topic in sorted(dict[day][log]):
+                    f.write(",,%s\n" % (topic))
+                    try:
+                        for value in sorted(dict[day][log][topic]):
+                            f.write(",,,%s\n" % (value))
+                    except TypeError:
+                        f.write(",,,%s\n" % (dict[day][log][topic]))
+
+def readDictFromCSV(filePath):
+    dict = {}
+    with open(filePath, 'r') as f:
+        for line in f:
+            line = line[:-1]
+            line = line.split(',')
+            if line[0] != '':
+                d0 = line[0]
+                dict[d0] = {}
+            elif line[1] != '':
+                d1 = line[1]
+                dict[d0][d1] = {}
+            elif line[2] != '':
+                d2 = line[2]
+                dict[d0][d1][d2] = {}
+            elif line[3] != '':
+                d3 = line[3]
+                dict[d0][d1][d2] = d3
+    return dict
     
 def stirData(pathRootData, preproParams, requiredList):
 
@@ -99,7 +134,7 @@ def stirData(pathRootData, preproParams, requiredList):
             loggoodcount += 1
             logtotcount += 1
             for topic in preproParams[day][log]:
-                if topic in requiredList and preproParams[day][log][topic] == 0:
+                if topic in requiredList and int(preproParams[day][log][topic]) == 0:
                     preproParams[day][log]['goodData'] = 0
                     loggoodcount -= 1
                     break
@@ -108,7 +143,7 @@ def stirData(pathRootData, preproParams, requiredList):
     comp_tot = 0
     testDays = dio.getDirectories(pathRootData)
     testDays.sort()
-    for testDay in testDays[0:5]:
+    for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
@@ -119,7 +154,7 @@ def stirData(pathRootData, preproParams, requiredList):
     kartDataAll = {}
     skipCount = 0
     comp_count = 0
-    for testDay in testDays[0:5]:
+    for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
@@ -168,9 +203,9 @@ def sortOut(pathRootData, preproParams, redo):
 
     comp_count = 0
     for testDay in testDays:
-#        if testDay in preproParams and not redo:
-#            print(testDay, ' already done. Continuing with next testDay')
-#            continue
+        # if testDay in preproParams and not redo:
+        #    print(testDay, ' already done. Continuing with next testDay')
+        #    continue
         if testDay not in preproParams:
             preproParams[testDay] = {}
         pathTestDay = pathRootData + '/' + testDay
@@ -178,12 +213,12 @@ def sortOut(pathRootData, preproParams, redo):
         logNrs.sort()
     
         for logNr in logNrs:
-            preproParams[testDay][logNr]['goodData'] = 1
             if logNr in preproParams[testDay] and not redo:
                 print(logNr, ' already done. Continuing with next logNr')
                 continue
             if logNr not in preproParams[testDay]:
                 preproParams[testDay][logNr] = {}
+                preproParams[testDay][logNr]['goodData'] = 1
             statusInfo = logNr + ':  '
             pathLogNr = pathTestDay + '/' + logNr
             
@@ -194,6 +229,7 @@ def sortOut(pathRootData, preproParams, redo):
             if kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)].count(0)/len(kartData['steer torque cmd']['data'][1][int(lenSteerCmd/10):int(lenSteerCmd/10*9)]) > 0.05:
                 statusInfo = statusInfo + 'steering cmd data: too many zeros...,  '
                 preproParams[testDay][logNr]['steer torque cmd'] = 0
+                preproParams[testDay][logNr]['MH BETA'] = 0
             elif np.abs(np.mean(kartData['steer torque cmd']['data'][1])) < 0.01 and np.std(kartData['steer torque cmd']['data'][1]) < 0.1:
                 statusInfo = statusInfo + 'steering cmd data missing or insufficient,  '
                 preproParams[testDay][logNr]['steer torque cmd'] = 0
@@ -231,9 +267,9 @@ def sortOut(pathRootData, preproParams, redo):
                 preproParams[testDay][logNr]['vmu vtheta'] = 1
         
             statusInfo = statusInfo + 'done'
-            print(statusInfo)
             comp_count += 1
-            print(str(int(comp_count/comp_tot*100)),'% completed.')
+            print(statusInfo)
+            print(str(int(comp_count/comp_tot*100)),'% completed.  ', statusInfo, end='\r')
             
     return preproParams
 
@@ -260,9 +296,9 @@ def setListItems(pathLogNr):
             groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
             groups.append(['pose theta', 0, 3, name, True, 0, 0, 0, 1])
         elif 'steer.put' in name:
-            groups.append(['steer torque cmd', 0, 2, name, True, 5, 50, 0, 1])
+            groups.append(['steer torque cmd', 0, 2, name, True, 0, 0, 0, 1])
         elif 'steer.get' in name:
-            groups.append(['steer torque eff', 0, 5, name, True, 5, 50, 0, 1])
+            groups.append(['steer torque eff', 0, 5, name, True, 0, 0, 0, 1])
             groups.append(['steer position raw', 0, 8, name, True, 0, 0, 0, 1])
         elif 'status.get' in name:
             groups.append(['steer position cal', 0, 1, name, True, 0, 0, 0, 1])
@@ -290,13 +326,16 @@ def setListItems(pathLogNr):
             dataFrame = dio.getCSV(fileName)
             xRaw = dataFrame.iloc[:, timeIndex]
             yRaw = dataFrame.iloc[:, dataIndex]
-            
+
             if name == 'pose theta':
                 for i in range(len(yRaw)):
                     if yRaw[i] < -np.pi:
                         yRaw[i] = yRaw[i] + 2 * np.pi
                     if yRaw[i] > np.pi:
                         yRaw[i] = yRaw[i] - 2 * np.pi
+                for i in range(len(yRaw) - 1):
+                    if np.abs(yRaw[i + 1] - yRaw[i]) > 1:
+                        yRaw[i + 1:] = yRaw[i + 1:] - np.sign((yRaw[i + 1] - yRaw[i])) * 2 * np.pi
             if name in ['vmu ax atvmu (forward)', 'vmu ay atvmu (left)', 'vmu vtheta']:
                 xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
         except:
@@ -317,10 +356,10 @@ def setListItems(pathLogNr):
 
     # Add Preprocessed Data
     groups = []
-    groups.append(['pose x', ['pose x atvmu'], True, 1, 10, 1, 1])
-    groups.append(['pose y', ['pose y atvmu'], True, 1, 10, 1, 1])
-    groups.append(['pose vx', ['pose x'], True, 1, 10, 1, 1])
-    groups.append(['pose vy', ['pose y'], True, 1, 10, 1, 1])
+    groups.append(['pose x', ['pose x atvmu'], True, 0, 0, 1, 1])
+    groups.append(['pose y', ['pose y atvmu'], True, 0, 0, 1, 1])
+    groups.append(['pose vx', ['pose x'], True, 0, 0, 1, 1])
+    groups.append(['pose vy', ['pose y'], True, 0, 0, 1, 1])
     groups.append(['pose vtheta', ['pose theta'], True, 0, 0, 1, 1])
     groups.append(['pose ax', ['pose vx'], True, 0, 0, 2, 1])
     groups.append(['pose ay', ['pose vy'], True, 0, 0, 2, 1])
@@ -332,7 +371,7 @@ def setListItems(pathLogNr):
     groups.append(['vehicle vy', ['pose vx', 'pose vy', 'vehicle slip angle'], True, 0, 0, 3, 1])
     groups.append(['vehicle ax total',
                    ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle','vehicle vx', 'vehicle vy'], 
-                   True, 5, 50, 3, 1])
+                   True, 0, 0, 3, 1])
     groups.append(['vehicle ay total',
                    ['pose theta', 'pose vtheta', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'vehicle vy'], 
                    True, 0, 0, 3, 1])
@@ -542,6 +581,8 @@ def preProcessing(kartData, name):
         powerAccelR = kartData['MH power accel rimo right']['data'][1]
         brakePos_t = kartData['brake position cmd']['data'][0]
         brakePos = kartData['brake position cmd']['data'][1]
+        velx_t = kartData['vehicle vx']['data'][0]
+        velx = kartData['vehicle vx']['data'][1]
         
         powerAccel = np.dstack((powerAccelL,powerAccelR))
         
@@ -549,11 +590,22 @@ def preProcessing(kartData, name):
         
         while x[0] < brakePos_t[0]:
             x = np.delete(x,0)
+            AB_rimo = np.delete(AB_rimo,0)
         while x[-1] > brakePos_t[-1]:
             x = np.delete(x,-1)
+            AB_rimo = np.delete(AB_rimo,-1)
+        while x[0] < velx_t[0]:
+            x = np.delete(x,0)
+            AB_rimo = np.delete(AB_rimo,0)
+        while x[-1] > velx_t[-1]:
+            x = np.delete(x,-1)
+            AB_rimo = np.delete(AB_rimo,-1)
+
             
-        interp1 = interp1d(brakePos_t, brakePos)
-        brakePos = interp1(x)
+        interp1B = interp1d(brakePos_t, brakePos)
+        brakePos = interp1B(x)
+        interp1V = interp1d(velx_t, velx)
+        velx = interp1V(x)
         
         staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/staticBrakeFunction.pkl'   #static brake function file
         try:
@@ -566,6 +618,10 @@ def preProcessing(kartData, name):
         
         interp2 = interp1d(staticBrakeFunction['brake pos'], staticBrakeFunction['deceleration'])
         deceleration = interp2(brakePos)
+
+        for i in range(len(deceleration)):
+            if velx[i] <= 0:
+                deceleration[i] = 0
         
         AB_brake = -deceleration
         
