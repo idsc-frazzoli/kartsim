@@ -25,7 +25,7 @@ app = QtGui.QApplication([])
 
 win = pg.GraphicsWindow(title="Basic plotting examples")
 win.resize(1600,800)
-win.setWindowTitle('pyqtgraph example: Plotting')
+win.setWindowTitle('kartsim visualization')
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)

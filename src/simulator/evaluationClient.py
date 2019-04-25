@@ -13,13 +13,17 @@ import pickle
 import pandas as pd
 import sys
 
-import dataanalysis.pyqtgraph.dataIO as dIO
+import dataanalysis.pyqtgraph.evaluationReference as evalRef
+import dataanalysis.pyqtgraph.evaluation as evalCalc
 
 def main():
     #___user inputs
 
     pathsavedata = sys.argv[1]
     pathpreprodata = sys.argv[2]
+    preprofiles = sys.argv[3:]
+
+    # preprofiles = preprofiles.split(',')[:-1]
     # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
     validation = True
@@ -27,25 +31,26 @@ def main():
 
     preprodata = getpreprodata(pathpreprodata)
 
-    #simulation parameters
-    dataStep = preprodata['time'].iloc[1]-preprodata['time'].iloc[0]       #[s] Log data sampling time step
-    simStep = 0.01                                                   #[s] Simulation time step
-    simTime = preprodata['time'].iloc[-1]                              #[s] Total simulation time
-    # print(dataStep, simStep, simTime, int(simTime/simStep), len(preprodata['time']))
-
-    #initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-    X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
-    # X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
+    # #simulation parameters
+    # dataStep = preprodata['time'].iloc[1]-preprodata['time'].iloc[0]       #[s] Log data sampling time step
+    # simStep = 0.01                                                   #[s] Simulation time step
+    # simTime = preprodata['time'].iloc[-1]                              #[s] Total simulation time
+    # # print(dataStep, simStep, simTime, int(simTime/simStep), len(preprodata['time']))
+    #
+    # #initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
+    # X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
+    # # X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
 
     # ______^^^______
 
-    files = []
-    for r, d, f in os.walk(pathpreprodata):
-        for file in f:
-            if '.pkl' in file:
-                files.append(os.path.join(r, file))
-
-    for filePath in files[0:1]:
+    # files = []
+    # for r, d, f in os.walk(pathpreprodata):
+    #     for file in f:
+    #         if '.pkl' in file:
+    #             files.append([os.path.join(r, file), file])
+    # files.sort()
+    for fileName in preprofiles:
+        filePath = pathpreprodata + '/' + fileName
         try:
             with open(filePath, 'rb') as f:
                 preprodata = pickle.load(f)
@@ -57,11 +62,15 @@ def main():
         dataStep = preprodata['time'].iloc[1] - preprodata['time'].iloc[0]  # [s] Log data sampling time step
         simStep = 0.01  # [s] Simulation time step
         simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
+        X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
+              preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0],
+              preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
+
         # generate simulation info file and store it in target folder
         try:
-            _ = open(pathsavedata + '/simulationinfo.txt', 'r')
-            os.remove(pathsavedata + '/simulationinfo.txt')
-            with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            _ = open(pathsavedata + '/' + fileName[:-12] + '_simulationinfo.txt', 'r')
+            os.remove(pathsavedata + '/' + fileName[:-12] + '_simulationinfo.txt')
+            with open(pathsavedata + '/' + fileName[:-12] + '_simulationinfo.txt', 'a') as the_file:
                 if validation:
                     the_file.write('simulation mode:                    evaluation' + '\n')
                     the_file.write('initial condition reset interval:   ' + str(validationhorizon) + 's\n')
@@ -74,9 +83,8 @@ def main():
                 the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
                 for item in X0[1:]:
                     the_file.write('                                    ' + str(item) + '\n')
-            print('Simulation info saved to file: ', pathsavedata + '/simulationinfo.txt')
         except FileNotFoundError:
-            with open(pathsavedata + '/simulationinfo.txt', 'a') as the_file:
+            with open(pathsavedata + '/' + fileName[:-12] + '_simulationinfo.txt', 'a') as the_file:
                 if validation:
                     the_file.write('simulation mode:                    evaluation' + '\n')
                     the_file.write('initial condition reset interval:   ' + str(validationhorizon) + 's\n')
@@ -89,9 +97,10 @@ def main():
                 the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
                 for item in X0[1:]:
                     the_file.write('                                    ' + str(item) + '\n')
-            print('Simulation info saved to file', pathsavedata + '/simulationinfo.txt')
+    # print('Simulation info saved to', pathsavedata)
 
-    for filePath in files[1:3]:
+    for fileName in preprofiles:
+        filePath = pathpreprodata + '/' + fileName
         try:
             with open(filePath, 'rb') as f:
                 preprodata = pickle.load(f)
@@ -121,6 +130,7 @@ def main():
         while runSimulation:
     #        ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)',
     #                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ]
+            print('Simulating with file ', fileName)
             for i in range(0,int(simTime/simStep)):
                 if i > 0:
                     currIndex = int(round(i * simStep/dataStep))
@@ -142,6 +152,7 @@ def main():
 
                 X0 = list(X1[-1,:])
 
+
                 if i%int(simTime/simStep/20) == 0.0:
                     print(int(round(i/(simTime/simStep)*100)), '% done, time: ', time.time()-tgo, end='\r')
     #            time.sleep(1)
@@ -149,6 +160,11 @@ def main():
             conn.close()
             print('time overall: ', time.time()-tgo)
 
+    time.sleep(2)
+    print('Creating reference signal for evaluation...')
+    evalRef.main()
+    print('Evaluating results...')
+    evalCalc.main()
 
 
 

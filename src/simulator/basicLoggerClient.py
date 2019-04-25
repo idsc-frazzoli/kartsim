@@ -14,8 +14,8 @@ import sys
 
 def main():
     savePath = sys.argv[1]
-    fileNames = sys.argv[2]
-    fileNames = fileNames.split(',')[:-1]
+    fileNames = sys.argv[2:]
+    # fileNames = fileNames.split(',')[:-1]
     fileNameIndex = 0
 
 
@@ -23,7 +23,10 @@ def main():
     logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
     logConn = Client(logAddress, authkey=b'kartSim2019')
     while True:
-        savePathName = savePath + '/' + fileNames[fileNameIndex][:-12] + '_sim.csv'
+        try:
+            savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_simulationlog.csv'
+        except IndexError:
+            print('No more files to read. Closing logger.')
         logClient(savePathName, logConn)
         fileNameIndex += 1
 
@@ -45,7 +48,6 @@ def logClient(savePathName, logConn):
     runLogger = True
     while runLogger:
         X1 = logConn.recv()
-#        tgo = time.time()
         if X1[0,0] != 'finished':
             if Xall.shape[1] < 1:
                 Xall = X1
@@ -53,16 +55,11 @@ def logClient(savePathName, logConn):
                 Xall = Xall[:-1]
                 Xall = np.concatenate((Xall,X1))
         else:
-            print('kill logger')
-#            print('Xall: ',Xall[:30,0])
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
-#            print(dataFrame)
             dataFrame.to_csv(savePathName, index = False, header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'MH BETA', 'MH AB', 'MH TV'])
             print('Simulation data saved to ', savePathName)
             runLogger = False
 
-#            pd.DataFrame.to_csv(dataFrame,)
-            
             
 if __name__ == '__main__':
     main()
