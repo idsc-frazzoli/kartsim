@@ -16,8 +16,8 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     C2 = param[4]
     D2 = param[5]
     Ic = param[6]
-    
-    reg = 0.5
+
+    reg = 0.2 #default: 0.5
     
     def magic(s,B,C,D):
         return D * np.sin(C * np.arctan(B * s))
