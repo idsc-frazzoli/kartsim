@@ -5,6 +5,8 @@ Created on Wed Mar 27 08:37:23 2019
 
 @author: mvb
 """
+import math
+
 from pyqtgraph.Qt import QtCore
 import numpy as np
 from scipy.interpolate import interp1d, interp2d
@@ -26,24 +28,29 @@ def interpolation(x, y, xBegin, xStop, timeStep):
             pass
         
         xInterp = np.linspace(xBegin, xStop, int((xStop-xBegin)/timeStep))
+
         yInterp = interp(xInterp)
 
         return xInterp, yInterp
     
     elif isinstance(y,list):
         interp = interp1d(x, y)
-    
+
+
         if xBegin % timeStep != 0:
-            xBegin = (timeStep - xBegin % timeStep) + xBegin
+            xBegin = np.around((timeStep - xBegin % timeStep) + xBegin,2)
         else:
             pass
-    
+
         if xStop % timeStep != 0:
-            xStop = xStop - xStop % timeStep
+            xStop = np.around(xStop - xStop % timeStep,2)
         else:
             pass
-    
-        xInterp = np.linspace(xBegin, xStop, int((xStop-xBegin)/timeStep))
+
+
+        xInterp = np.linspace(xBegin, xStop, int(np.around((xStop-xBegin)/timeStep))+1)
+        xInterp = np.round(xInterp,2)
+
         yInterp = interp(xInterp)
 
         return xInterp, yInterp
