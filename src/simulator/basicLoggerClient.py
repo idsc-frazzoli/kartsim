@@ -18,10 +18,16 @@ def main():
     # fileNames = fileNames.split(',')[:-1]
     fileNameIndex = 0
 
+    connected = False
+    while not connected:
+        try:
+            logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
+            logConn = Client(logAddress, authkey=b'kartSim2019')
+            connected = True
+        except ConnectionRefusedError:
+            pass
 
 
-    logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
-    logConn = Client(logAddress, authkey=b'kartSim2019')
     while True:
         try:
             savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_simulationlog.csv'
@@ -32,28 +38,27 @@ def main():
 
 def logClient(savePathName, logConn):
 
-    # currentDT = datetime.datetime.now()
-    # folderName = currentDT.strftime("%Y%m%d-%H%M%S")
-    # folderPath = savePath + '/' + folderName + '_' + simTag
-
-    # try:
-    #     if not os.path.exists(folderPath):
-    #         os.makedirs(folderPath)
-    # except OSError:
-    #     print('Error: Creating directory: ', folderPath)
-
-
     Xall = np.array([[]])
     
     runLogger = True
     while runLogger:
-        X1 = logConn.recv()
-        if X1[0,0] != 'finished':
+        msg = logConn.recv()
+        if len(msg) == 2:
+            X = msg[0]
+            U = msg[1]
+            XU = np.concatenate((X, np.transpose(U)), axis=1)
+            print(X)
+            print(U)
+        else:
+            XU = msg
+
+
+        if XU[0,0] != 'finished':
             if Xall.shape[1] < 1:
-                Xall = X1
+                Xall = XU
             else:
                 Xall = Xall[:-1]
-                Xall = np.concatenate((Xall,X1))
+                Xall = np.concatenate((Xall,XU))
         else:
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
             dataFrame.to_csv(savePathName, index = False, header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'MH BETA', 'MH AB', 'MH TV'])

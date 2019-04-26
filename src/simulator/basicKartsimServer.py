@@ -18,13 +18,15 @@ def main():
 
     #simulation default parameters
     simIncrement = 0.01  #s underlying time step for integration
-    visualization = sys.argv[1]
-    # visualization = 'false'
-    if visualization == 'true':
-        visualization = True
-    else:
-        visualization = False
-    logging = True
+
+    try:
+        visualization = int(sys.argv[1])
+        logging = int(sys.argv[2])
+    except:
+        visualization = 0
+        logging = 1
+
+
     clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
     if visualization:
@@ -41,7 +43,6 @@ def main():
         if noThread:
             noThread = False
 
-
             if visualization and vizConn is None:
                 print("waiting for visualization connection at", visualizationAddress)
                 vizConn = visualizationListener.accept()
@@ -55,6 +56,7 @@ def main():
                 print('logger connection accepted from', logListener.last_accepted)
             else:
                 pass
+
             time.sleep(1)
 #            print('No of active threads running: ', active_count())
             print("waiting for client connection at", clientAddress)
@@ -65,21 +67,25 @@ def main():
             runThread = True
             t.start()
         else:
-            if active_count() < 2:
-                noThread = True
+            time.sleep(0.1)
+            pass
+            # if active_count() < 2:
+            #     noThread = True
 
 
 def handle_client(c,v,l,simIncrement,visualization,logging):
     initSignal = 0
     while runThread:
         try:
-            msg = c.recv()
-            if len(msg) == 2 and len(msg[0]) == 10 and isinstance(msg[1], float):
-                X0 = msg[0]
-                simStep = msg[1]
 
-                X = integrator.odeIntegrator(X0, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                # X = integrator.odeIntegratorIVP(X0, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+            msg = c.recv()
+
+            if len(msg) == 3 and len(msg[0]) == 7 and isinstance(msg[2], float):
+                X0 = msg[0]
+                U = msg[1]
+                simStep = msg[2]
+                # X = integrator.odeIntegrator(X0, U, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                X = integrator.odeIntegratorIVP(X0, U, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
 
                 c.send(X)
 
@@ -97,7 +103,7 @@ def handle_client(c,v,l,simIncrement,visualization,logging):
 
         if logging:
             try:
-                l.send(X)
+                l.send([X,U[1:]])
             except:
                 print('LoggerError: BrokenPipe', l.fileno())
                 break
@@ -109,7 +115,7 @@ def handle_client(c,v,l,simIncrement,visualization,logging):
                     initSignal = 1
                 if v.poll():
                     v.recv()
-                    v.send(X)
+                    v.send([X,U[1:]])
             except:
                 print('VisualizationError: BrokenPipe', v.fileno())
                 break

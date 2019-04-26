@@ -9,6 +9,20 @@ from scipy.integrate import odeint, solve_ivp
 import numpy as np
 
 from simulator.pymodelDx import pymodelDx
+from scipy.interpolate import interp1d
+
+import time
+
+def setInput(U):
+    global interpBETA, interpAB, interpTV
+    interpBETA = interp1d(U[0], U[1], fill_value='extrapolate')
+    interpAB = interp1d(U[0], U[2], fill_value='extrapolate')
+    interpTV = interp1d(U[0], U[3], fill_value='extrapolate')
+
+def getInput(time1):
+    # print(U_array[0], U_array[1],time1)
+    # print(interpBETA(time1))
+    return interpBETA(time1), interpAB(time1), interpTV(time1)
 
 def MATLABvehicleModel (vx,vy,vrot,beta,accRearAxle,tv):
     #debug params
@@ -40,46 +54,60 @@ def MATLABvehicleModel (vx,vy,vrot,beta,accRearAxle,tv):
     return accX,accY,accRot
     
     
-def odeIntegrator (X0, simStep, simIncrement):
-    def dx_dt (X,t):
-        theta = float(X[3])
-        vx = float(X[4])
-        vy = float(X[5])
-        vrot = float(X[6])
-        beta = float(X[7])
-        accRearAxle = float(X[8])
-        tv = float(X[9])
-#        [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)
-        [accX,accY,accRot] = MATLABvehicleModel(vx,vy,vrot,beta,accRearAxle,tv)
-        vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
-        vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
-        return [1,vxAbs,vyAbs,vrot,accX,accY,accRot,0,0,0]
+def odeIntegrator (X0, U, simStep, simIncrement):
+    setInput(U)
     ts = np.linspace(0,simStep,int(simStep/simIncrement)+1)
-    X1 = odeint(dx_dt, X0, ts)
-    
+    X1 = odeint(odeInt_dx_dt, X0, ts)
     return X1
 
 
-def odeIntegratorIVP(X0, simStep, simIncrement):
-    def dx_dt(t, X):
-        theta = float(X[3])
-        vx = float(X[4])
-        vy = float(X[5])
-        vrot = float(X[6])
-        beta = float(X[7])
-        accRearAxle = float(X[8])
-        tv = float(X[9])
-        #        [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)
-        [accX, accY, accRot] = MATLABvehicleModel(vx, vy, vrot, beta, accRearAxle, tv)
-        vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
-        vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
-        return [1, vxAbs, vyAbs, vrot, accX, accY, accRot, 0, 0, 0]
+def odeInt_dx_dt(X,t):
+    theta = float(X[3])
+    vx = float(X[4])
+    vy = float(X[5])
+    vrot = float(X[6])
 
-    # t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
-    X1 = solve_ivp(dx_dt, [0, simStep], X0, method='RK45', vectorized=True)
-    X1 = np.concatenate((X1.y[:,:1], X1.y[:,-1:]),axis=1)
-    # print(X1)
-    return np.transpose(X1)
+    beta, accRearAxle, tv = getInput(X[0])
+
+    # beta = float(X[7])
+    # accRearAxle = float(X[8])
+    # tv = float(X[9])
+
+    [accX,accY,accRot] = MATLABvehicleModel(vx,vy,vrot,beta,accRearAxle,tv)
+    vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
+    vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
+
+    return [1,vxAbs,vyAbs,vrot,accX,accY,accRot,0,0,0]
+    # return [1, vxAbs, vyAbs, vrot, accX, accY, accRot]
+
+
+def odeIntegratorIVP(X0, U, simStep, simIncrement):
+    setInput(U)
+    t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
+
+    X1 = solve_ivp(odeIntIVP_dx_dt, [0, simStep], X0, t_eval=t_eval, method='RK45', vectorized=True)
+
+    return np.transpose(X1.y)
+
+def odeIntIVP_dx_dt(t, X):
+    theta = float(X[3])
+    vx = float(X[4])
+    vy = float(X[5])
+    vrot = float(X[6])
+
+    beta, accRearAxle, tv = getInput(X[0])
+
+    # beta = float(X[7])
+    # accRearAxle = float(X[8])
+    # tv = float(X[9])
+
+    #        [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)
+    [accX, accY, accRot] = MATLABvehicleModel(vx, vy, vrot, beta[0], accRearAxle[0], tv[0])
+    # [accX, accY, accRot] = MATLABvehicleModel(vx, vy, vrot, beta, accRearAxle, tv)
+    vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
+    vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
+    # return [1, vxAbs, vyAbs, vrot, accX, accY, accRot, 0, 0, 0]
+    return [1, vxAbs, vyAbs, vrot, accX, accY, accRot]
 
 def euler (X0, simStep):
     x = float(X0[0])

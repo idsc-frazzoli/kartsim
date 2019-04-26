@@ -77,21 +77,27 @@ def updateData():
     global X1, t1
     conn.send('readyForNextMessage')
 #    print('waiting for msg')
-    X = conn.recv()
-    if X[0,0] == 'finished':
+    msg = conn.recv()
+    if len(msg) == 2:
+        X = msg[0]
+        U = msg[1]
+        XU = np.concatenate((X, np.transpose(U)), axis=1)
+    else:
+        XU = msg
+
+    if XU[0,0] == 'finished':
         # print('kill visualization')
         print('timeOverall = ' + str(time.time() - t1))
         # timerdata.stop()
 
-    elif X[0,0] == 'init':
-        X1 = []
-#        updatePlot(X1)
+    elif XU[0,0] == 'init':
         t1 = time.time()
     else:
         if len(X1) < 1:
-            X1 = np.array([X[-1,:]])
+            X1 = np.take(XU,[0,-1],axis=0)
         else:
-            X1 = np.concatenate((X1,[X[-1,:]]))
+            X1 = np.concatenate((X1,XU[-1:,:]))
+
         updatePlot(X1)
 
 t1 = time.time()
