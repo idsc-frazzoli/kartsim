@@ -24,7 +24,7 @@ def main():
     pathLoadData = pathRootSortedData + '/' + defaultSim
     # pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190423-155633_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
     pathSaveData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    datasetTag = 'test_MarcsModel_allData'
+    datasetTag = 'test_oneLog'
     samplingTimeStep = 0.01
     
 #    dataSpecificMarcsModel = True
@@ -55,7 +55,8 @@ def main():
     starttime = time.time()
     for file, fileName in files:
         print(str(int(comp_count / comp_tot * 100)),
-              '% completed.   current file:', fileName[:-4] + '_sampledlogdata.pkl   elapsed time:', int(time.time() - starttime), 's', end='\r')
+              '% completed.   current file:', fileName[:-4] + '_sampledlogdata.pkl   elapsed time:',
+              int(time.time() - starttime), 's', end='\r')
 
         dataSet = getSampledData(file, samplingTimeStep)
 
@@ -93,7 +94,8 @@ def getSampledData(file, samplingTimeStep):
     for topic in logData:
         sTime, sData = prep.interpolation(list(logData[topic][0]), list(logData[topic][1]), logData[topicRef0][0][0], logData[topicRef1][0][-1], samplingTimeStep)
         if initDataFrame:
-            dataSetLog = pd.DataFrame(list(sTime-sTime[0]),columns = ['time'])
+            dataTime = np.round(list(sTime-sTime[0]),2)
+            dataSetLog = pd.DataFrame(dataTime,columns = ['time'])
             initDataFrame = False
         dataSetLog.insert(len(dataSetLog.columns),topic,list(sData))
 
