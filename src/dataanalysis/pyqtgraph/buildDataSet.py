@@ -33,7 +33,7 @@ def main():
     requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax',
                     'vmu ay', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
     saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData'
-    datasetTag = 'test_MarcsModel_allData'
+    datasetTag = 'test_oneLog'
     #check logs for missing or incomplete data
     sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete
     sortOutDataOverwrite = False                                                #if True: all data in preproParams-file will be overwritten
@@ -125,8 +125,6 @@ def readDictFromCSV(filePath):
     return dict
     
 def stirData(pathRootData, preproParams, requiredList):
-
-
     loggoodcount = 0
     logtotcount = 0
     for day in preproParams:
@@ -496,9 +494,9 @@ def preProcessing(kartData, name):
         slipAngle = kartData['vehicle slip angle']['data'][1]
 
         if name == 'vehicle vx':
-            y = np.sqrt(vx ** 2 + vy ** 2) * np.cos(slipAngle)
+            y = np.sqrt(np.square(vx) + np.square(vy)) * np.cos(slipAngle)
         else:
-            y = np.sqrt(vx ** 2 + vy ** 2) * np.sin(slipAngle)
+            y = np.sqrt(np.square(vx) + np.square(vy)) * np.sin(slipAngle)
 
         kartData[name]['data'] = [x, y]
 
