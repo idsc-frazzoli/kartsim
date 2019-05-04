@@ -4,10 +4,12 @@
 Created on Wed Apr  3 09:00:21 2019
 
 @author: mvb
+original code from MATLAB written by Marc Heim
 """
 import numpy as np
 
 def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
+    global B1, B2, C1, C2, D1, D2, reg
 #    %param = [B1,C1,D1,B2,C2,D2,Ic];
     B1 = param[0]
     C1 = param[1]
@@ -18,41 +20,20 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     Ic = param[6]
 
     reg = 0.2 #default: 0.5
-    
-    def magic(s,B,C,D):
-        return D * np.sin(C * np.arctan(B * s))
-    
-    def capfactor(taccx):
-        return(1-satfun((taccx/D2)**2))**(1/2)
 
-    def simpleslip(VELY,VELX,taccx):
-        return -(1/capfactor(taccx))*VELY/(VELX+reg)
-
-    def simplediraccy(VELY,VELX,taccx):
-        return magic(simpleslip(VELY,VELX,taccx),B2,C2,D2)
-
-    def simpleaccy(VELY,VELX,taccx):
-        return capfactor(taccx)*simplediraccy(VELY,VELX,taccx)
-
-    def simplefaccy(VELY,VELX):
-        return magic(-VELY/(VELX+reg),B1,C1,D1)
-
-    
     l = 1.19
     l1 = 0.73
     l2 = l-l1
     f1n = l2/l
     f2n = l1/l
-    w = 1
-    def rotmat(beta):
-        return np.array([[np.cos(beta),np.sin(beta)],[-np.sin(beta), np.cos(beta)]])
+    w = 1.08
+
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
 
     F1 = np.matmul(rotmat(-BETA),np.array([[0],[f1y[0]]]))*f1n
     F1x = F1[0]
     F1y = F1[1]
-#    frontabcorr = F1x
     F2x = AB
     F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.
     F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
@@ -60,11 +41,36 @@ def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     TVTrq = TV*w
 
     ACCROTZ = (TVTrq + F1y * l1 - F2y * l2) / Ic
-#    %ACCROTZ = TVTrq + F1y*l1;
     ACCX = F1x+F2x+VELROTZ*VELY
     ACCY = F1y+F2y1+F2y2-VELROTZ*VELX
     
     return ACCX[0],ACCY[0],ACCROTZ[0]
+
+def rotmat(beta):
+    return np.array([[np.cos(beta),np.sin(beta)],[-np.sin(beta), np.cos(beta)]])
+
+def magic(s, B, C, D):
+    return D * np.sin(C * np.arctan(B * s))
+
+
+def capfactor(taccx):
+    return (1 - satfun((taccx / D2) ** 2)) ** (1 / 2)
+
+
+def simpleslip(VELY, VELX, taccx):
+    return -(1 / capfactor(taccx)) * VELY / (VELX + reg)
+
+
+def simplediraccy(VELY, VELX, taccx):
+    return magic(simpleslip(VELY, VELX, taccx), B2, C2, D2)
+
+
+def simpleaccy(VELY, VELX, taccx):
+    return capfactor(taccx) * simplediraccy(VELY, VELX, taccx)
+
+
+def simplefaccy(VELY, VELX):
+    return magic(-VELY / (VELX + reg), B1, C1, D1)
 
 
 def satfun(x):
@@ -78,7 +84,7 @@ def satfun(x):
             y = 1-1/4*r*d**2;
         else:
             # y = 1;
-            y = 0.999;
+            y = 0.999999999999999;
     else:
         print('ERROR: x in satfun(x) is not float!')
     return y
