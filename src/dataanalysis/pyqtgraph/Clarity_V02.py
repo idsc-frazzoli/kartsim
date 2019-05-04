@@ -6,7 +6,7 @@ Created on Sun Mar 24 16:38:24 2019
 @author: mvb
 """
 import dataanalysis.pyqtgraph.dataIO as dio
-import dataanalysis.pyqtgraph.buildDataSet as bd
+import dataanalysis.gokartpreprocessing.buildDataSet as bd
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -36,6 +36,7 @@ class Clarity(QtGui.QMainWindow):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
+#         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
         defaultSim = simFolders[-1]
@@ -281,19 +282,6 @@ class Clarity(QtGui.QMainWindow):
                 print('No Data Selected!')
             else:
                 print(dispName + ' is already plotted!')
-
-#    def updateData(self):
-#        for topic in self.kartData:
-#            sigma = self.kartData[topic]['info'][1]
-#            width = self.kartData[topic]['info'][2]
-#            xOld = self.kartData[topic]['rawdata'][0]
-#            yOld = self.kartData[topic]['rawdata'][1]
-#            if sigma == 0:
-#                yNew = yOld
-#            else:
-#                trunc = (((width - 1) / 2) - 0.5) / sigma
-#                yNew = gaussian_filter1d(yOld, sigma, truncate=trunc)
-#            self.kartData[topic]['data'] = [xOld, yNew]
             
 
     def updatePlot(self):
@@ -393,11 +381,9 @@ class Clarity(QtGui.QMainWindow):
                 if '.pkl' in file and self.prefix in file:
                     pklFiles.append([os.path.join(r, file),file])
 
-        print(csvFiles)
         self.dataNames = []
         timeTopic = ''
         for csvfile, csvfileName in csvFiles:
-            print(csvfileName)
             try:
                 dataFrame = dio.getCSV(csvfile)
                 for topic in dataFrame.columns:
@@ -409,13 +395,6 @@ class Clarity(QtGui.QMainWindow):
                         if topic != timeTopic:
                             if not 'MH' in topic and not 'vehicle' in topic and 'pose' not in topic:
                                 self.dataNames.append(topic)
-                            # if topic == 'pose theta':
-                            #     for i in range(len(dataFrame[topic].values)):
-                            #         if dataFrame[topic].values[i] < -np.pi:
-                            #             dataFrame[topic].values[i:] = dataFrame[topic].values[i:] + 2 * np.pi
-                            #         if dataFrame[topic].values[i] > np.pi:
-                            #             dataFrame[topic].values[i:] = dataFrame[topic].values[i:] - 2 * np.pi
-                            print(topic)
                             rawData[topic] = {}
                             rawData[topic]['data'] = [dataFrame[timeTopic].values, dataFrame[topic].values]
                             rawData[topic]['info'] = [1, 0, 0, 1]

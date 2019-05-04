@@ -17,7 +17,7 @@ def main():
     fileNames = sys.argv[2:]
     # fileNames = fileNames.split(',')[:-1]
     fileNameIndex = 0
-
+    print('Simulation data will be saved to ', savePath)
     connected = False
     while not connected:
         try:
@@ -47,8 +47,6 @@ def logClient(savePathName, logConn):
             X = msg[0]
             U = msg[1]
             XU = np.concatenate((X, np.transpose(U)), axis=1)
-            print(X)
-            print(U)
         else:
             XU = msg
 
@@ -62,7 +60,6 @@ def logClient(savePathName, logConn):
         else:
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
             dataFrame.to_csv(savePathName, index = False, header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'MH BETA', 'MH AB', 'MH TV'])
-            print('Simulation data saved to ', savePathName)
             runLogger = False
 
             

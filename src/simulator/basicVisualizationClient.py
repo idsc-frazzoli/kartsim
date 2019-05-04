@@ -74,7 +74,7 @@ runSimulation = True
 #    first = True
 X1 = []
 def updateData():
-    global X1, t1
+    global X1
     conn.send('readyForNextMessage')
 #    print('waiting for msg')
     msg = conn.recv()
@@ -86,12 +86,14 @@ def updateData():
         XU = msg
 
     if XU[0,0] == 'finished':
+        pass
         # print('kill visualization')
-        print('timeOverall = ' + str(time.time() - t1))
+        # print('timeOverall = ' + str(time.time() - t1))
         # timerdata.stop()
 
     elif XU[0,0] == 'init':
         t1 = time.time()
+        X1 = []
     else:
         if len(X1) < 1:
             X1 = np.take(XU,[0,-1],axis=0)
@@ -100,7 +102,6 @@ def updateData():
 
         updatePlot(X1)
 
-t1 = time.time()
 timerdata = QtCore.QTimer()
 timerdata.timeout.connect(updateData)
 timerdata.start()

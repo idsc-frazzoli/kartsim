@@ -25,19 +25,18 @@ def main():
     #__User parameters
     
     pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics' #path where all the raw logfiles are
+
     #preprocess data and compute inferred data from raw logs
     preprocessData = True
-#    requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax ',
-#                    'vmu ay', 'pose atheta', 'steer torque cmd', 'brake position cmd', 'motor torque cmd left',
-#                    'motor torque cmd right', ] #list of required raw log parameters
     requiredList = ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax',
                     'vmu ay', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ] #list of required raw log parameters
-    saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData'
-    datasetTag = 'test_oneLog'
+    saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'
+    datasetTag = 'test_threeLogs'
+
     #check logs for missing or incomplete data
-    sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete
+    sortOutData = False                                                         #if True: checks all the raw logfiles for missing/incomplete data
     sortOutDataOverwrite = False                                                #if True: all data in preproParams-file will be overwritten
-    preproParamsFileName = 'preproParams' 
+    preproParamsFileName = 'preproParams'
     # preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.pkl'   #file where all the information about missing/incomplete data is stored
     preproParamsFilePath = pathRootData + '/' + preproParamsFileName + '.csv'   #file where all the information about missing/incomplete data is stored
 
@@ -45,8 +44,6 @@ def main():
     
     
     try:
-        # with open(preproParamsFilePath, 'rb') as f:
-        #     preproParams = pickle.load(f)
         preproParams = readDictFromCSV(preproParamsFilePath)
         print('Parameter file for preprocessing located and opened.')
     except:
@@ -57,11 +54,9 @@ def main():
         #tag logs with missing data
         preproParams = sortOut(pathRootData, preproParams, sortOutDataOverwrite)
         #save information to file
-        # with open(preproParamsFilePath, 'wb') as f:
-        #     pickle.dump(preproParams, f, pickle.HIGHEST_PROTOCOL)
         writeDictToCSV(preproParamsFilePath, preproParams)
         print('preproParams saved to ', preproParamsFilePath)
-#    print(preproParams)
+
     if preprocessData:
         kartDataAll, comp_tot = stirData(pathRootData, preproParams, requiredList)
         print('Data preprocessing completed.')

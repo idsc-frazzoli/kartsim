@@ -45,9 +45,9 @@ def MATLABvehicleModel (vx,vy,vrot,beta,accRearAxle,tv):
     B2 = 5.2
     C2 = 1.4
     D2 = 10.4
-    Cf = 0.3
+    Ic = 0.3
 
-    param = [B1,C1,D1,B2,C2,D2,Cf]
+    param = [B1,C1,D1,B2,C2,D2,Ic]
 #    [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)  #This function only runs in Matlab Session. Shared Matlab session needed to access this function!
     [accX,accY,accRot] = pymodelDx(vx,vy,vrot,beta,accRearAxle,tv, param)   #Marc's Matlab function translated to python
     

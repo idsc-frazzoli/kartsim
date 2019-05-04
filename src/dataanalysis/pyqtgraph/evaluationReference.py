@@ -73,7 +73,7 @@ def main():
         evalrefdata.to_csv(savePathName, index=False,
                          header=['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',
                                  'MH BETA', 'MH AB', 'MH TV'])
-        print('Simulation data saved to ', savePathName)
+        print('Evaluation reference saved to ', savePathName)
 
 if __name__ == '__main__':
     main()

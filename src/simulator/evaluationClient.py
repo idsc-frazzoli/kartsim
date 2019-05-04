@@ -29,46 +29,19 @@ def main():
 
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
-    simStep = 0.1  # [s] Simulation time step
+    server_return_interval = 0.1  # [s] simulation time after which result is returned from server
 
-    preprodata = getpreprodata(pathpreprodata)
+    # preprodata = getpreprodata(pathpreprodata)
 
-    # #simulation parameters
-    # dataStep = preprodata['time'].iloc[1]-preprodata['time'].iloc[0]       #[s] Log data sampling time step
-    # simStep = 0.01                                                   #[s] Simulation time step
-    # simTime = preprodata['time'].iloc[-1]                              #[s] Total simulation time
-    # # print(dataStep, simStep, simTime, int(simTime/simStep), len(preprodata['time']))
-    #
-    # #initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-    # X0 = [preprodata['time'][0] , preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0], preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0], preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
-    # # X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
-
-    # ______^^^______
-
-    # files = []
-    # for r, d, f in os.walk(pathpreprodata):
-    #     for file in f:
-    #         if '.pkl' in file:
-    #             files.append([os.path.join(r, file), file])
-    # files.sort()
-    # for fileName in preprofiles:
-    #     filePath = pathpreprodata + '/' + fileName
-    #     try:
-    #         with open(filePath, 'rb') as f:
-    #             preprodata = pickle.load(f)
-    #     except:
-    #         print('Could not open file at', filePath)
-    #         preprodata = pd.DataFrame()
-    #
-    #     # ___simulation parameters
-    #     dataStep = preprodata['time'].iloc[1] - preprodata['time'].iloc[0]  # [s] Log data sampling time step
-    #     simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
-    #     X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
-    #           preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0],
-    #           preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
-
-
-    # print('Simulation info saved to', pathsavedata)
+    connected = False
+    while not connected:
+        try:
+            address = ('localhost', 6000)
+            conn = Client(address, authkey=b'kartSim2019')
+            connected = True
+        except ConnectionRefusedError:
+            print('ConnectionRefusedError')
+            pass
 
     for fileName in preprofiles:
         filePath = pathpreprodata + '/' + fileName
@@ -80,59 +53,37 @@ def main():
             preprodata = pd.DataFrame()
 
         #___simulation parameters
-        dataStep = preprodata['time'].iloc[1] - preprodata['time'].iloc[0]  # [s] Log data sampling time step
+        data_time_step = np.round(preprodata['time'].iloc[1] - preprodata['time'].iloc[0],3)  # [s] Log data sampling time step
+        sim_time_increment = data_time_step     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
         simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
-        # print(dataStep, simStep, simTime, int(simTime / simStep), len(preprodata['MH BETA']))
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
         X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
               preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0]]
-        # X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
-        #       preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0],
-        #       preprodata['MH BETA'][0], preprodata['MH AB'][0], preprodata['MH TV'][0]]
-        # X0 = [preprodata['time'][1000] , preprodata['pose x'][1000], preprodata['pose y'][1000], preprodata['pose theta'][1000], preprodata['vehicle vx'][1000], preprodata['vehicle vy'][1000], preprodata['pose vtheta'][1000], preprodata['MH BETA'][1000], preprodata['MH AB'][1000], preprodata['MH TV'][1000]]
 
         # ______^^^______
 
-        connected = False
-        while not connected:
-            try:
-                address = ('localhost', 6000)
-                conn = Client(address, authkey=b'kartSim2019')
-                connected = True
-            except ConnectionRefusedError:
-                pass
-
         runSimulation = True
+        ttot = time.time()
         while runSimulation:
     #        ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)',
     #                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ]
-            print('Simulating with file ', fileName)
-            firstStep = int(round(simStep/dataStep))+1
+            print('Simulation with file ', fileName)
+            firstStep = int(round(server_return_interval/data_time_step))+1
             U = [preprodata['time'][0:firstStep].values,
                  preprodata['MH BETA'][0:firstStep].values,
                  preprodata['MH AB'][0:firstStep].values,
                  preprodata['MH TV'][0:firstStep].values]
-            for i in range(0,int(simTime/simStep)):
+            for i in range(0,int(simTime/server_return_interval)):
                 if i > 0:
-                    # currIndex = int(round(i * simStep/dataStep))
-                    # X0[7] = preprodata['MH BETA'][currIndex]
-                    # X0[8] = preprodata['MH AB'][currIndex]
-                    # X0[9] = preprodata['MH TV'][currIndex]
-
-                    simRange = [int(round(i * simStep/dataStep)), int(round((i+1) * simStep/dataStep))+1]
-
-                    # U = [preprodata['time'][simRange[0]:simRange[1]].values,
-                    #        preprodata['MH BETA'][simRange[0]:simRange[1]].values,
-                    #        preprodata['MH AB'][simRange[0]:simRange[1]].values,
-                    #        preprodata['MH TV'][simRange[0]:simRange[1]].values]
+                    simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
                     U = np.vstack((preprodata['time'][simRange[0]:simRange[1]].values,
                                      preprodata['MH BETA'][simRange[0]:simRange[1]].values,
                                      preprodata['MH AB'][simRange[0]:simRange[1]].values,
                                      preprodata['MH TV'][simRange[0]:simRange[1]].values))
 
-                    if validation and i*simStep % validationhorizon < simStep:
-                        currIndex = int(round(i * simStep / dataStep))
+                    if validation and i*server_return_interval % validationhorizon < server_return_interval:
+                        currIndex = int(round(i * server_return_interval / data_time_step))
                         X0[1] = preprodata['pose x'][currIndex]
                         X0[2] = preprodata['pose y'][currIndex]
                         X0[3] = preprodata['pose theta'][currIndex]
@@ -141,18 +92,18 @@ def main():
                         X0[6] = preprodata['pose vtheta'][currIndex]
                 else:
                     tgo = time.time()
-
-                conn.send([X0,U,simStep])
+                conn.send([X0, U, server_return_interval, sim_time_increment])
 
                 X1 = conn.recv()
 
                 X0 = list(X1[-1,:])
-                if i%int(simTime/simStep/20) == 0.0:
-                    print(int(round(i/(simTime/simStep)*100)), '% done, time: ', time.time()-tgo, end='\r')
-    #            time.sleep(1)
+                if i%10 == 0.0:
+                    print(int(round(i/(simTime/server_return_interval)*100)), '% done, time: ', time.time()-tgo, end='\r')
+
+            conn.send('simulation finished')
             runSimulation = False
-            conn.close()
-            print('time overall: ', time.time()-tgo)
+
+            print('Success! Time overall: ', time.time()-tgo)
 
         # generate simulation info file and store it in target folder
         try:
@@ -165,9 +116,9 @@ def main():
                 else:
                     the_file.write('simulation mode:                    normal simulation' + '\n')
                 the_file.write('source folder:                      ' + pathpreprodata + '\n')
-                the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+                the_file.write('simulation time step:               ' + str(server_return_interval) + 's\n')
                 the_file.write('total simulation time:              ' + str(simTime) + 's\n')
-                the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+                the_file.write('time step in data:                  ' + str(data_time_step) + 's\n')
                 the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
                 for item in X0[1:]:
                     the_file.write('                                    ' + str(item) + '\n')
@@ -179,18 +130,20 @@ def main():
                 else:
                     the_file.write('simulation mode:                    normal simulation' + '\n')
                 the_file.write('source folder:                      ' + pathpreprodata + '\n')
-                the_file.write('simulation time step:               ' + str(simStep) + 's\n')
+                the_file.write('simulation time step:               ' + str(server_return_interval) + 's\n')
                 the_file.write('total simulation time:              ' + str(simTime) + 's\n')
-                the_file.write('time step in data:                  ' + str(dataStep) + 's\n')
+                the_file.write('time step in data:                  ' + str(data_time_step) + 's\n')
                 the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
                 for item in X0[1:]:
                     the_file.write('                                    ' + str(item) + '\n')
-
+    print('connection closed')
+    conn.close()
     time.sleep(2)
     print('Creating reference signal for evaluation...')
     evalRef.main()
     print('Evaluating results...')
     evalCalc.main()
+    print('Evaluation complete!')
 
 
 
