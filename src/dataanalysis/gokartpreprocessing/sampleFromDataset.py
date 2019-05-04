@@ -17,14 +17,14 @@ import dataanalysis.pyqtgraph.dataIO as dio
 
 def main():
     #__user input
-    pathRootSortedData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/'
+    pathRootSortedData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData/'
     simFolders = dio.getDirectories(pathRootSortedData)
     simFolders.sort()
     defaultSim = simFolders[-1]
     pathLoadData = pathRootSortedData + '/' + defaultSim
     # pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190423-155633_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
     pathSaveData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    datasetTag = 'test_oneLog'
+    datasetTag = 'test_three'
     samplingTimeStep = 0.01
     
 #    dataSpecificMarcsModel = True
@@ -53,7 +53,7 @@ def main():
 
     comp_count = 0
     starttime = time.time()
-    for file, fileName in files:
+    for file, fileName in files[:10]:
         print(str(int(comp_count / comp_tot * 100)),
               '% completed.   current file:', fileName[:-4] + '_sampledlogdata.pkl   elapsed time:',
               int(time.time() - starttime), 's', end='\r')
