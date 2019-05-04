@@ -6,7 +6,8 @@ Created on Fri Mar 29 16:19:49 2019
 @author: mvb
 """
 
-import simulator.timeIntegrators as integrator
+# import simulator.timeIntegrators as integrators
+import simulator.timeIntegrators as integrators
 from multiprocessing.connection import Listener
 from threading import Thread, active_count
 import numpy as np
@@ -14,10 +15,9 @@ import sys
 import time
 
 def main():
-    global runThread
+    global runThread, noThread, cliConn, logConn, vizConn
 
     #simulation default parameters
-    simIncrement = 0.01  #s underlying time step for integration
 
     try:
         visualization = int(sys.argv[1])
@@ -38,8 +38,10 @@ def main():
     noThread = True
     vizConn = None
     logConn = None
+    cliConn = None
+    runServer = True
 
-    while True:
+    while runServer:
         if noThread:
             noThread = False
 
@@ -56,48 +58,52 @@ def main():
                 print('logger connection accepted from', logListener.last_accepted)
             else:
                 pass
-
-            time.sleep(1)
-#            print('No of active threads running: ', active_count())
-            print("waiting for client connection at", clientAddress)
-            cliConn = clientListener.accept()
-            print('client connection accepted from', clientListener.last_accepted)
+            if cliConn is None:
+                print("waiting for client connection at", clientAddress)
+                cliConn = clientListener.accept()
+                print('client connection accepted from', clientListener.last_accepted)
+                print('Starting simulation:\n')
             
-            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,simIncrement,visualization,logging,))
+            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,))
             runThread = True
             t.start()
         else:
             time.sleep(0.1)
-            pass
             # if active_count() < 2:
             #     noThread = True
+            pass
 
 
-def handle_client(c,v,l,simIncrement,visualization,logging):
+def handle_client(c,v,l,visualization,logging):
+    global noThread, cliConn, logConn, vizConn
     initSignal = 0
     while runThread:
         try:
-
             msg = c.recv()
-
-            if len(msg) == 3 and len(msg[0]) == 7 and isinstance(msg[2], float):
+            if len(msg) == 4 and len(msg[0]) == 7 and (isinstance(msg[2], float) or isinstance(msg[2], int)):
                 X0 = msg[0]
                 U = msg[1]
-                simStep = msg[2]
-                # X = integrator.odeIntegrator(X0, U, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrator.odeIntegratorIVP(X0, U, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                server_return_time = msg[2]
+                sim_time_increment = msg[3]
+
+                # X = integrator.odeIntegrator(X0, U, simStep, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                X = integrators.odeIntegratorIVP(X0, U, server_return_time, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
 
                 c.send(X)
 
+            elif msg == 'simulation finished':
+                noThread = True
+                if visualization:
+                    v.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                if logging:
+                    l.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                break
             else:
                 print('FormatError: msg sent to server must be of form:\n   msg = [[simStartTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv],[simTimeStep]]\n e.g. msg = [[0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0],[0.1]]')
         except EOFError:
-            # print('EOFError: exit thread', c.fileno())
-            if visualization:
-                v.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                initSignal = 0
-            if logging:
-                l.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+            print('SimClientError: BrokenPipe', c.fileno())
+            cliConn = None
+            noThread = True
             break
 
 
@@ -106,6 +112,7 @@ def handle_client(c,v,l,simIncrement,visualization,logging):
                 l.send([X,U[1:]])
             except:
                 print('LoggerError: BrokenPipe', l.fileno())
+                logConn = None
                 break
 #                print('sendTime l: ', time.time() - tt)
         if visualization:
@@ -118,6 +125,7 @@ def handle_client(c,v,l,simIncrement,visualization,logging):
                     v.send([X,U[1:]])
             except:
                 print('VisualizationError: BrokenPipe', v.fileno())
+                vizConn = None
                 break
     
 if __name__ == '__main__':
