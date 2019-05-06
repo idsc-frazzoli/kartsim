@@ -83,8 +83,8 @@ def satfun(x):
             d = (1+r-x)/r;
             y = 1-1/4*r*d**2;
         else:
-            # y = 1;
-            y = 0.999999999999999;
+            y = 1;
+        y=0.95*y;
     else:
         print('ERROR: x in satfun(x) is not float!')
     return y
