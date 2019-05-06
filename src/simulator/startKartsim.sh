@@ -33,10 +33,11 @@ for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH
 python3 basicKartsimServer.py $VISUALIZATION $LOGGING &
 SRVPID=$!
 
-if (( $VISUALIZATION ))
+if [ $VISUALIZATION = 1 ]
 then
     python3 basicVisualizationClient.py &
     VIZPID=$!
+    echo $VIZPID
 fi
 
 python3 basicLoggerClient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
@@ -44,6 +45,7 @@ LOGPID=$!
 
 #python3 basicSimulationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
 python3 evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+#python3 dummyClient.py $SAVEFOLDERPATH &
 SIMPID=$!
 
 exit_script() {
@@ -53,6 +55,7 @@ exit_script() {
     kill ${SRVPID}
     if [ $VISUALIZATION = 1 ]
     then
+        echo "Kill viz"
         kill ${VIZPID}
     fi
     kill ${LOGPID}
