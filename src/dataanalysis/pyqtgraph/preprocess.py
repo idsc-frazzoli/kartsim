@@ -258,12 +258,13 @@ def preProcessing(self, name):
         velocity = interp(x)
 
         lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysis/pyqtgraph/lookup_cur_vel_to_acc.pkl'   #lookupTable file
+
         try:
             with open(lookupFilePath, 'rb') as f:
                 lookupTable = pickle.load(f)
             print('lookup_cur_vel_to_acc file for preprocessing located and opened.')
         except:
-            print('lookup_cur_vel_to_acc file for preprocessing does not exist. Creating file...')
+            print('lookup_cur_vel_to_acc file for preprocessing not found')
             lookupTable = pd.DataFrame()
         interp = interp2d(lookupTable.columns, lookupTable.index, lookupTable.values)
         powerAcceleration = [float(interp(XX,YY)) for XX,YY in zip(velocity,motorPower)]
@@ -320,8 +321,9 @@ def preProcessing(self, name):
             if velx[i] <= 0:
                 deceleration[i] = 0
         
+        # AB_brake = np.multiply(0.6,-deceleration)
         AB_brake = -deceleration
-        
+
         # AB_tot = AB_rimo + AB_brake
         AB_tot = AB_rimo + AB_brake
 
