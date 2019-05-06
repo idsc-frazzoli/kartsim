@@ -147,7 +147,7 @@ def stirData(pathRootData, preproParams, requiredList):
     kartDataAll = {}
     skipCount = 0
     comp_count = 0
-    for testDay in testDays:
+    for testDay in testDays[0:1]:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = dio.getDirectories(pathTestDay)
         logNrs.sort()
@@ -616,8 +616,9 @@ def preProcessing(kartData, name):
             if velx[i] <= 0:
                 deceleration[i] = 0
         
+        # AB_brake = np.multiply(0.6,-deceleration)
         AB_brake = -deceleration
-        
+
         AB_tot = AB_rimo + AB_brake
         
         kartData[name]['data'] = [x, AB_tot[0,:]]
@@ -634,8 +635,7 @@ def preProcessing(kartData, name):
     elif name == 'MH BETA':
         x = kartData['steer position cal']['data'][0]
         steerCal = np.array(kartData['steer position cal']['data'][1])
-                
-        BETA = -0.63*steerCal*steerCal*steerCal+0.94*steerCal
+        BETA = -0.625 * np.power(steerCal, 3) + 0.939 * steerCal
         
         kartData[name]['data'] = [x, BETA]
     return kartData
