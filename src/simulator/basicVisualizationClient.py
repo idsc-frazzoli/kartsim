@@ -16,6 +16,7 @@ import pyqtgraph as pg
 import time
 
 #initializing Client and connect to pyKartsimServer
+time.sleep(1)
 address = ('localhost', 6001)
 conn = Client(address, authkey=b'kartSim2019')
 ##wait until initalization msg is sent and Simulation starts
