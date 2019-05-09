@@ -7,7 +7,7 @@ Created on Thu Mar 28 13:20:04 2019
 """
 import numpy as np
 import os
-from dataIO import getPKL, getDirectories
+from dataanalysisV2.dataIO import getPKL, getDirectories
 
 
 def main():
