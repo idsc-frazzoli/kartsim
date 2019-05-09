@@ -198,7 +198,7 @@ def preProcessing(self, name):
         interp = interp1d(velocity_t, velocity)
         velocity = interp(x)
 
-        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunction/lookup_cur_vel_to_acc.pkl'   #lookupTable file
+        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunctions/lookup_cur_vel_to_acc.pkl'   #lookupTable file
 
         try:
             with open(lookupFilePath, 'rb') as f:
@@ -245,7 +245,7 @@ def preProcessing(self, name):
         interp1V = interp1d(velx_t, velx)
         velx = interp1V(x)
         
-        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunction/staticBrakeFunction.pkl'   #static brake function file
+        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunctions/staticBrakeFunction.pkl'   #static brake function file
         try:
             with open(staticBrakeFunctionFilePath, 'rb') as f:
                 staticBrakeFunction = pickle.load(f)
