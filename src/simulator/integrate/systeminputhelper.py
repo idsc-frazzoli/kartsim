@@ -14,4 +14,4 @@ def setInput(U):
     interpTV = interp1d(U[0], U[3], fill_value='extrapolate')
 
 def getInput(time1):
-    return interpBETA(time1), interpAB(time1), interpTV(time1)
+    return [interpBETA(time1), interpAB(time1), interpTV(time1)]

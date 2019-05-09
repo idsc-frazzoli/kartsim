@@ -10,33 +10,28 @@ import numpy as np
 from model.pymodelDx import marc_vehiclemodel
 from simulator.integrate.systeminputhelper import getInput
 
+
 def odeint_dx_dt(X,t):
-    theta = float(X[3])
-    vx = float(X[4])
-    vy = float(X[5])
-    vrot = float(X[6])
+    V = X[4:7]
+    U = getInput(X[0])
 
-    beta, accRearAxle, tv = getInput(X[0])
+    V_dt = marc_vehiclemodel(V, U)
 
-    [accX,accY,accRot] = marc_vehiclemodel(vx, vy, vrot, beta, accRearAxle, tv)
-    vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
-    vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
+    c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+    R = np.array(((c, -s), (s, c)))
+    Vabs = np.matmul(V[:2], R.transpose())
 
-    return [1,vxAbs,vyAbs,vrot,accX,accY,accRot,0,0,0]
+    return [1,Vabs[0],Vabs[1],V[2],V_dt[0],V_dt[1],V_dt[2]]
 
 
 def solveivp_dx_dt(t, X):
-    # print('X', X)
-    theta = float(X[3])
-    vx = float(X[4])
-    vy = float(X[5])
-    vrot = float(X[6])
+    V = [X[4][0], X[5][0], X[6][0]]
+    U = getInput(X[0][0])
 
-    beta, accRearAxle, tv = getInput(X[0])
+    V_dt = marc_vehiclemodel(V, U)
 
-    [accX, accY, accRot] = marc_vehiclemodel(vx, vy, vrot, beta[0], accRearAxle[0], tv[0])
+    c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+    R = np.array(((c, -s), (s, c)))
+    Vabs = np.matmul(V[:2], R.transpose())
 
-    vxAbs = vx * np.cos(theta) - vy * np.sin(theta)
-    vyAbs = vy * np.cos(theta) + vx * np.sin(theta)
-
-    return [1, vxAbs, vyAbs, vrot, accX, accY, accRot]
+    return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
