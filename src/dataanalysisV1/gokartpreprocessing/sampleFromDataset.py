@@ -12,8 +12,8 @@ import pandas as pd
 import datetime
 import time
 
-import dataanalysis.pyqtgraph.preprocess as prep
-import dataanalysis.pyqtgraph.dataIO as dio
+import showrawdata.preprocess as prep
+import dataIO as dio
 
 def main():
     #__user input

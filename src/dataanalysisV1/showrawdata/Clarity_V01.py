@@ -5,8 +5,8 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import dataanalysis.pyqtgraph.preprocess as prep
-import dataanalysis.pyqtgraph.dataIO as dio
+import showrawdata.preprocess as prep
+import dataIO as dio
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -34,14 +34,14 @@ class Clarity(QtGui.QMainWindow):
 
     def __init__(self):
         super(Clarity, self).__init__()
-        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics'
+        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics/'
         testDays = dio.getDirectories(self.pathRootData)
         testDays.sort()
-        defaultDay = testDays[2]
+        defaultDay = testDays[-1]
         self.pathTestDay = self.pathRootData + '/' + defaultDay
         logNrs = dio.getDirectories(self.pathTestDay)
         logNrs.sort()
-        defaultLogNr = logNrs[19]
+        defaultLogNr = logNrs[-1]
         self.pathLogNr = self.pathTestDay + '/' + defaultLogNr
 
         params = [
@@ -357,6 +357,7 @@ class Clarity(QtGui.QMainWindow):
 
         self.dataList.clear()
         groups.sort()
+        print(groups)
         rawDataNames = []
         for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
             rawDataNames.append(name)
@@ -378,8 +379,6 @@ class Clarity(QtGui.QMainWindow):
                     xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
             except:
                 print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
-                xRaw = [0]
-                yRaw = [0]
                 raise
 
             item = QtGui.QListWidgetItem(name)

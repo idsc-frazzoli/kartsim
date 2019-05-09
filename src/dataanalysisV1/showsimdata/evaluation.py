@@ -7,7 +7,7 @@ Created on Thu Mar 28 13:20:04 2019
 """
 import numpy as np
 import os
-import dataanalysis.pyqtgraph.dataIO as dIO
+import dataIO as dIO
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 

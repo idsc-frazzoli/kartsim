@@ -5,8 +5,8 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import dataanalysis.pyqtgraph.dataIO as dio
-import dataanalysis.gokartpreprocessing.buildDataSet as bd
+import dataIO as dio
+import dataanalysisV1.gokartpreprocessing.buildDataSet as bd
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
