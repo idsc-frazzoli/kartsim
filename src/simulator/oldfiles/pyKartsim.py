@@ -6,14 +6,12 @@ Created on Fri Mar 29 16:19:49 2019
 @author: mvb
 """
 
-import matlab.engine
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 
 import time
-import timeIntegrators as integrator
-
+from integrate import timeIntegrators as integrator
 
 #p2.plot(np.random.normal(size=120)+10, pen=(0,0,255), name="Blue curve")
 
@@ -36,7 +34,7 @@ app = QtGui.QApplication([])
 
 win = pg.GraphicsWindow(title="Basic plotting examples")
 win.resize(1600,800)
-win.setWindowTitle('pyqtgraph example: Plotting')
+win.setWindowTitle('showsimdata example: Plotting')
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)

@@ -8,6 +8,37 @@ original code from MATLAB written by Marc Heim
 """
 import numpy as np
 
+def marc_vehiclemodel (vx, vy, vrot, beta, accRearAxle, tv):
+    #debug params
+    # B = 4.0
+    # C = 1.7
+    # D = 0.7*9.81
+    # Cf = 0.15
+    # B1 = B
+    # B2 = B
+    # C1 = C
+    # C2 = C
+    # D1 = 0.8*D
+    # D2 = D
+    # maxA = D*0.9
+
+    #optimal parameters
+    B1 = 15
+    C1 = 1.1
+    D1 = 9.4
+    B2 = 5.2
+    C2 = 1.4
+    D2 = 10.4
+    Ic = 0.3
+
+    param = [B1,C1,D1,B2,C2,D2,Ic]
+#    [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3)  #This function only runs in Matlab Session. Shared Matlab session needed to access this function!
+    [accX,accY,accRot] = pymodelDx(vx,vy,vrot,beta,accRearAxle,tv, param)   #Marc's Matlab function translated to python
+    # [accX,accY,accRot] = pymodelDx(vx,vy,vrot,beta,accRearAxle,0, param)   #Marc's Matlab function translated to python
+
+    return accX,accY,accRot
+
+
 def pymodelDx(VELX,VELY,VELROTZ,BETA,AB,TV, param):
     global B1, B2, C1, C2, D1, D2, reg
 #    %param = [B1,C1,D1,B2,C2,D2,Ic];

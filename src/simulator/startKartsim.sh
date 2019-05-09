@@ -30,22 +30,21 @@ mkdir $SAVEFOLDERPATH
 
 for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
-python3 basicKartsimServer.py $VISUALIZATION $LOGGING &
+python3 kartsim_server.py $VISUALIZATION $LOGGING &
 SRVPID=$!
 
 if [ $VISUALIZATION = 1 ]
 then
-    python3 basicVisualizationClient.py &
+    python3 kartsim_visualizationclient.py &
     VIZPID=$!
     echo $VIZPID
 fi
 
-python3 basicLoggerClient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+python3 kartsim_loggerclient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 LOGPID=$!
 
-#python3 basicSimulationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH &
-python3 evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
-#python3 dummyClient.py $SAVEFOLDERPATH &
+python3 user/evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+#python3 user/dummyClient.py $SAVEFOLDERPATH &
 SIMPID=$!
 
 exit_script() {

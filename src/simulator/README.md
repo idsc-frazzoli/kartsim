@@ -2,7 +2,7 @@
 
 # Launching Kartsim
 
-- Go to folder "ValidationPipeline" and execute: 
+- Go to folder "simulator" and execute: 
 ```ruby 
 ./startKartsim.sh
 ``` 

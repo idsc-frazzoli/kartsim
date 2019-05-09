@@ -14,8 +14,8 @@ import pickle
 import pandas as pd
 import sys
 
-import dataanalysis.pyqtgraph.evaluationReference as evalRef
-import dataanalysis.pyqtgraph.evaluation as evalCalc
+import dataanalysisV1.pyqtgraph.evaluationReference as evalRef
+import dataanalysisV1.pyqtgraph.evaluation as evalCalc
 
 def main():
     #___user inputs
@@ -27,9 +27,9 @@ def main():
     # preprofiles = preprofiles.split(',')[:-1]
     # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
-    validation = True
+    validation = False
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
-    server_return_interval = 0.1  # [s] simulation time after which result is returned from server
+    server_return_interval = 0.01  # [s] simulation time after which result is returned from server
 
     # preprodata = getpreprodata(pathpreprodata)
 
@@ -53,13 +53,20 @@ def main():
             preprodata = pd.DataFrame()
 
         #___simulation parameters
-        data_time_step = np.round(preprodata['time'].iloc[1] - preprodata['time'].iloc[0],3)  # [s] Log data sampling time step
-        sim_time_increment = data_time_step     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
-        simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
+        # data_time_step = np.round(preprodata['time'].iloc[1] - preprodata['time'].iloc[0],3)  # [s] Log data sampling time step
+        # sim_time_increment = data_time_step     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
+        # simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
+        data_time_step = 0.1
+        sim_time_increment = 0.01     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
+        simTime = 30
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
         X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
               preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0]]
+        X0 = [0,0,0,0,1,0,0]
+        BETA_const = 0.35
+        AB_const = 1
+        TV_const = -1.5
 
         # ______^^^______
 
@@ -69,18 +76,20 @@ def main():
     #        ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)',
     #                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ]
             print('Simulation with file ', fileName)
-            firstStep = int(round(server_return_interval/data_time_step))+1
-            U = [preprodata['time'][0:firstStep].values,
-                 preprodata['MH BETA'][0:firstStep].values,
-                 preprodata['MH AB'][0:firstStep].values,
-                 preprodata['MH TV'][0:firstStep].values]
+            # firstStep = int(round(server_return_interval/data_time_step))+1
+            # U = [preprodata['time'][0:firstStep].values,
+            #      preprodata['MH BETA'][0:firstStep].values,
+            #      preprodata['MH AB'][0:firstStep].values,
+            #      preprodata['MH TV'][0:firstStep].values]
+            U = [[0,100], [BETA_const,BETA_const], [AB_const,AB_const], [TV_const,TV_const]]
             for i in range(0,int(simTime/server_return_interval)):
                 if i > 0:
-                    simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
-                    U = np.vstack((preprodata['time'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH BETA'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH AB'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH TV'][simRange[0]:simRange[1]].values))
+                    # simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
+                    # U = np.vstack((preprodata['time'][simRange[0]:simRange[1]].values,
+                    #                  preprodata['MH BETA'][simRange[0]:simRange[1]].values,
+                    #                  preprodata['MH AB'][simRange[0]:simRange[1]].values,
+                    #                  preprodata['MH TV'][simRange[0]:simRange[1]].values))
+                    U = np.vstack([[0, 100], [BETA_const,BETA_const], [AB_const,AB_const], [TV_const,TV_const]])
 
                     if validation and i*server_return_interval % validationhorizon < server_return_interval:
                         currIndex = int(round(i * server_return_interval / data_time_step))
@@ -139,11 +148,11 @@ def main():
     print('connection closed')
     conn.close()
     time.sleep(2)
-    print('Creating reference signal for evaluation...')
-    evalRef.main()
-    print('Evaluating results...')
-    evalCalc.main()
-    print('Evaluation complete!')
+    # print('Creating reference signal for evaluation...')
+    # evalRef.main()
+    # print('Evaluating results...')
+    # evalCalc.main()
+    # print('Evaluation complete!')
 
 
 

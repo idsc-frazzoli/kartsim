@@ -6,27 +6,19 @@ Created on Fri Mar 29 16:19:49 2019
 @author: mvb
 """
 
-# import simulator.timeIntegrators as integrators
-import simulator.timeIntegrators as integrators
+from integrate import timeIntegrators as integrator
 from multiprocessing.connection import Listener
 from threading import Thread, active_count
 import numpy as np
-import sys
-import time
+
 
 def main():
-    global runThread, noThread, cliConn, logConn, vizConn
-
+    global runThread
+    
     #simulation default parameters
-
-    try:
-        visualization = int(sys.argv[1])
-        logging = int(sys.argv[2])
-    except:
-        visualization = 0
-        logging = 1
-
-
+    simIncrement = 0.01  #s underlying time step for integration
+    visualization = True
+    logging = True
     clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
     if visualization:
@@ -38,83 +30,70 @@ def main():
     noThread = True
     vizConn = None
     logConn = None
-    cliConn = None
-    runServer = True
-
-    while runServer:
+    while True:
         if noThread:
             noThread = False
-
+            
             if visualization and vizConn is None:
                 print("waiting for visualization connection at", visualizationAddress)
                 vizConn = visualizationListener.accept()
                 print('visualization connection accepted from', visualizationListener.last_accepted)
             else:
                 pass
-
+            
             if logging and logConn is None:
                 print("waiting for logger connection at", logAddress)
                 logConn = logListener.accept()
                 print('logger connection accepted from', logListener.last_accepted)
             else:
                 pass
-            if cliConn is None:
-                print("waiting for client connection at", clientAddress)
-                cliConn = clientListener.accept()
-                print('client connection accepted from', clientListener.last_accepted)
-                print('Starting simulation:\n')
             
-            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,))
+#            print('No of active threads running: ', active_count())
+            print("waiting for client connection at", clientAddress)
+            cliConn = clientListener.accept()
+            print('client connection accepted from', clientListener.last_accepted)
+            
+            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,simIncrement,visualization,logging,))
             runThread = True
             t.start()
         else:
-            time.sleep(0.1)
-            # if active_count() < 2:
-            #     noThread = True
-            pass
+            if active_count() < 2:
+                noThread = True
+    
 
-
-def handle_client(c,v,l,visualization,logging):
-    global noThread, cliConn, logConn, vizConn
+def handle_client(c,v,l,simIncrement,visualization,logging):
     initSignal = 0
     while runThread:
         try:
             msg = c.recv()
-            if len(msg) == 4 and len(msg[0]) == 7 and (isinstance(msg[2], float) or isinstance(msg[2], int)):
+            if len(msg) == 2 and len(msg[0]) == 10 and isinstance(msg[1], float):
                 X0 = msg[0]
-                U = msg[1]
-                server_return_time = msg[2]
-                sim_time_increment = msg[3]
-
-                # X = integrator.odeIntegrator(X0, U, simStep, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrators.odeIntegratorIVP(X0, U, server_return_time, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-
+                simStep = msg[1]
+                
+                X = integrator.odeIntegrator(X0, simStep, simIncrement) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+#                tt = time.time()
                 c.send(X)
-
-            elif msg == 'simulation finished':
-                noThread = True
-                if visualization:
-                    v.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                if logging:
-                    l.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                break
+#                print('sendTime c: ', time.time() - tt)
+#                tt = time.time()
             else:
                 print('FormatError: msg sent to server must be of form:\n   msg = [[simStartTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv],[simTimeStep]]\n e.g. msg = [[0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0],[0.1]]')
         except EOFError:
-            print('SimClientError: BrokenPipe', c.fileno())
-            cliConn = None
-            noThread = True
+            print('EOFError: exit thread', c.fileno())
+            if visualization:
+                v.send(np.array([['finished', 0, 0, 0, 1, 0, 0, 0.5, 0, 0]]))
+                initSignal = 0
+            if logging:
+                l.send(np.array([['finished', 0, 0, 0, 1, 0, 0, 0.5, 0, 0]]))
             break
-
-
+        
         if logging:
             try:
-                l.send([X,U[1:]])
+                l.send(X)
             except:
                 print('LoggerError: BrokenPipe', l.fileno())
-                logConn = None
                 break
 #                print('sendTime l: ', time.time() - tt)
+
         if visualization:
             try:
                 if initSignal < 1:
@@ -122,11 +101,12 @@ def handle_client(c,v,l,visualization,logging):
                     initSignal = 1
                 if v.poll():
                     v.recv()
-                    v.send([X,U[1:]])
+                    v.send(X)
             except:
                 print('VisualizationError: BrokenPipe', v.fileno())
-                vizConn = None
                 break
+        
+
     
 if __name__ == '__main__':
     main()
