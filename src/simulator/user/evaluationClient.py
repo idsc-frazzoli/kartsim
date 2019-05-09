@@ -14,9 +14,7 @@ import pickle
 import pandas as pd
 import sys
 
-import dataanalysisV2.evaluation.evaluationReference as evalRef
-import dataanalysisV2.evaluation.evaluation as evalCalc
-from dataanalysisV2.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
+from textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
 
 def main():
     #___user inputs

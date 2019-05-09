@@ -8,7 +8,7 @@ Created on Fri Mar 29 16:19:49 2019
 
 # import simulator.timeIntegrators as integrators
 import integrate.timeIntegrators as integrators
-from dataanalysisV2.textcommunication import decode_request_msg_from_txt, encode_answer_msg_to_txt
+from textcommunication import decode_request_msg_from_txt, encode_answer_msg_to_txt
 from multiprocessing.connection import Listener
 from threading import Thread
 import numpy as np
