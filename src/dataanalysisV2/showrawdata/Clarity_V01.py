@@ -5,7 +5,8 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import dataanalysisV2.showrawdata.preprocess as prep
+from dataanalysisV2.showrawdata.preprocess import preProcessing
+from dataanalysisV2.mathfunction import interpolation
 import dataIO as dio
 
 from pyqtgraph.Qt import QtGui, QtCore
@@ -218,7 +219,7 @@ class Clarity(QtGui.QMainWindow):
         # print('dataNames', dataNames)
         for name in dataNames:
             if name in self.needsPreprocessing:
-                prep.preProcessing(self, name)
+                preProcessing(self, name)
                 availableDataList = [item[0] for item in self.availableData]
                 for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
                     sigma = item.info[1]
@@ -374,7 +375,7 @@ class Clarity(QtGui.QMainWindow):
                         if np.abs(yRaw[i + 1] - yRaw[i]) > 1:
                             yRaw[i + 1:] = yRaw[i + 1:] - np.sign((yRaw[i + 1] - yRaw[i])) * 2 * np.pi
                 if name in ['vmu ax atvmu (forward)', 'vmu ay atvmu (left)', 'vmu vtheta']:
-                    xRaw, yRaw = prep.interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
+                    xRaw, yRaw = interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
             except:
                 print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
                 raise
@@ -425,6 +426,7 @@ class Clarity(QtGui.QMainWindow):
                        True, 0, 0, 4, 1])
         groups.append(['MH AB',
                        ['brake position cmd', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
+                       # ['brake position effective', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
                        True, 0, 0, 5, 1])
         groups.append(['MH TV',
                        ['pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],

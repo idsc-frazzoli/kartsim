@@ -13,47 +13,7 @@ from scipy.interpolate import interp1d, interp2d
 import pandas as pd
 import pickle
 
-def interpolation(x, y, xBegin, xStop, timeStep):
-    if isinstance(y,pd.Series):
-        interp = interp1d(x, y)
-    
-        if xBegin % timeStep != 0:
-            xBegin = (timeStep - xBegin % timeStep) + xBegin
-        else:
-            pass
-    
-        if xStop % timeStep != 0:
-            xStop = xStop - xStop % timeStep
-        else:
-            pass
-        
-        xInterp = np.linspace(xBegin, xStop, int((xStop-xBegin)/timeStep))
-
-        yInterp = interp(xInterp)
-
-        return xInterp, yInterp
-    
-    elif isinstance(y,list):
-        interp = interp1d(x, y)
-
-
-        if xBegin % timeStep != 0:
-            xBegin = np.around((timeStep - xBegin % timeStep) + xBegin,2)
-        else:
-            pass
-
-        if xStop % timeStep != 0:
-            xStop = np.around(xStop - xStop % timeStep,2)
-        else:
-            pass
-
-
-        xInterp = np.linspace(xBegin, xStop, int(np.around((xStop-xBegin)/timeStep))+1)
-        xInterp = np.round(xInterp,2)
-
-        yInterp = interp(xInterp)
-
-        return xInterp, yInterp
+from dataanalysisV2.mathfunction import derivative_X_dX
 
 
 def preProcessing(self, name):
@@ -183,25 +143,6 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, x, y])
 
-    # if name in ['vehicle vx', 'vehicle vy']:
-    #     for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
-    #         nameDependency = item.dependencies[0]
-    #     x = self.availableData[availableDataList.index(nameDependency[2])][1]
-    #     vx = self.availableData[availableDataList.index(nameDependency[2])][2]
-    #     vy = self.availableData[availableDataList.index(nameDependency[3])][2]
-    #     slipAngle = self.availableData[availableDataList.index(nameDependency[4])][2]
-    #
-    #     if name == 'vehicle vx':
-    #         y = np.sqrt(vx ** 2 + vy ** 2) * np.cos(slipAngle)
-    #     else:
-    #         y = np.sqrt(vx ** 2 + vy ** 2) * np.sin(slipAngle)
-    #
-    #     if name in availableDataList:
-    #         index = availableDataList.index(name)
-    #         self.availableData[index][2] = y
-    #     else:
-    #         self.availableData.append([name, x, y])
-
     if name in ['vehicle ax total', 'vehicle ay total']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
@@ -257,7 +198,7 @@ def preProcessing(self, name):
         interp = interp1d(velocity_t, velocity)
         velocity = interp(x)
 
-        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/gokartpreprocessing/lookup_cur_vel_to_acc.pkl'   #lookupTable file
+        lookupFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunction/lookup_cur_vel_to_acc.pkl'   #lookupTable file
 
         try:
             with open(lookupFilePath, 'rb') as f:
@@ -304,7 +245,7 @@ def preProcessing(self, name):
         interp1V = interp1d(velx_t, velx)
         velx = interp1V(x)
         
-        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/gokartpreprocessing/staticBrakeFunction.pkl'   #static brake function file
+        staticBrakeFunctionFilePath = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/dataanalysisV2/lookupfunction/staticBrakeFunction.pkl'   #static brake function file
         try:
             with open(staticBrakeFunctionFilePath, 'rb') as f:
                 staticBrakeFunction = pickle.load(f)
@@ -364,21 +305,3 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, x, beta])
 
-def derivative_X_dX(name, x, y):
-    if name == 'pose vtheta':
-        dydx = np.diff(y) / np.diff(x)
-        lim = 4
-        for i in range(len(dydx) - 1):
-            if dydx[i] > lim:
-                dydx[i] = (y[i + 1] - y[i] - 2 * np.pi) / (x[i + 1] - x[i])
-            elif dydx[i] < -lim:
-                dydx[i] = (y[i + 1] - y[i] + 2 * np.pi) / (x[i + 1] - x[i])
-                # k = 1
-                # while dydx[i + k] > lim or dydx[i + k] < -lim:
-                #     k += 1
-                # for l in range(k):
-                #     dydx[i + l] = (dydx[i + l - 1] + dydx[i + k]) / 2.0
-
-    else:
-        dydx = np.diff(y) / np.diff(x)
-    return x[:-1], dydx
