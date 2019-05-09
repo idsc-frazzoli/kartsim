@@ -71,8 +71,7 @@ def setListItems(pathLogNr):
                 xRaw, yRaw = interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
         except:
             print('EmptyDataError for ', name, ': could not read data from file ', fileName)
-            xRaw = [0]
-            yRaw = [0]
+            xRaw, yRaw = [0], [0]
 
         kartData[name] = {}
         kartData[name]['data'] = [list(xRaw), list(yRaw)]  # item.data = [x_data, y_data]

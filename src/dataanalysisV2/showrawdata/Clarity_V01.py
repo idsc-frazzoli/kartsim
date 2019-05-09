@@ -378,7 +378,7 @@ class Clarity(QtGui.QMainWindow):
                     xRaw, yRaw = interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
             except:
                 print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
-                raise
+                xRaw, yRaw = [0], [0]
 
             item = QtGui.QListWidgetItem(name)
             item.setText(name)
