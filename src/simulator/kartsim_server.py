@@ -8,6 +8,7 @@ Created on Fri Mar 29 16:19:49 2019
 
 # import simulator.timeIntegrators as integrators
 import integrate.timeIntegrators as integrators
+from dataanalysisV2.textcommunication import decode_request_msg_from_txt, encode_answer_msg_to_txt
 from multiprocessing.connection import Listener
 from threading import Thread
 import numpy as np
@@ -79,19 +80,19 @@ def handle_client(c,v,l,visualization,logging):
     initSignal = 0
     while runThread:
         try:
-            msg = c.recv()
-            if len(msg) == 4 and len(msg[0]) == 7 and (isinstance(msg[2], float) or isinstance(msg[2], int)):
-                X0 = msg[0]
-                U = msg[1]
-                server_return_time = msg[2]
-                sim_time_increment = msg[3]
+            request_msg = c.recv()
+            msg_list = request_msg.split("\n")
+            if len(msg_list) == 4:
+                X0, U, server_return_interval, sim_time_increment = decode_request_msg_from_txt(request_msg)
 
-                # X = integrator.odeIntegrator(X0, U, simStep, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrators.odeIntegratorIVP(X0, U, server_return_time, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                # X = integrators.odeIntegrator(X0, U, server_return_time, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
 
-                c.send(X)
+                answer_msg = encode_answer_msg_to_txt(X)
 
-            elif msg == 'simulation finished':
+                c.send(answer_msg)
+
+            elif request_msg == 'simulation finished':
                 noThread = True
                 if visualization:
                     v.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))

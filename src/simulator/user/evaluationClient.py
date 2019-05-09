@@ -16,6 +16,7 @@ import sys
 
 import dataanalysisV2.evaluation.evaluationReference as evalRef
 import dataanalysisV2.evaluation.evaluation as evalCalc
+from dataanalysisV2.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
 
 def main():
     #___user inputs
@@ -29,7 +30,7 @@ def main():
 
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
-    server_return_interval = 0.01  # [s] simulation time after which result is returned from server
+    server_return_interval = 0.1  # [s] simulation time after which result is returned from server
 
     # preprodata = getpreprodata(pathpreprodata)
 
@@ -70,10 +71,10 @@ def main():
     #                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ]
             print('Simulation with file ', fileName)
             firstStep = int(round(server_return_interval/data_time_step))+1
-            U = [preprodata['time'][0:firstStep].values,
+            U = np.array((preprodata['time'][0:firstStep].values,
                  preprodata['MH BETA'][0:firstStep].values,
                  preprodata['MH AB'][0:firstStep].values,
-                 preprodata['MH TV'][0:firstStep].values]
+                 preprodata['MH TV'][0:firstStep].values))
             for i in range(0,int(simTime/server_return_interval)):
                 if i > 0:
                     simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
@@ -92,9 +93,13 @@ def main():
                         X0[6] = preprodata['pose vtheta'][currIndex]
                 else:
                     tgo = time.time()
-                conn.send([X0, U, server_return_interval, sim_time_increment])
 
-                X1 = conn.recv()
+                txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
+                # conn.send([X0, U, server_return_interval, sim_time_increment])
+                conn.send(txt_msg)
+
+                answer_msg = conn.recv()
+                X1 = decode_answer_msg_from_txt(answer_msg)
 
                 X0 = list(X1[-1,:])
                 if i%10 == 0.0:
