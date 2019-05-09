@@ -6,7 +6,7 @@ Created on Sun Mar 24 16:38:24 2019
 @author: mvb
 """
 import dataIO as dio
-import dataanalysisV1.gokartpreprocessing.buildDataSet as bd
+from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -297,7 +297,7 @@ class Clarity(QtGui.QMainWindow):
         #        self.plotfield.addLegend()
         sel = list([str(item.text()) for item in self.dataList.selectedItems()])
         
-        kartDataMod = bd.updateData(copy.deepcopy(self.kartData),self.dataNames)
+        kartDataMod = updateData(copy.deepcopy(self.kartData),self.dataNames)
         
 #        self.updateData()
         colorIndex = 0
@@ -415,7 +415,7 @@ class Clarity(QtGui.QMainWindow):
                 rawData[topic]['info'] = [1, 0, 0, 1]
                 self.dataNames.append(topic)
 
-            rawData = bd.updateData(rawData,self.dataNames)
+            rawData = updateData(rawData,self.dataNames)
 
             for topic in rawData:
                 if timeTopic:
@@ -451,7 +451,7 @@ class Clarity(QtGui.QMainWindow):
                 print('EmptyDataError: could not read data from file ', pklfile)
                 raise
 
-            rawData = bd.updateData(rawData,self.dataNames)
+            rawData = updateData(rawData,self.dataNames)
 
             for topic in rawData:
                 if timeTopic:
