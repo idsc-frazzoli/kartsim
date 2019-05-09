@@ -173,8 +173,8 @@ def preProcessing(kartData, name):
         x = kartData['MH power accel rimo left']['data'][0]
         powerAccelL = kartData['MH power accel rimo left']['data'][1]
         powerAccelR = kartData['MH power accel rimo right']['data'][1]
-        brakePos_t = kartData['brake position cmd']['data'][0]
-        brakePos = kartData['brake position cmd']['data'][1]
+        brakePos_t = kartData['brake position effective']['data'][0]
+        brakePos = kartData['brake position effective']['data'][1]
         velx_t = kartData['vehicle vx']['data'][0]
         velx = kartData['vehicle vx']['data'][1]
 

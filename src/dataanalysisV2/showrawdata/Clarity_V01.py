@@ -425,8 +425,7 @@ class Clarity(QtGui.QMainWindow):
                        ['motor torque cmd right', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx'],
                        True, 0, 0, 4, 1])
         groups.append(['MH AB',
-                       ['brake position cmd', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
-                       # ['brake position effective', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
+                       ['brake position effective', 'pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],
                        True, 0, 0, 5, 1])
         groups.append(['MH TV',
                        ['pose x', 'pose y', 'pose vx', 'pose vy', 'vehicle slip angle', 'vehicle vx', 'MH power accel rimo left', 'MH power accel rimo right'],

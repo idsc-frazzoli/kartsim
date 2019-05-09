@@ -106,7 +106,7 @@ def sort_out(pathRootData, preproParams, redo):
             else:
                 preproParams[testDay][logNr]['vmu vtheta'] = 1
 
-            if preproParams[testDay][logNr]['brake position cal']:
+            if preproParams[testDay][logNr]['brake position effective']:
                 preproParams[testDay][logNr]['MH AB'] = 1
                 preproParams[testDay][logNr]['MH TV'] = 1
             else:
