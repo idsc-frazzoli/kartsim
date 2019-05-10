@@ -39,9 +39,8 @@ def main():
         vy = 0
         vtheta = 0
         evalrefdata = rawdataframe[['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',
-                                 'MH BETA', 'MH AB', 'MH TV']].copy(deep=True)
+                                    'vehicle ax local', 'vehicle ay local', 'pose atheta', 'MH BETA', 'MH AB', 'MH TV']].copy(deep=True)
         for i in range(len(rawdataframe)):
-        # for i in range(350):
             if i * dt % evaluationhorizon < dt:
                 vxRel = rawdataframe['vehicle vx'][i]
                 vyRel = rawdataframe['vehicle vy'][i]
@@ -56,6 +55,9 @@ def main():
                     evalrefdata['vehicle vx'][i] = vxRel
                     evalrefdata['vehicle vy'][i] = vyRel
                     evalrefdata['pose vtheta'][i] = vtheta
+                    evalrefdata['vehicle ax local'][i] = 0
+                    evalrefdata['vehicle ay local'][i] = 0
+                    evalrefdata['pose atheta'][i] = 0
                 continue
             if i > 0:
                 theta = evalrefdata['pose theta'][i]
@@ -67,12 +69,15 @@ def main():
                 evalrefdata['vehicle vx'][i] = vxRel
                 evalrefdata['vehicle vy'][i] = vyRel
                 evalrefdata['pose vtheta'][i] = vtheta
+                evalrefdata['vehicle ax local'][i] = 0
+                evalrefdata['vehicle ay local'][i] = 0
+                evalrefdata['pose atheta'][i] = 0
 
         savePathName = pathsimdata + '/' + pklfiles[index][1][:-19] + '_evaluationreference.csv'
 
         evalrefdata.to_csv(savePathName, index=False,
                          header=['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',
-                                 'MH BETA', 'MH AB', 'MH TV'])
+                                 'vehicle ax local', 'vehicle ay local', 'pose atheta', 'MH BETA', 'MH AB', 'MH TV'])
         print('Evaluation reference saved to ', savePathName)
 
 if __name__ == '__main__':

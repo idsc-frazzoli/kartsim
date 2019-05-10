@@ -59,8 +59,8 @@ def main():
 
             start = 0
             part = -1
-            rawvaldata.append(rawdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta']])
-            simvaldata.append(simdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta']])
+            rawvaldata.append(rawdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vehicle ax local', 'vehicle ay local', 'pose atheta']])
+            simvaldata.append(simdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vehicle ax local', 'vehicle ay local', 'pose atheta']])
             diff.append(rawvaldata[j][start:start+part] - simvaldata[j][start:start+part])
             # print(np.square(diff))
             rmse.append(np.sqrt(np.sum(np.square(diff[j])) / len(rawdataframe[start:start + part])))
