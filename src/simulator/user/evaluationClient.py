@@ -14,7 +14,9 @@ import pickle
 import pandas as pd
 import sys
 
-from textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
+from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
+import dataanalysisV2.evaluation.evaluation as evalCalc
+import dataanalysisV2.evaluation.evaluationReference as evalRef
 
 def main():
     #___user inputs
@@ -142,11 +144,11 @@ def main():
     print('connection closed')
     conn.close()
     time.sleep(2)
-    # print('Creating reference signal for evaluation...')
-    # evalRef.main()
-    # print('Evaluating results...')
-    # evalCalc.main()
-    # print('Evaluation complete!')
+    print('Creating reference signal for evaluation...')
+    evalRef.main()
+    print('Evaluating results...')
+    evalCalc.main()
+    print('Evaluation complete!')
 
 
 

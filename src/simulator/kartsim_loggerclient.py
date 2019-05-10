@@ -8,9 +8,9 @@ Created on Fri Apr  5 17:40:03 2019
 from multiprocessing.connection import Client
 import numpy as np
 import pandas as pd
-import datetime
-import os
 import sys
+
+from dataanalysisV2.mathfunction import derivative_X_dX
 
 def main():
     savePath = sys.argv[1]
@@ -46,6 +46,9 @@ def logClient(savePathName, logConn):
         if len(msg) == 2:
             X = msg[0]
             U = msg[1]
+
+            X = add_acceleration(X)
+
             XU = np.concatenate((X, np.transpose(U)), axis=1)
         else:
             XU = msg
@@ -59,9 +62,30 @@ def logClient(savePathName, logConn):
                 Xall = np.concatenate((Xall,XU))
         else:
             dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
-            dataFrame.to_csv(savePathName, index = False, header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'MH BETA', 'MH AB', 'MH TV'])
+            dataFrame.to_csv(savePathName, index = False,
+                             header = ['time', 'pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta',
+                                       'vehicle ax local', 'vehicle ay local', 'pose atheta', 'MH BETA', 'MH AB', 'MH TV',])
             runLogger = False
 
-            
+
+def add_acceleration(X):
+    _,ax = derivative_X_dX("", X[:, 0], X[:, 4])
+    _,ay = derivative_X_dX("", X[:, 0], X[:, 5])
+    _,atheta = derivative_X_dX("", X[:, 0], X[:, 6])
+
+    ax = np.array([np.append(ax,ax[-1])])
+    ay = np.array([np.append(ay,ay[-1])])
+    atheta = np.array([np.append(atheta,atheta[-1])])
+
+    # ax = np.add(ax, np.multiply(X[:,6], X[:,5]))
+    # ay = np.subtract(ay, np.multiply(X[:,6], X[:,4]))
+
+    X = np.concatenate((X, ax.transpose()), axis=1)
+    X = np.concatenate((X, ay.transpose()), axis=1)
+    X = np.concatenate((X, atheta.transpose()), axis=1)
+
+    return X
+
+
 if __name__ == '__main__':
     main()
