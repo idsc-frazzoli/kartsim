@@ -10,7 +10,7 @@ from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
 from dataanalysisV2.gokartpreprocessing.importdata import setListItems
 
     
-def stirData(pathRootData, preproParams, requiredList):
+def stirData(pathRootData, preproParams, requiredList, nono_list):
     loggoodcount = 0
     logtotcount = 0
     for day in preproParams:
@@ -18,7 +18,7 @@ def stirData(pathRootData, preproParams, requiredList):
             loggoodcount += 1
             logtotcount += 1
             for topic in preproParams[day][log]:
-                if topic in requiredList and int(preproParams[day][log][topic]) == 0:
+                if (topic in requiredList and int(preproParams[day][log][topic]) == 0) or (topic in nono_list and int(preproParams[day][log][topic]) == 1):
                     preproParams[day][log]['goodData'] = 0
                     loggoodcount -= 1
                     break
@@ -64,7 +64,7 @@ def stirData(pathRootData, preproParams, requiredList):
                         kartData[topic] = kartData[topic]['data']
                 for delTopic in delTopics:
                     kartData.pop(delTopic,None)
-                
+
                 kartDataAll[logNr] = kartData
                 comp_count += 1
 
