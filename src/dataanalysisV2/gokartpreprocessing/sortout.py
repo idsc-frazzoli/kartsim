@@ -6,6 +6,7 @@ Created 09.05.19 10:18
 @author: mvb
 """
 import numpy as np
+import time
 
 from dataanalysisV2.dataIO import getDirectories
 from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
@@ -13,6 +14,7 @@ from dataanalysisV2.gokartpreprocessing.importdata import setListItems
 
 
 def sort_out(pathRootData, preproParams, redo):
+    t = time.time()
 
     path_logs, comp_tot = initialize_parameters(pathRootData, preproParams, redo)
 
@@ -20,11 +22,33 @@ def sort_out(pathRootData, preproParams, redo):
     for testDay, logNr, path in path_logs:
 
         kartData, allDataNames = setListItems(path)
-        vmuDataNames = ['pose vtheta', 'pose atheta', 'vmu ax', 'vmu ay']
+        vmuDataNames = ['pose x', 'pose y', 'vehicle vy', 'pose vtheta', 'pose atheta', 'vmu ax', 'vmu ay']
         kartData = updateData(kartData, vmuDataNames)
 
         statusInfo = logNr + ':  '
 
+        #___distance
+        dx = np.subtract(kartData['pose x']['data'][1][1:], kartData['pose x']['data'][1][:-1])
+        dy = np.subtract(kartData['pose y']['data'][1][1:], kartData['pose y']['data'][1][:-1])
+        dist = np.sum(np.sqrt(np.square(dx) + np.square(dy)))
+        if dist > 100:
+            preproParams[testDay][logNr]['multiple laps'] = 1
+        else:
+            preproParams[testDay][logNr]['multiple laps'] = 0
+
+        #___driving style
+        if np.std(kartData['vehicle vy']['data'][1]) > 0.2:
+            preproParams[testDay][logNr]['high slip angles'] = 1
+        else:
+            preproParams[testDay][logNr]['high slip angles'] = 0
+
+        #___reverse
+        if np.min(kartData['vehicle vx']['data'][1]) < -0.2:
+            preproParams[testDay][logNr]['reverse'] = 1
+        else:
+            preproParams[testDay][logNr]['reverse'] = 0
+
+        #___steering
         lenSteerCmd = len(kartData['steer torque cmd']['data'][1])
         if lenSteerCmd == 1:
             statusInfo = statusInfo + 'steering cmd data missing,  '
@@ -56,6 +80,7 @@ def sort_out(pathRootData, preproParams, redo):
         else:
             preproParams[testDay][logNr]['steer position cal'] = 1
 
+        #___brake
         if np.max(kartData['brake position cmd']['data'][1]) < 0.025 and np.mean(kartData['brake position cmd']['data'][1]) < 0.004:
             statusInfo = statusInfo + 'brake position cmd data missing or insufficient,  '
             preproParams[testDay][logNr]['brake position cmd'] = 0
@@ -68,6 +93,7 @@ def sort_out(pathRootData, preproParams, redo):
         else:
             preproParams[testDay][logNr]['brake position effective'] = 1
 
+        #___VMU
         if np.abs(np.mean(kartData['vmu ax']['data'][1])) < 0.01 and np.std(kartData['vmu ax']['data'][1]) < 0.01:
             statusInfo = statusInfo + 'vmu ax data missing or insufficient,  '
             preproParams[testDay][logNr]['vmu ax'] = 0
@@ -87,6 +113,7 @@ def sort_out(pathRootData, preproParams, redo):
         else:
             preproParams[testDay][logNr]['vmu vtheta'] = 1
 
+        #___MH model specific
         if preproParams[testDay][logNr]['brake position effective']:
             preproParams[testDay][logNr]['MH AB'] = 1
             preproParams[testDay][logNr]['MH TV'] = 1
@@ -102,7 +129,7 @@ def sort_out(pathRootData, preproParams, redo):
         statusInfo = statusInfo + 'done'
         comp_count += 1
         print(statusInfo)
-        print(str(int(comp_count / comp_tot * 100)), '% completed.  ', statusInfo, end='\r')
+        print(str(int(comp_count / comp_tot * 100)), '% completed.  elapsed time:', int(time.time() - t), "s", end='\r')
 
     return preproParams
 
