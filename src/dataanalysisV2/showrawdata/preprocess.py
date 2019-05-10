@@ -180,6 +180,19 @@ def preProcessing(self, name):
             self.availableData[index][2] = y
         else:
             self.availableData.append([name, x, y])
+
+    if name in ['vehicle ax local', 'vehicle ay local']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        t = self.availableData[availableDataList.index(nameDependency[0])][1]
+        v = self.availableData[availableDataList.index(nameDependency[0])][2]
+        t, dydt = derivative_X_dX(name, t, v)
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = dydt
+        else:
+            self.availableData.append([name, t, dydt])
             
     if name in ['MH power accel rimo left', 'MH power accel rimo right']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):

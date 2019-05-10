@@ -111,7 +111,7 @@ def preProcessing(kartData, name):
             while len(dydt) < len(vy):
                 vy = vy[:-1]
 
-            y = dydt - (vtheta * vy)
+            y = dydt + (vtheta * vy)
         else:
             nameFrom = 'vehicle vy'
             t, dydt = derivative_X_dX(name, kartData[nameFrom]['data'][0],
@@ -121,7 +121,7 @@ def preProcessing(kartData, name):
             while len(dydt) < len(vx):
                 vx = vx[:-1]
 
-            y = dydt + (vtheta * vx)
+            y = dydt - (vtheta * vx)
 
         kartData[name]['data'] = [x[:-1], y]
 
@@ -136,6 +136,18 @@ def preProcessing(kartData, name):
             y = ay * np.cos(theta[:-2]) - ax * np.sin(theta[:-2])
 
         kartData[name]['data'] = [x, y]
+
+    elif name in ['vehicle ax local', 'vehicle ay local']:
+        if name == 'vehicle ax local':
+            t = kartData['vehicle vx']['data'][0]
+            v = kartData['vehicle vx']['data'][1]
+        else:
+            t = kartData['vehicle vy']['data'][0]
+            v = kartData['vehicle vy']['data'][1]
+
+        t, dydt = derivative_X_dX(name, t, v)
+
+        kartData[name]['data'] = [t, dydt]
 
     elif name in ['MH power accel rimo left', 'MH power accel rimo right']:
         if name == 'MH power accel rimo left':

@@ -91,3 +91,10 @@ def dict_to_pkl(dict, folder_path):
         except:
             print('Could not save ', key + '.pkl', ' to file.')
         comp_count += 1
+
+def dataframe_to_pkl(file_path_name, dataframe):
+    try:
+        with open(file_path_name, 'wb') as f:
+            pickle.dump(dataframe, f, pickle.HIGHEST_PROTOCOL)
+    except:
+        print('Could not save to file at', file_path_name)

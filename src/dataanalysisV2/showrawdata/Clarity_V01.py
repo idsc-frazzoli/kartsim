@@ -402,6 +402,8 @@ class Clarity(QtGui.QMainWindow):
         groups.append(['pose vx', ['pose x'], True, 5, 50, 1, 1])
         groups.append(['pose vy', ['pose y'], True, 5, 50, 1, 1])
         groups.append(['pose vtheta', ['pose theta'], True, 5, 50, 1, 1])
+        groups.append(['vehicle ax local', ['vehicle vx'], True, 0, 0, 1, 1])
+        groups.append(['vehicle ay local', ['vehicle vy'], True, 0, 0, 1, 1])
         groups.append(['pose ax', ['pose x', 'pose vx'], True, 20, 200, 2, 1])
         groups.append(['pose ay', ['pose y', 'pose vy'], True, 20, 200, 2, 1])
         groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])

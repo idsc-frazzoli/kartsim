@@ -5,7 +5,7 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import dataIO as dio
+import dataanalysisV2.dataIO as dio
 from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
 
 from pyqtgraph.Qt import QtGui, QtCore
@@ -406,9 +406,9 @@ class Clarity(QtGui.QMainWindow):
                 raise
                 
             preproTopics = ['pose vx', 'pose vy', 'pose ax',
-                                  'pose ay', 'pose atheta', 'vehicle slip angle',
-                                  'vehicle ax total', 'vehicle ay total',
-                                  'vehicle ax only transl', 'vehicle ay only transl']
+                                  'pose ay', 'pose atheta', 'vehicle slip angle',]
+                                  # 'vehicle ax total', 'vehicle ay total',
+                                  # 'vehicle ax only transl', 'vehicle ay only transl']
             for topic in preproTopics:
                 rawData[topic] = {}
                 rawData[topic]['data'] = []
