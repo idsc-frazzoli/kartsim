@@ -13,19 +13,22 @@ import datetime
 import time
 
 import showrawdata.preprocess as prep
+from dataanalysisV2.dataIO import create_folder_with_time, dataframe_to_pkl
 import dataIO as dio
 
-def main():
+def sample_from_logdata(sampling_time_period, path_save_data, path_load_data = None, dataset_tag = "test"):
     #__user input
-    pathRootSortedData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData/'
-    simFolders = dio.getDirectories(pathRootSortedData)
-    simFolders.sort()
-    defaultSim = simFolders[-1]
-    pathLoadData = pathRootSortedData + '/' + defaultSim
-    # pathLoadData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190423-155633_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    pathSaveData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    datasetTag = 'test_newFormat'
-    samplingTimeStep = 0.01
+    if path_load_data == None:
+        path_preprocessed_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData/'
+        simFolders = dio.getDirectories(path_preprocessed_data)
+        simFolders.sort()
+        defaultSim = simFolders[-1]
+        path_load_data = path_preprocessed_data + '/' + defaultSim
+
+    # path_load_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/RawSortedData/20190423-155633_test_MarcsModel_allData' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # path_save_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # dataset_tag = 'test_newFormat'
+    # sampling_time_period = 0.01
     
 #    dataSpecificMarcsModel = True
     
@@ -33,41 +36,28 @@ def main():
 
     comp_tot = 0
     files = []
-    for r, d, f in os.walk(pathLoadData):
+    for r, d, f in os.walk(path_load_data):
         for file in f:
             if '.pkl' in file:
                 files.append([os.path.join(r, file), file])
                 comp_tot += 1
 
-    currentDT = datetime.datetime.now()
-    folderName = currentDT.strftime("%Y%m%d-%H%M%S")
-    folderPath = pathSaveData + '/' + folderName + '_' + datasetTag
+    folder_path = create_folder_with_time(path_save_data, dataset_tag)
 
-    try:
-        if not os.path.exists(folderPath):
-            os.makedirs(folderPath)
-    except OSError:
-        print('Error while creating directory: ', folderPath)
-
-    print('Sampling data from preprocessed data at', pathLoadData)
+    print('Sampling data from preprocessed data at', path_load_data)
 
     comp_count = 0
     starttime = time.time()
-    for file, fileName in files[:10]:
+    for file, fileName in files:
         print(str(int(comp_count / comp_tot * 100)),
               '% completed.   current file:', fileName[:-4] + '_sampledlogdata.pkl   elapsed time:',
               int(time.time() - starttime), 's', end='\r')
 
-        dataSet = getSampledData(file, samplingTimeStep)
+        dataSet = getSampledData(file, sampling_time_period)
 
-        filePathName = folderPath + '/' + fileName[:-4] + '_sampledlogdata.pkl'
+        filePathName = folder_path + '/' + fileName[:-4] + '_sampledlogdata.pkl'
 
-        try:
-            with open(filePathName, 'wb') as f:
-                pickle.dump(dataSet, f, pickle.HIGHEST_PROTOCOL)
-            # print('dataset.pkl',' done')
-        except:
-            print('Could not save ', 'dataset.pkl' ,' to file.')
+        dataframe_to_pkl(filePathName, dataSet)
 
         comp_count += 1
 
@@ -100,7 +90,3 @@ def getSampledData(file, samplingTimeStep):
         dataSetLog.insert(len(dataSetLog.columns),topic,list(sData))
 
     return dataSetLog
-
-
-if __name__ == '__main__':
-    main()
