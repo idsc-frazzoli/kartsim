@@ -54,43 +54,43 @@ def main():
             preprodata = pd.DataFrame()
 
         #___simulation parameters
-        data_time_step = np.round(preprodata['time'].iloc[1] - preprodata['time'].iloc[0],3)  # [s] Log data sampling time step
+        data_time_step = np.round(preprodata['time [s]'].iloc[1] - preprodata['time [s]'].iloc[0],3)  # [s] Log data sampling time step
         sim_time_increment = data_time_step     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
-        simTime = preprodata['time'].iloc[-1]  # [s] Total simulation time
+        simTime = preprodata['time [s]'].iloc[-1]  # [s] Total simulation time
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-        X0 = [preprodata['time'][0], preprodata['pose x'][0], preprodata['pose y'][0], preprodata['pose theta'][0],
-              preprodata['vehicle vx'][0], preprodata['vehicle vy'][0], preprodata['pose vtheta'][0]]
+        X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
+              preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0], preprodata['pose vtheta [rad*s^-1]'][0]]
 
         # ______^^^______
 
         runSimulation = True
         ttot = time.time()
         while runSimulation:
-    #        ['pose x','pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vmu ax (forward)',
-    #                    'vmu ay (left)', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA', ]
+    #        ['pose x [m]','pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vmu ax (forward)',
+    #                    'vmu ay (left)', 'pose atheta', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]', 'MH BETA [rad]', ]
             print('Simulation with file ', fileName)
             firstStep = int(round(server_return_interval/data_time_step))+1
-            U = np.array((preprodata['time'][0:firstStep].values,
-                 preprodata['MH BETA'][0:firstStep].values,
-                 preprodata['MH AB'][0:firstStep].values,
-                 preprodata['MH TV'][0:firstStep].values))
+            U = np.array((preprodata['time [s]'][0:firstStep].values,
+                 preprodata['MH BETA [rad]'][0:firstStep].values,
+                 preprodata['MH AB [m*s^-2]'][0:firstStep].values,
+                 preprodata['MH TV [rad*s^-2]'][0:firstStep].values))
             for i in range(0,int(simTime/server_return_interval)):
                 if i > 0:
                     simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
-                    U = np.vstack((preprodata['time'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH BETA'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH AB'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH TV'][simRange[0]:simRange[1]].values))
+                    U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
+                                     preprodata['MH BETA [rad]'][simRange[0]:simRange[1]].values,
+                                     preprodata['MH AB [m*s^-2]'][simRange[0]:simRange[1]].values,
+                                     preprodata['MH TV [rad*s^-2]'][simRange[0]:simRange[1]].values))
 
                     if validation and i*server_return_interval % validationhorizon < server_return_interval:
                         currIndex = int(round(i * server_return_interval / data_time_step))
-                        X0[1] = preprodata['pose x'][currIndex]
-                        X0[2] = preprodata['pose y'][currIndex]
-                        X0[3] = preprodata['pose theta'][currIndex]
-                        X0[4] = preprodata['vehicle vx'][currIndex]
-                        X0[5] = preprodata['vehicle vy'][currIndex]
-                        X0[6] = preprodata['pose vtheta'][currIndex]
+                        X0[1] = preprodata['pose x [m]'][currIndex]
+                        X0[2] = preprodata['pose y [m]'][currIndex]
+                        X0[3] = preprodata['pose theta [rad]'][currIndex]
+                        X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
+                        X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
+                        X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
                 else:
                     tgo = time.time()
 
