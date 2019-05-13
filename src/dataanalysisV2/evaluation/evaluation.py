@@ -59,14 +59,20 @@ def main():
 
             start = 0
             part = -1
-            rawvaldata.append(rawdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vehicle ax local', 'vehicle ay local', 'pose atheta']])
-            simvaldata.append(simdataframe[['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'pose vtheta', 'vehicle ax local', 'vehicle ay local', 'pose atheta']])
-            diff.append(rawvaldata[j][start:start+part] - simvaldata[j][start:start+part])
+            rawvaldata.append(rawdataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
+                                            'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]',
+                                            'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']])
+            simvaldata.append(simdataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
+                                            'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]',
+                                            'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']])
+            tmp_diff = rawvaldata[j][start:start+part] - simvaldata[j][start:start+part]
+            tmp_diff['time [s]'] = rawdataframe['time [s]']
+            diff.append(tmp_diff)
             # print(np.square(diff))
             rmse.append(np.sqrt(np.sum(np.square(diff[j])) / len(rawdataframe[start:start + part])))
 
             print('Evaluation for ', simfiles[index][j+1][1], 'vs', simfiles[index][0][1])
-            print(rmse[j])
+            print(rmse[j][1:])
             print('Overall score: ', np.sum(rmse[j]), '\n')
 
         #generating results page
@@ -89,7 +95,7 @@ def main():
         resultsPage = plt.figure(figsize=(11.69, 8.27))
         resultsPage.clf()
         resultsPage.text(0.05, 0.95, infotext1,  size=12, ha="left", va='top')
-        resultsPage.text(0.2, 0.95, infotext2,  size=12, ha="left", va='top')
+        resultsPage.text(0.3, 0.95, infotext2,  size=12, ha="left", va='top')
         pdf.savefig()
         plt.close()
         # print('Evaluation for ' + simfiles[index][k+1][1] + ' vs ' + simfiles[index][0][1] + '\n')
@@ -97,18 +103,19 @@ def main():
 
 
         # generating plots
-        for debugtopic in rawvaldata[0].columns:
+        for debugtopic in rawvaldata[0].columns[1:]:
             for k in range(len(simfiles[index][1:])):
                 # debugtopic = 'pose vtheta'
                 savetopic = debugtopic.replace(' ', '_')
                 fig, axs = plt.subplots(2, 1, figsize = (10,6))
                 fig.suptitle(debugtopic + '\n' + csvfiles[index*2+k][1][:-4],fontsize = 16)
                 # plt.figure(figsize=(10,10))
-                axs[0].plot(rawvaldata[k][debugtopic][start:start+part], label = 'log data')
-                axs[0].plot(simvaldata[k][debugtopic][start:start+part], label = 'simulation data')
+                axs[0].plot(rawvaldata[k]['time [s]'][start:start+part], rawvaldata[k][debugtopic][start:start+part], label = 'measured (reference)')
+                axs[0].plot(simvaldata[k]['time [s]'][start:start+part], simvaldata[k][debugtopic][start:start+part], label = 'simulated')
                 axs[0].legend()
-                axs[1].plot(diff[k][debugtopic], color = 'r', label = 'error')
+                axs[1].plot(diff[k]['time [s]'], diff[k][debugtopic], color = 'r', label = 'error')
                 axs[1].legend()
+                axs[1].set_xlabel('time [s]')
                 pdf.savefig()
                 plt.close()
                 # plt.savefig(pathsimdata + '/' + savetopic + '-' + csvfiles[index * 2 + j][1][:-4] + '.pdf')

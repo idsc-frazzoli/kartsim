@@ -405,8 +405,8 @@ class Clarity(QtGui.QMainWindow):
                 print('EmptyDataError: could not read data from file ', csvfile)
                 raise
                 
-            preproTopics = ['pose vx', 'pose vy', 'pose ax',
-                                  'pose ay', 'pose atheta', 'vehicle slip angle',]
+            preproTopics = ['pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose ax [m*s^-2]',
+                                  'pose ay [m*s^-2]', 'pose atheta [rad*s^-2]', 'vehicle slip angle [rad]',]
                                   # 'vehicle ax total', 'vehicle ay total',
                                   # 'vehicle ax only transl', 'vehicle ay only transl']
             for topic in preproTopics:

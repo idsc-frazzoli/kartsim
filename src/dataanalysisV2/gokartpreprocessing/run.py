@@ -30,11 +30,13 @@ def main():
     # preprocess data and compute inferred data from raw logs
     preprocessData = True
     # preprocessData = False
-    required_list = ['pose x', 'pose y', 'pose theta', 'vehicle vx', 'vehicle vy', 'vehicle slip angle', 'pose vtheta',
-                     'vehicle ax local', 'vehicle ay local', 'pose atheta', 'MH AB', 'MH TV', 'MH BETA']  # list of signals and tags which should be true for the logs used to build the dataset
+    required_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+                     'pose vtheta [rad*s^-1]', 'vehicle slip angle', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+                     'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]',
+                     'multiple laps', 'high slip angles']  # list of signals and tags which should be true for the logs used to build the dataset
     nono_list = ['reverse']
     saveDatasetPath = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData' # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'test_newFormat'
+    dataset_tag = 'MM_multilap_slip_noreverse'
 
     # sample data
     sampleData = True

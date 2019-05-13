@@ -22,14 +22,15 @@ def sort_out(pathRootData, preproParams, redo):
     for testDay, logNr, path in path_logs:
 
         kartData, allDataNames = setListItems(path)
-        vmuDataNames = ['pose x', 'pose y', 'vehicle vy', 'pose vtheta', 'pose atheta', 'vmu ax', 'vmu ay']
+        vmuDataNames = ['pose x [m]', 'pose y [m]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'pose atheta [rad*s^-2]',
+                        'vmu ax [m*s^-2] [m*s^-2]', 'vmu ay [m*s^-2] [m*s^-2]']
         kartData = updateData(kartData, vmuDataNames)
 
         statusInfo = logNr + ':  '
 
         #___distance
-        dx = np.subtract(kartData['pose x']['data'][1][1:], kartData['pose x']['data'][1][:-1])
-        dy = np.subtract(kartData['pose y']['data'][1][1:], kartData['pose y']['data'][1][:-1])
+        dx = np.subtract(kartData['pose x [m]']['data'][1][1:], kartData['pose x [m]']['data'][1][:-1])
+        dy = np.subtract(kartData['pose y [m]']['data'][1][1:], kartData['pose y [m]']['data'][1][:-1])
         dist = np.sum(np.sqrt(np.square(dx) + np.square(dy)))
         if dist > 100:
             preproParams[testDay][logNr]['multiple laps'] = 1
@@ -37,94 +38,94 @@ def sort_out(pathRootData, preproParams, redo):
             preproParams[testDay][logNr]['multiple laps'] = 0
 
         #___driving style
-        if np.std(kartData['vehicle vy']['data'][1]) > 0.2:
+        if np.std(kartData['vehicle vy [m*s^-1]']['data'][1]) > 0.2:
             preproParams[testDay][logNr]['high slip angles'] = 1
         else:
             preproParams[testDay][logNr]['high slip angles'] = 0
 
         #___reverse
-        if np.min(kartData['vehicle vx']['data'][1]) < -0.2:
+        if np.min(kartData['vehicle vx [m*s^-1]']['data'][1]) < -0.2:
             preproParams[testDay][logNr]['reverse'] = 1
         else:
             preproParams[testDay][logNr]['reverse'] = 0
 
         #___steering
-        lenSteerCmd = len(kartData['steer torque cmd']['data'][1])
+        lenSteerCmd = len(kartData['steer torque cmd [n.a.]']['data'][1])
         if lenSteerCmd == 1:
             statusInfo = statusInfo + 'steering cmd data missing,  '
-            preproParams[testDay][logNr]['steer torque cmd'] = 0
-        elif kartData['steer torque cmd']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(0) / len(
-                kartData['steer torque cmd']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
+            preproParams[testDay][logNr]['steer torque cmd [n.a.]'] = 0
+        elif kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(0) / len(
+                kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
             statusInfo = statusInfo + 'steering cmd data: too many zeros...,  '
-            preproParams[testDay][logNr]['steer torque cmd'] = 0
-        elif np.abs(np.mean(kartData['steer torque cmd']['data'][1])) < 0.01 and np.std(
-                kartData['steer torque cmd']['data'][1]) < 0.1:
+            preproParams[testDay][logNr]['steer torque cmd [n.a.]'] = 0
+        elif np.abs(np.mean(kartData['steer torque cmd [n.a.]']['data'][1])) < 0.01 and np.std(
+                kartData['steer torque cmd [n.a.]']['data'][1]) < 0.1:
             statusInfo = statusInfo + 'steering cmd data insufficient,  '
-            preproParams[testDay][logNr]['steer torque cmd'] = 0
+            preproParams[testDay][logNr]['steer torque cmd [n.a.]'] = 0
         else:
-            preproParams[testDay][logNr]['steer torque cmd'] = 1
+            preproParams[testDay][logNr]['steer torque cmd [n.a.]'] = 1
 
-        lenSteerPos = len(kartData['steer position cal']['data'][1])
+        lenSteerPos = len(kartData['steer position cal [n.a.]']['data'][1])
         if lenSteerPos == 1:
             statusInfo = statusInfo + 'steering pos cal data missing,  '
-            preproParams[testDay][logNr]['steer position cal'] = 0
-        elif kartData['steer position cal']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)].count(
+            preproParams[testDay][logNr]['steer position cal [n.a.]'] = 0
+        elif kartData['steer position cal [n.a.]']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)].count(
                 0) / len(
-                kartData['steer position cal']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)]) > 0.05:
+                kartData['steer position cal [n.a.]']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)]) > 0.05:
             statusInfo = statusInfo + 'steering pos cal data: too many zeros...,  '
-            preproParams[testDay][logNr]['steer position cal'] = 0
-        elif np.abs(np.mean(kartData['steer position cal']['data'][1])) < 0.01 and np.std(
-                kartData['steer position cal']['data'][1]) < 0.1:
+            preproParams[testDay][logNr]['steer position cal [n.a.]'] = 0
+        elif np.abs(np.mean(kartData['steer position cal [n.a.]']['data'][1])) < 0.01 and np.std(
+                kartData['steer position cal [n.a.]']['data'][1]) < 0.1:
             statusInfo = statusInfo + 'steering pos cal data missing or insufficient,  '
-            preproParams[testDay][logNr]['steer position cal'] = 0
+            preproParams[testDay][logNr]['steer position cal [n.a.]'] = 0
         else:
-            preproParams[testDay][logNr]['steer position cal'] = 1
+            preproParams[testDay][logNr]['steer position cal [n.a.]'] = 1
 
         #___brake
-        if np.max(kartData['brake position cmd']['data'][1]) < 0.025 and np.mean(kartData['brake position cmd']['data'][1]) < 0.004:
-            statusInfo = statusInfo + 'brake position cmd data missing or insufficient,  '
-            preproParams[testDay][logNr]['brake position cmd'] = 0
+        if np.max(kartData['brake position cmd [m]']['data'][1]) < 0.025 and np.mean(kartData['brake position cmd [m]']['data'][1]) < 0.004:
+            statusInfo = statusInfo + 'brake position cmd [m] data missing or insufficient,  '
+            preproParams[testDay][logNr]['brake position cmd [m]'] = 0
         else:
-            preproParams[testDay][logNr]['brake position cmd'] = 1
+            preproParams[testDay][logNr]['brake position cmd [m]'] = 1
 
-        if np.max(kartData['brake position effective']['data'][1]) < 0.025 and np.mean(kartData['brake position effective']['data'][1]) < 0.004:
-            statusInfo = statusInfo + 'brake position effective data missing or insufficient,  '
-            preproParams[testDay][logNr]['brake position effective'] = 0
+        if np.max(kartData['brake position effective [m]']['data'][1]) < 0.025 and np.mean(kartData['brake position effective [m]']['data'][1]) < 0.004:
+            statusInfo = statusInfo + 'brake position effective [m] data missing or insufficient,  '
+            preproParams[testDay][logNr]['brake position effective [m]'] = 0
         else:
-            preproParams[testDay][logNr]['brake position effective'] = 1
+            preproParams[testDay][logNr]['brake position effective [m]'] = 1
 
         #___VMU
-        if np.abs(np.mean(kartData['vmu ax']['data'][1])) < 0.01 and np.std(kartData['vmu ax']['data'][1]) < 0.01:
-            statusInfo = statusInfo + 'vmu ax data missing or insufficient,  '
-            preproParams[testDay][logNr]['vmu ax'] = 0
+        if np.abs(np.mean(kartData['vmu ax [m*s^-2]']['data'][1])) < 0.01 and np.std(kartData['vmu ax [m*s^-2]']['data'][1]) < 0.01:
+            statusInfo = statusInfo + 'vmu ax [m*s^-2] data missing or insufficient,  '
+            preproParams[testDay][logNr]['vmu ax [m*s^-2]'] = 0
         else:
-            preproParams[testDay][logNr]['vmu ax'] = 1
+            preproParams[testDay][logNr]['vmu ax [m*s^-2]'] = 1
 
-        if np.abs(np.mean(kartData['vmu ay']['data'][1])) < 0.01 and np.std(kartData['vmu ay']['data'][1]) < 0.05:
-            statusInfo = statusInfo + 'vmu ay data missing or insufficient,  '
-            preproParams[testDay][logNr]['vmu ay'] = 0
+        if np.abs(np.mean(kartData['vmu ay [m*s^-2]']['data'][1])) < 0.01 and np.std(kartData['vmu ay [m*s^-2]']['data'][1]) < 0.05:
+            statusInfo = statusInfo + 'vmu ay [m*s^-2] data missing or insufficient,  '
+            preproParams[testDay][logNr]['vmu ay [m*s^-2]'] = 0
         else:
-            preproParams[testDay][logNr]['vmu ay'] = 1
+            preproParams[testDay][logNr]['vmu ay [m*s^-2]'] = 1
 
-        if np.abs(np.mean(kartData['vmu vtheta']['data'][1])) < 0.01 and np.std(
-                kartData['vmu vtheta']['data'][1]) < 0.05:
-            statusInfo = statusInfo + 'vmu vtheta data missing or insufficient,  '
-            preproParams[testDay][logNr]['vmu vtheta'] = 0
+        if np.abs(np.mean(kartData['vmu vtheta [rad*s^-1]']['data'][1])) < 0.01 and np.std(
+                kartData['vmu vtheta [rad*s^-1]']['data'][1]) < 0.05:
+            statusInfo = statusInfo + 'vmu vtheta [rad*s^-1] data missing or insufficient,  '
+            preproParams[testDay][logNr]['vmu vtheta [rad*s^-1]'] = 0
         else:
-            preproParams[testDay][logNr]['vmu vtheta'] = 1
+            preproParams[testDay][logNr]['vmu vtheta [rad*s^-1]'] = 1
 
         #___MH model specific
-        if preproParams[testDay][logNr]['brake position effective']:
-            preproParams[testDay][logNr]['MH AB'] = 1
-            preproParams[testDay][logNr]['MH TV'] = 1
+        if preproParams[testDay][logNr]['brake position effective [m]']:
+            preproParams[testDay][logNr]['MH AB [m*s^-2]'] = 1
+            preproParams[testDay][logNr]['MH TV [rad*s^-2]'] = 1
         else:
-            preproParams[testDay][logNr]['MH AB'] = 0
-            preproParams[testDay][logNr]['MH TV'] = 0
+            preproParams[testDay][logNr]['MH AB [m*s^-2]'] = 0
+            preproParams[testDay][logNr]['MH TV [rad*s^-2]'] = 0
 
-        if preproParams[testDay][logNr]['steer position cal']:
-            preproParams[testDay][logNr]['MH BETA'] = 1
+        if preproParams[testDay][logNr]['steer position cal [n.a.]']:
+            preproParams[testDay][logNr]['MH BETA [rad]'] = 1
         else:
-            preproParams[testDay][logNr]['MH BETA'] = 0
+            preproParams[testDay][logNr]['MH BETA [rad]'] = 0
 
         statusInfo = statusInfo + 'done'
         comp_count += 1
