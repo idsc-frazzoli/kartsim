@@ -7,6 +7,7 @@ Created on Wed Apr  3 09:00:21 2019
 original code from MATLAB written by Marc Heim
 """
 import numpy as np
+import tensorflow as tf
 
 def marc_vehiclemodel (X,W):
 
@@ -28,12 +29,10 @@ def marc_vehiclemodel (X,W):
 
 def pymodelDx(X, W, param):
     global B1, B2, C1, C2, D1, D2, reg
-    print(X)
     VELX = X[0,0]
     VELY = X[0,1]
     VELROTZ = X[0,2]
     BETA = X[0,3]
-    print(BETA)
     AB = X[0,4]
     TV = X[0,5]
 
@@ -62,10 +61,10 @@ def pymodelDx(X, W, param):
     f2n = l1/l
     # w = 1.08
 
-    vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
+    vel1 = tf.matmul(rotmat_tf(BETA),tf.stack([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
 
-    F1 = np.matmul(rotmat(-BETA),np.array([[0],[f1y[0]]]))*f1n
+    F1 = tf.matmul(rotmat_tf(-BETA),tf.stack([[0],[f1y[0]]]))*f1n
     F1x = F1[0]
     F1y = F1[1]
     F2x = AB
@@ -80,11 +79,15 @@ def pymodelDx(X, W, param):
     
     return ACCX[0], ACCY[0], ACCROTZ[0]
 
-def rotmat(beta):
-    return np.array([[np.cos(beta),np.sin(beta)],[-np.sin(beta), np.cos(beta)]])
+# def rotmat(beta):
+#     return np.array([[tf.cos(beta),tf.sin(beta)],[-tf.sin(beta), tf.cos(beta)]])
+def rotmat_tf(beta):
+    R1 = tf.stack([tf.cos(beta),tf.sin(beta)],axis=0)
+    R2 = tf.stack([-tf.sin(beta), tf.cos(beta)],axis=0)
+    return tf.stack([R1, R2],axis=0)
 
 def magic(s, B, C, D):
-    return D * np.sin(C * np.arctan(B * s))
+    return D * tf.sin(C * tf.atan(B * s))
 
 
 def capfactor(taccx):
@@ -110,15 +113,38 @@ def simplefaccy(VELY, VELX):
 def satfun(x):
     l = 0.8;
     r = 1-l;
-    if isinstance(x, float):
-        if x<l:
-            y=x;
-        elif x<1+r:
-            d = (1+r-x)/r;
-            y = 1-1/4*r*d**2;
-        else:
-            y = 1;
-        y=0.95*y;
-    else:
+
+    def ft0(x,l,r): return tf.cond(tf.less(x,l), lambda: ft1(x), lambda: ff1(x,r))
+
+    def ff0(): return 999.0
+
+    def ft1(x): return x
+
+    def ff1(x,r): return tf.cond(tf.less(x,1+r), lambda: ft2(x,r), lambda: ff2())
+
+    def ft2(x,r):
+        d = (1+r-x)/r
+        return 1-1/4*r*d**2
+
+    def ff2(): return 1.0
+
+    y = tf.cond(tf.equal(isinstance(x,tf.Tensor),True), lambda: ft0(x,l,r), lambda: ff0())
+
+    if y == 999.0:
         print('ERROR: x in satfun(x) is not float!')
-    return y
+        return None
+    else:
+        y = 0.95 * y
+        return y
+    # if isinstance(x, tf.Tensor):
+    #     if x<l:
+    #         y=x;
+    #     elif x<1+r:
+    #         d = (1+r-x)/r;
+    #         y = 1-1/4*r*d**2;
+    #     else:
+    #         y = 1;
+    #     y=0.95*y;
+    # else:
+    #     print('ERROR: x in satfun(x) is not float!')
+
