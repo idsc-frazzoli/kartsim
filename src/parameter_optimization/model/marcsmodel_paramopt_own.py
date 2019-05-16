@@ -67,7 +67,7 @@ def pymodelDx(X, W, param):
     l2 = l - l1
     f1n = l2 / l
     f2n = l1 / l
-    w = 1.08
+    # w = 1.08
 
     vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
     f1y = simplefaccy(vel1[1], vel1[0])
@@ -111,7 +111,7 @@ def jacobian_of_pymodelDx(X, W, param):
     l2 = l-l1
     f1n = l2/l
     f2n = l1/l
-    w = 1.08
+    # w = 1.08
 
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
