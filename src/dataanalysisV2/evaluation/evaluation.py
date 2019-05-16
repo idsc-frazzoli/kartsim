@@ -57,22 +57,24 @@ def main():
                 print('FileNotFoundError: could not read data from file ', simfiles[index][j+1][0])
                 raise
 
-            start = 0
-            part = -1
+
             rawvaldata.append(rawdataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]',
                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']])
             simvaldata.append(simdataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]',
                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']])
-            tmp_diff = rawvaldata[j][start:start+part] - simvaldata[j][start:start+part]
-            tmp_diff['time [s]'] = rawdataframe['time [s]']
+            tmp_diff = rawvaldata[j].drop(['time [s]'], axis=1) - simvaldata[j].drop(['time [s]'], axis=1)
             diff.append(tmp_diff)
             # print(np.square(diff))
-            rmse.append(np.sqrt(np.sum(np.square(diff[j])) / len(rawdataframe[start:start + part])))
+            rmse.append(np.sqrt(np.sum(np.square(diff[j])) / len(rawdataframe)))
+            print(rmse)
+            # rmse = rmse[0][1:]
+            # print(rmse)
+
 
             print('Evaluation for ', simfiles[index][j+1][1], 'vs', simfiles[index][0][1])
-            print(rmse[j][1:])
+            print(rmse[j])
             print('Overall score: ', np.sum(rmse[j]), '\n')
 
         #generating results page
@@ -81,11 +83,11 @@ def main():
         infotext1 = simfolder + '\n'
         for k in range(len(simfiles[index][1:])):
             if k == 0:
-                infotext2 = '\n\n\nRMSE\n'
+                infotext2 = '\n\n\n\nRMSE\n'
             else:
-                infotext2 += '\n\nRMSE\n'
+                infotext2 += '\n\n\nRMSE\n'
             infotext1 += '_____________________________________\n'
-            infotext1 +='Evaluation for ' + simfiles[index][k+1][1] + ' vs ' + simfiles[index][0][1] + '\n'
+            infotext1 +='Evaluation for ' + simfiles[index][k+1][1] + ' vs ' + simfiles[index][0][1] + '\n\n'
             infotext1 += 'Parameter' + '\n'
             for i in range(len(rmse[k])):
                 infotext1 += str(rmse[k].index[i]) + '\n'
@@ -110,10 +112,10 @@ def main():
                 fig, axs = plt.subplots(2, 1, figsize = (10,6))
                 fig.suptitle(debugtopic + '\n' + csvfiles[index*2+k][1][:-4],fontsize = 16)
                 # plt.figure(figsize=(10,10))
-                axs[0].plot(rawvaldata[k]['time [s]'][start:start+part], rawvaldata[k][debugtopic][start:start+part], label = 'measured (reference)')
-                axs[0].plot(simvaldata[k]['time [s]'][start:start+part], simvaldata[k][debugtopic][start:start+part], label = 'simulated')
+                axs[0].plot(rawvaldata[k]['time [s]'], rawvaldata[k][debugtopic], label = 'measured (reference)')
+                axs[0].plot(simvaldata[k]['time [s]'], simvaldata[k][debugtopic], label = 'simulated')
                 axs[0].legend()
-                axs[1].plot(diff[k]['time [s]'], diff[k][debugtopic], color = 'r', label = 'error')
+                axs[1].plot(rawvaldata[k]['time [s]'], diff[k][debugtopic], color = 'r', label = 'error')
                 axs[1].legend()
                 axs[1].set_xlabel('time [s]')
                 pdf.savefig()
