@@ -7,7 +7,7 @@ Created on Sun Mar 24 16:38:24 2019
 """
 from dataanalysisV2.showrawdata.preprocess import preProcessing
 from dataanalysisV2.mathfunction import interpolation
-import dataIO as dio
+import dataanalysisV2.dataIO as dio
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
