@@ -41,31 +41,25 @@ def main():
         # data = np.reshape(X[:,6:], (1,0))
         pred = marc_vehiclemodel(X[:,:6], W)
         square = np.square(pred - X[:,6:])
-        sum = np.sum(square, axis=1)
-        error = sum/3.
+        loss = 0.5 * np.sum(square, axis=1)
+        error = loss
         # print('pred',pred[0])
         # print('pred',pred.shape)
         # print('target', X[:,6:][0])
         # print('target', X[:,6:].shape)
         # print('square', square[0])
         # print('sum',sum)
-        print('error',np.mean(error))
-        print('W',W,'\n')
-        return sum
+        print('error',np.mean(error),'weights',W)
+        return loss
 
     # res = leastsq(objective_function, W0, ftol=0.0001)
     # print(res[0])
 
-    res = least_squares(objective_function, W0, bounds=([0, 0, 0.5, -np.inf], [50, 50, 2, np.inf]))
+    # res = least_squares(objective_function, W0, bounds=([0, 0, 1.05, -np.inf], [50, 50, 1.1, np.inf]))
+    res = least_squares(objective_function, W0)
     print('res.x',res.x)
 
     print('Optimization finished.')
-
-
-def loss_function(pred, target):
-    error = np.mean(np.subtract(pred, target),axis=0)
-    loss = np.sum(np.mean(np.square(np.subtract(pred, target)),axis=0))
-    return loss, np.array(error)
 
 if __name__ == '__main__':
     main()
