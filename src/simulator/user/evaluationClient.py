@@ -7,6 +7,7 @@ Created on Fri Apr  5 09:11:42 2019
 """
 
 from multiprocessing.connection import Client
+import threading
 import numpy as np
 import time
 import os
@@ -24,13 +25,22 @@ def main():
     pathsavedata = sys.argv[1]
     pathpreprodata = sys.argv[2]
     preprofiles = sys.argv[3:]
+    print(preprofiles)
 
     # preprofiles = preprofiles.split(',')[:-1]
     # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
-    server_return_interval = 0.1  # [s] simulation time after which result is returned from server
+
+    real_time = False
+    server_return_interval = 1  # [s] simulation time after which result is returned from server
+    real_time_factor = 2
+    _wait_for_real_time = 0
+
+    if real_time:
+        server_return_interval = 0.1*real_time_factor  # [s] simulation time after which result is returned from server
+        _wait_for_real_time = server_return_interval*0.9*(1.0/real_time_factor)
 
     # preprodata = getpreprodata(pathpreprodata)
 
@@ -52,6 +62,7 @@ def main():
         except:
             print('Could not open file at', filePath)
             preprodata = pd.DataFrame()
+            raise
 
         #___simulation parameters
         data_time_step = np.round(preprodata['time [s]'].iloc[1] - preprodata['time [s]'].iloc[0],3)  # [s] Log data sampling time step
@@ -59,56 +70,62 @@ def main():
         simTime = preprodata['time [s]'].iloc[-1]  # [s] Total simulation time
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-        X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
-              preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0], preprodata['pose vtheta [rad*s^-1]'][0]]
+        # X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
+        #       preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0], preprodata['pose vtheta [rad*s^-1]'][0]]
+        X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0],
+              preprodata['pose theta [rad]'][0],
+              0.1, preprodata['vehicle vy [m*s^-1]'][0],
+              preprodata['pose vtheta [rad*s^-1]'][0]]
 
         # ______^^^______
 
         runSimulation = True
         ttot = time.time()
-        while runSimulation:
-    #        ['pose x [m]','pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vmu ax (forward)',
-    #                    'vmu ay (left)', 'pose atheta', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]', 'MH BETA [rad]', ]
-            print('Simulation with file ', fileName)
-            firstStep = int(round(server_return_interval/data_time_step))+1
-            U = np.array((preprodata['time [s]'][0:firstStep].values,
-                 preprodata['MH BETA [rad]'][0:firstStep].values,
-                 preprodata['MH AB [m*s^-2]'][0:firstStep].values,
-                 preprodata['MH TV [rad*s^-2]'][0:firstStep].values))
-            for i in range(0,int(simTime/server_return_interval)):
-                if i > 0:
-                    simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
-                    U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH BETA [rad]'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH AB [m*s^-2]'][simRange[0]:simRange[1]].values,
-                                     preprodata['MH TV [rad*s^-2]'][simRange[0]:simRange[1]].values))
+        # while runSimulation:
+        print('Simulation with file ', fileName)
+        firstStep = int(round(server_return_interval/data_time_step))+1
+        U = np.array((preprodata['time [s]'][0:firstStep].values,
+             preprodata['MH BETA [rad]'][0:firstStep].values,
+             preprodata['MH AB [m*s^-2]'][0:firstStep].values,
+             preprodata['MH TV [rad*s^-2]'][0:firstStep].values))
+        # for i in range(0,int(simTime/server_return_interval)):
+        ticker = threading.Event()
+        i = 0
+        while not ticker.wait(_wait_for_real_time):
+            if i >= int(simTime/server_return_interval):
+                conn.send('simulation finished')
+                break
+            elif i > 0:
+                simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
+                U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
+                                 preprodata['MH BETA [rad]'][simRange[0]:simRange[1]].values,
+                                 preprodata['MH AB [m*s^-2]'][simRange[0]:simRange[1]].values,
+                                 preprodata['MH TV [rad*s^-2]'][simRange[0]:simRange[1]].values))
 
-                    if validation and i*server_return_interval % validationhorizon < server_return_interval:
-                        currIndex = int(round(i * server_return_interval / data_time_step))
-                        X0[1] = preprodata['pose x [m]'][currIndex]
-                        X0[2] = preprodata['pose y [m]'][currIndex]
-                        X0[3] = preprodata['pose theta [rad]'][currIndex]
-                        X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
-                        X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
-                        X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
-                else:
-                    tgo = time.time()
+                if validation and i*server_return_interval % validationhorizon < server_return_interval:
+                    currIndex = int(round(i * server_return_interval / data_time_step))
+                    X0[1] = preprodata['pose x [m]'][currIndex]
+                    X0[2] = preprodata['pose y [m]'][currIndex]
+                    X0[3] = preprodata['pose theta [rad]'][currIndex]
+                    X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
+                    X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
+                    X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
+            else:
+                tgo = time.time()
 
-                txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
-                # conn.send([X0, U, server_return_interval, sim_time_increment])
-                conn.send(txt_msg)
+            txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
+            # conn.send([X0, U, server_return_interval, sim_time_increment])
+            conn.send(txt_msg)
 
-                answer_msg = conn.recv()
-                X1 = decode_answer_msg_from_txt(answer_msg)
+            answer_msg = conn.recv()
+            X1 = decode_answer_msg_from_txt(answer_msg)
 
-                X0 = list(X1[-1,:])
-                if i%10 == 0.0:
-                    print(int(round(i/(simTime/server_return_interval)*100)), '% done, time: ', time.time()-tgo, end='\r')
+            X0 = list(X1[-1,:])
+            if i%10 == 0.0:
+                print(int(round(i/(simTime/server_return_interval)*100)), '% done, time: ', time.time()-tgo, end='\r')
+            i += 1
 
-            conn.send('simulation finished')
-            runSimulation = False
-
-            print('Success! Time overall: ', time.time()-tgo)
+        print('Success! Time overall: ', time.time()-tgo)
 
         # generate simulation info file and store it in target folder
         try:
