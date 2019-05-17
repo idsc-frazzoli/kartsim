@@ -9,15 +9,31 @@ original code from MATLAB written by Marc Heim
 import numpy as np
 
 def marc_vehiclemodel (V, U):
+    #Parameters from optimizations (Michi's)
+    # res = [2.4869, 7.6091 ,2.1568] #gradient descent
+    res = [ 5.6698 ,18.1382 , 0.1669] #least squares
+    D1 = res[0]
+    D2 = res[1]
+    Ic = res[2]
 
-    #optimal parameters
-    B1 = 15
-    C1 = 1.1
-    D1 = 9.4
-    B2 = 5.2
-    C2 = 1.4
-    D2 = 10.4
-    Ic = 0.3
+
+    #Optimal parameters (from Marc)
+    # D1 = 9.4
+    # D2 = 10.4
+    # Ic = 0.3
+    #
+    # B1 = 15
+    # C1 = 1.1
+    # B2 = 5.2
+    # C2 = 1.4
+
+    #New optimal parameters (from Marc)
+    B1 = 9;
+    C1 = 1;
+    B2 = 5.2;
+    C2 = 1.1;
+    # D2 = 10;
+    # D1 = 10;
 
     param = [B1,C1,D1,B2,C2,D2,Ic]
     [accX,accY,accRot] = pymodelDx(V, U, param)   #Marc's Matlab function translated to python
@@ -26,11 +42,10 @@ def marc_vehiclemodel (V, U):
 
 
 def pymodelDx(V, U, param):
+    global B1, B2, C1, C2, D1, D2, reg
 
     VELX, VELY, VELROTZ = V
     BETA, AB, TV = U
-
-    global B1, B2, C1, C2, D1, D2, reg
 
 #    %param = [B1,C1,D1,B2,C2,D2,Ic];
     B1 = param[0]
@@ -49,6 +64,7 @@ def pymodelDx(V, U, param):
     f1n = l2/l
     f2n = l1/l
     w = 1.08
+    # w = 0.
 
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
@@ -56,11 +72,16 @@ def pymodelDx(V, U, param):
     F1 = np.matmul(rotmat(-BETA),np.array([[0],[f1y[0]]]))*f1n
     F1x = F1[0]
     F1y = F1[1]
+    # print('F1y',F1y*l1)
     F2x = AB
     F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.
+    #F2y1 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
     F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
+    #F2y2 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
     F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n
+    # print('F2y',F2y*l2)
     TVTrq = TV*w
+    # print('tv',TVTrq)
 
     ACCROTZ = (TVTrq + F1y * l1 - F2y * l2) / Ic
     ACCX = F1x+F2x+VELROTZ*VELY
