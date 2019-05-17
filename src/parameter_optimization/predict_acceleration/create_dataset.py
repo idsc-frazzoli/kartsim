@@ -55,8 +55,9 @@ def load_data(filepath):
                 print('File',filepath, 'will be skipped!')
         return pd.DataFrame()
 
-    return dataframe[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'MH BETA [rad]',
-         'MH AB [m*s^-2]', 'MH TV [rad*s^-2]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+    return dataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+                      'pose vtheta [rad*s^-1]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]',
+                      'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
 
 
 

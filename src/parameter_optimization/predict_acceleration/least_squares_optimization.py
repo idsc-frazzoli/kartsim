@@ -6,7 +6,7 @@ Created 14.05.19 15:26
 @author: mvb
 """
 # from parameter_optimization.model.marcsmodel_paramopt_scipy import marc_vehiclemodel
-from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel
+from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec
 from dataanalysisV2.dataIO import getPKL
 import numpy as np
 np.set_printoptions(precision=4)
@@ -14,15 +14,12 @@ import time
 from scipy.optimize import least_squares, leastsq
 
 def main():
-    dataset_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/33333333333333/20190404T133714_01_sampledlogdata.pkl'
-    batch_size = 100
-    learning_rate = 0.01
-    epochs = 10
+    dataset_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/_33333333333333/20190404T133714_01_sampledlogdata.pkl'
+    # dataset_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/Parameter_Optimization/20190517-140558_test_dataset_for_paramopt/dataset.pkl'
 
     # Load and batch data
     dataframe = getPKL(dataset_path)
     total_no_of_samples = len(dataframe)
-    no_of_batches = int(total_no_of_samples / batch_size)
     print('Training on dataset with', total_no_of_samples, 'samples.')
 
     dataset = dataframe[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'MH BETA [rad]',
@@ -37,9 +34,11 @@ def main():
     X = dataset
 
     def objective_function(W):
-        pred = marc_vehiclemodel(X[:,:6], W)
+        # t0 = time.time()
+        pred,_ = marc_vehiclemodel_vec(X[:,:6], W)
         loss = 0.5 * np.sum(np.square(pred - X[:,6:]), axis=1)
         print('error',np.mean(loss),'weights',W)
+        # print('time', time.time()-t0)
         return loss
 
     # res = leastsq(objective_function, W0, ftol=0.0001)

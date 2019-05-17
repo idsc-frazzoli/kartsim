@@ -49,7 +49,7 @@ def pymodelDx(X, W, param):
 
     VELX, VELY, VELROTZ, BETA, AB, TV = X
 
-    D1, D2, w, Ic = W
+    D1, D2, Ic = W
 
     #    %param = [B1,C1,D1,B2,C2,D2,Ic];
     B1 = param[0]
@@ -67,7 +67,7 @@ def pymodelDx(X, W, param):
     l2 = l - l1
     f1n = l2 / l
     f2n = l1 / l
-    # w = 1.08
+    w = 1.08
 
     vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
     f1y = simplefaccy(vel1[1], vel1[0])
@@ -93,7 +93,7 @@ def jacobian_of_pymodelDx(X, W, param):
 
     VELX, VELY, VELROTZ, BETA, AB, TV = X
 
-    D1, D2, w, Ic = W
+    D1, D2, Ic = W
 
     #    %param = [B1,C1,D1,B2,C2,D2,Ic];
     B1 = param[0]
@@ -111,7 +111,7 @@ def jacobian_of_pymodelDx(X, W, param):
     l2 = l-l1
     f1n = l2/l
     f2n = l1/l
-    # w = 1.08
+    w = 1.08
 
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
@@ -143,7 +143,7 @@ def magic(s, B, C):
 
 
 def capfactor(taccx):
-    return (1 - satfun((taccx / D2) ** 2)) ** (1 / 2)
+    return (1 - satfun_approx((taccx / D2) ** 2)) ** (1 / 2)
 
 
 def simpleslip(VELY, VELX, taccx):
@@ -162,18 +162,6 @@ def simplefaccy(VELY, VELX):
     return magic(-VELY / (VELX + reg), B1, C1)
 
 
-def satfun(x):
-    l = 0.8;
-    r = 1-l;
-    if isinstance(x, float):
-        if x<l:
-            y=x;
-        elif x<1+r:
-            d = (1+r-x)/r;
-            y = 1-1/4*r*d**2;
-        else:
-            y = 1;
-        y=0.95*y;
-    else:
-        print('ERROR: x in satfun(x) is not float!')
-    return y
+def satfun_approx(x):
+    return (1.03616764e+00 * x + -1.03619930e+00) * (-2.91844486e-01 * np.arctan(7.27342214e+00 * (x + -1.04920374e+00) + 3.59055456e-01) + 4.58406776e-01) + (
+                -3.10005810e-02 * np.arctan(1.70845190e-02 * (x + -9.54399532e+01) + 6.32433105e-01) + -1.97634176e+01) * (-4.60294363e-02)
