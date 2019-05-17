@@ -5,7 +5,8 @@ Created 14.05.19 15:26
 
 @author: mvb
 """
-from parameter_optimization.model.marcsmodel_paramopt_scipy import marc_vehiclemodel
+# from parameter_optimization.model.marcsmodel_paramopt_scipy import marc_vehiclemodel
+from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel
 from dataanalysisV2.dataIO import getPKL
 import numpy as np
 np.set_printoptions(precision=4)

@@ -6,11 +6,10 @@ Created 13.05.19 15:33
 @author: mvb
 """
 from dataanalysisV2.dataIO import getPKL
-from parameter_optimization.model.marcsmodel_paramopt_TF import marc_vehiclemodel
+from old_files.marcsmodel_paramopt_TF import marc_vehiclemodel
 
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 def main():
     # Parameters

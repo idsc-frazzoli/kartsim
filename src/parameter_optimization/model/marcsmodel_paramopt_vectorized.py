@@ -157,15 +157,17 @@ def jacobian_of_pymodelDx(X, W, param):
     
     return np.array(list(Jacobian))
 
+
 def rotmat(beta):
     return np.array([[np.cos(beta),np.sin(beta)],[-np.sin(beta), np.cos(beta)]])
 
-def rotmatx(beta):
-    return np.array([np.cos(beta), np.sin(beta)])
 
-
-def rotmaty(beta):
-    return np.array([-np.sin(beta), np.cos(beta)])
+# def rotmatx(beta):
+#     return np.array([np.cos(beta), np.sin(beta)])
+#
+#
+# def rotmaty(beta):
+#     return np.array([-np.sin(beta), np.cos(beta)])
 
 
 def magic(s, B, C):

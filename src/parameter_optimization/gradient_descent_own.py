@@ -5,8 +5,7 @@ Created 14.05.19 15:26
 
 @author: mvb
 """
-from model.marcsmodel_paramopt_own import marc_vehiclemodel, Jacobian_marc_vehiclemodel
-from model.marcsmodel_paramopt_own_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec, Jacobian_marc_vehiclemodel as Jacobian_marc_vehiclemodel_vec
+from model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec, Jacobian_marc_vehiclemodel as Jacobian_marc_vehiclemodel_vec
 from dataIO import getPKL
 import numpy as np
 np.set_printoptions(precision=4)
