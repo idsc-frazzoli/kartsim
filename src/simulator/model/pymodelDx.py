@@ -11,7 +11,11 @@ import numpy as np
 def marc_vehiclemodel (V, U):
     #Parameters from optimizations (Michi's)
     # res = [2.4869, 7.6091 ,2.1568] #gradient descent
-    res = [ 5.6698 ,18.1382 , 0.1669] #least squares
+    # res = [ 5.6698 ,18.1382 , 0.1669] #least squares
+    # res = [7, 10, 1] #second best human guess so far
+    # res = [5.47243906141646,	8.63088711471141,	0.912601312957689] #best optimization so far
+    # res = [8.0*1.1, 10.0*1.2, 1.0] #best human guess so far
+    res = [7,10.8888888888889,0.8] #test
     D1 = res[0]
     D2 = res[1]
     Ic = res[2]
@@ -28,12 +32,14 @@ def marc_vehiclemodel (V, U):
     # C2 = 1.4
 
     #New optimal parameters (from Marc)
-    B1 = 9;
-    C1 = 1;
-    B2 = 5.2;
-    C2 = 1.1;
+    B1 = 9
+    C1 = 1
+    B2 = 5.2
+    C2 = 1.1
     # D2 = 10;
     # D1 = 10;
+    # Ic = 0.3
+
 
     param = [B1,C1,D1,B2,C2,D2,Ic]
     [accX,accY,accRot] = pymodelDx(V, U, param)   #Marc's Matlab function translated to python
@@ -65,15 +71,15 @@ def pymodelDx(V, U, param):
     f2n = l1/l
     w = 1.08
     # w = 0.
-
     vel1 = np.matmul(rotmat(BETA),np.array([[VELX],[VELY+l1*VELROTZ]]))
     f1y = simplefaccy(vel1[1],vel1[0])
 
     F1 = np.matmul(rotmat(-BETA),np.array([[0],[f1y[0]]]))*f1n
     F1x = F1[0]
     F1y = F1[1]
-    # print('F1y',F1y*l1)
+
     F2x = AB
+
     F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.
     #F2y1 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
     F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
@@ -86,7 +92,12 @@ def pymodelDx(V, U, param):
     ACCROTZ = (TVTrq + F1y * l1 - F2y * l2) / Ic
     ACCX = F1x+F2x+VELROTZ*VELY
     ACCY = F1y+F2y1+F2y2-VELROTZ*VELX
-    
+
+    if VELX < 0.08:
+        ACCX[0] = 0.0
+        ACCY[0] = 0.0
+        ACCROTZ[0] = 0.0
+
     return ACCX[0],ACCY[0],ACCROTZ[0]
 
 def rotmat(beta):
