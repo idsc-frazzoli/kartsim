@@ -34,7 +34,6 @@ def main():
                          'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
                          'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']].values
 
-    dataset_split = []
     X0 = []
     sim_time = []
     U = []

@@ -6,7 +6,8 @@ Created 14.05.19 15:26
 @author: mvb
 """
 # from parameter_optimization.model.marcsmodel_paramopt_scipy import marc_vehiclemodel
-from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec
+# from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec
+from parameter_optimization.model.marcsmodel_paramopt_vectorized_correct import marc_vehiclemodel as marc_vehiclemodel_vec_jcorr
 from dataanalysisV2.dataIO import getPKL
 import numpy as np
 np.set_printoptions(precision=4)
@@ -35,7 +36,7 @@ def main():
 
     def objective_function(W):
         # t0 = time.time()
-        pred,_ = marc_vehiclemodel_vec(X[:,:6], W)
+        pred,_ = marc_vehiclemodel_vec_jcorr(X[:,:6], W)
         loss = 0.5 * np.sum(np.square(pred - X[:,6:]), axis=1)
         print('error',np.mean(loss),'weights',W)
         # print('time', time.time()-t0)

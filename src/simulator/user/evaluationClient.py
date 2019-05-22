@@ -33,9 +33,9 @@ def main():
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = False
+    real_time = True
     server_return_interval = 1  # [s] simulation time after which result is returned from server
-    real_time_factor = 2
+    real_time_factor = 1
     _wait_for_real_time = 0
 
     if real_time:
@@ -91,6 +91,7 @@ def main():
         # for i in range(0,int(simTime/server_return_interval)):
         ticker = threading.Event()
         i = 0
+        tgo = time.time()
         while not ticker.wait(_wait_for_real_time):
             if i >= int(simTime/server_return_interval):
                 conn.send('simulation finished')
@@ -110,8 +111,8 @@ def main():
                     X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
                     X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
                     X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
-            else:
-                tgo = time.time()
+            # else:
+            #     tgo = time.time()
 
             txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
             # conn.send([X0, U, server_return_interval, sim_time_increment])

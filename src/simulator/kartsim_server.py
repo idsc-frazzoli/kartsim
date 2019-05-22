@@ -89,7 +89,7 @@ def handle_client(c,v,l,visualization,logging):
                 X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
 
                 answer_msg = encode_answer_msg_to_txt(X)
-
+                # time.sleep(0.01)
                 c.send(answer_msg)
 
             elif request_msg == 'simulation finished':
