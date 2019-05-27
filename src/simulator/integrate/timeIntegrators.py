@@ -22,30 +22,32 @@ def odeIntegrator (X0, U, simStep, simIncrement):
 def odeIntegratorIVP(X0, U, simStep, simIncrement):
     setInput(U)
     t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
+
     X1 = solve_ivp(solveivp_dx_dt, [0, simStep], X0, t_eval=t_eval, method='RK45', vectorized=True)
 
     return np.transpose(X1.y)
 
 
-def euler (X0, simStep):
-    x = float(X0[0])
-    y = float(X0[1])
-    theta = float(X0[2])
-    vx = float(X0[3])
-    vy = float(X0[4])
-    vrot = float(X0[5])
-    beta = float(X0[6])
-    accRearAxle = float(X0[7])
-    tv = float(X0[8])
-#    [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3) #This function only runs in Matlab Session. Shared Matlab session needed to access this function!
-    [accX,accY,accRot] = marc_vehiclemodel(vx,vy,vrot,beta,accRearAxle,tv)
-    vx = vx + accX * simStep
-    vy = vy + accY * simStep
-    vrot = vrot + accRot * simStep
-    x = x + (vx * np.cos(theta) - vy * np.sin(theta)) * simStep
-    y = y + (vy * np.cos(theta) + vx * np.sin(theta)) * simStep
-    theta = theta + vrot * simStep
-    X1 = np.array([[x,y,theta,vx,vy,vrot,beta,accRearAxle,tv]])
+def euler(X0, U, simStep, simIncrement):
+    X = X0
+    X1 = X
+    U = U[1:]
+    print('U',len(U[0,:]))
+    for i in range(len(U[0,:])):
+        Ui = U[:,i]
+        V = [X[4], X[5], X[6]]
+
+    #    [accX,accY,accRot] = eng.modelDx_pymod(vx,vy,vrot,beta,accRearAxle,tv, param, nargout=3) #This function only runs in Matlab Session. Shared Matlab session needed to access this function!
+        V_dt = marc_vehiclemodel(V, Ui)
+
+        c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+        R = np.array(((c, -s), (s, c)))
+        Vabs = np.matmul(V[:2], R.transpose())
+        dX = [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
+        X = X + np.multiply(dX,simIncrement)
+        X1 = np.vstack((X1,X))
+    print(X1)
+    print(type(X1))
     return X1
     
     
