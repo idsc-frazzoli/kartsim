@@ -38,11 +38,11 @@ class Clarity(QtGui.QMainWindow):
         self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/'
         testDays = dio.getDirectories(self.pathRootData)
         testDays.sort()
-        defaultDay = testDays[0]
+        defaultDay = testDays[1]
         self.pathTestDay = self.pathRootData + '/' + defaultDay
         logNrs = dio.getDirectories(self.pathTestDay)
         logNrs.sort()
-        defaultLogNr = logNrs[0]
+        defaultLogNr = logNrs[13]
         self.pathLogNr = self.pathTestDay + '/' + defaultLogNr
 
         params = [
@@ -361,7 +361,7 @@ class Clarity(QtGui.QMainWindow):
         for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
             rawDataNames.append(name)
             try:
-                dataFrame = dio.getCSV(fileName)
+                dataFrame = dio.dataframe_from_csv(fileName)
                 xRaw = dataFrame.iloc[:, timeIndex]
                 yRaw = dataFrame.iloc[:, dataIndex]
 
@@ -379,6 +379,7 @@ class Clarity(QtGui.QMainWindow):
             except:
                 print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
                 xRaw, yRaw = [0], [0]
+                raise
 
             item = QtGui.QListWidgetItem(name)
             item.setText(name)
@@ -407,6 +408,8 @@ class Clarity(QtGui.QMainWindow):
         groups.append(['pose ax', ['pose x', 'pose vx'], True, 20, 200, 2, 1])
         groups.append(['pose ay', ['pose y', 'pose vy'], True, 20, 200, 2, 1])
         groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])
+        groups.append(['slip ratio left', ['motor rot rate left', 'vehicle vx'], True, 0, 0, 1, 1])
+        groups.append(['slip ratio right', ['motor rot rate right', 'vehicle vx'], True, 0, 0, 1, 1])
         groups.append(['vehicle slip angle', ['pose theta', 'pose x', 'pose y', 'pose vx', 'pose vy'], True, 0, 0, 2, 1])
         groups.append(['vmu ax', ['vmu ax atvmu (forward)', 'pose theta','pose vtheta','pose atheta'], True, 0, 0, 3, 1])
         groups.append(['vmu ay', ['vmu ay atvmu (left)', 'pose theta','pose vtheta','pose atheta'], True, 0, 0, 3, 1])

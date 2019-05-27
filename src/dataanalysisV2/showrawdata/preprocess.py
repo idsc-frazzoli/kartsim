@@ -89,7 +89,25 @@ def preProcessing(self, name):
             self.availableData[index][2] = y
         else:
             self.availableData.append([name, x, y])
-    
+
+    if name in ['slip ratio left', 'slip ratio right']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[1])][1]
+        vx = self.availableData[availableDataList.index(nameDependency[1])][2]
+        rotrate_t = self.availableData[availableDataList.index(nameDependency[0])][1]
+        rotrate = self.availableData[availableDataList.index(nameDependency[0])][2]
+        interp = interp1d(rotrate_t, rotrate, bounds_error=False, fill_value="extrapolate")
+        rotrate = interp(x)
+
+        y = rotrate * 0.13 - vx
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+
     if name == 'vehicle slip angle':
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
             nameDependency = item.dependencies[0]
