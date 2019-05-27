@@ -11,7 +11,7 @@ import os
 import datetime
 import pickle
 
-def getCSV(filePath):
+def dataframe_from_csv(filePath):
     dataFrame = pd.read_csv(str(filePath))
     return dataFrame
 
