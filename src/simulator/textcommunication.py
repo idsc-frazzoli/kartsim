@@ -76,7 +76,10 @@ def encode_request_msg_to_txt(msg):
 
 def decode_answer_msg_from_txt(msg):
     msg_list = msg.split(",")
-    if len(msg_list[0].split(" ")) == 7:
+    # if len(msg_list) < 3:
+    #     X1 = np.fromstring(msg.split(",")[0], dtype=float, sep=" ")
+    # else:
+    if len(msg_list[0].split(" ")) == 7 or len(msg_list[0].split(" ")) == 10:
         try:
             X1 = np.fromstring(msg.split(",")[0], dtype=float, sep=" ")
             for str_array in msg.split(",")[1:]:
@@ -90,13 +93,20 @@ def decode_answer_msg_from_txt(msg):
 def encode_answer_msg_to_txt(msg):
     txt_msg = ""
     if isinstance(msg, np.ndarray):
+        # if len(msg.shape) < 2:
+        #     try:
+        #         txt_msg += " ".join(str(i) for i in msg)
+        #         # txt_msg += ","
+        #     except:
+        #         print("ValueError")
+        #         raise
+        # else:
         try:
             for item in msg:
                 txt_msg += " ".join(str(i) for i in item)
                 txt_msg += ","
-            txt_msg = txt_msg[:-1]
+            txt_msg = txt_msg[:-2]
         except:
             print("ValueError")
             raise
-    txt_msg = txt_msg[:-1]
     return txt_msg

@@ -41,23 +41,23 @@ p11.showGrid(x = True, y = True)
 p11.setAspectLocked(lock=True, ratio=1)
 
     
-p2 = win.addPlot(title="theta")
-
-win.nextRow()
-
-p3 = win.addPlot(title="vx")
-
-p4 = win.addPlot(title="vy")
-
-p5 = win.addPlot(title="vrot")
-
-win.nextRow()
-
-p6 = win.addPlot(title="slip angle")
-
-p7 = win.addPlot(title="AB")
-
-p8 = win.addPlot(title="TV")
+# p2 = win.addPlot(title="theta")
+#
+# win.nextRow()
+#
+# p3 = win.addPlot(title="vx")
+#
+# p4 = win.addPlot(title="vy")
+#
+# p5 = win.addPlot(title="vrot")
+#
+# win.nextRow()
+#
+# p6 = win.addPlot(title="slip angle")
+#
+# p7 = win.addPlot(title="AB")
+#
+# p8 = win.addPlot(title="TV")
 
 kart_l = 1.5
 kart_w = 1. 
@@ -118,6 +118,7 @@ def updatePlot(X1):
     vy = X1[:,5]
     vrot = X1[:,6]
     beta = X1[-1,7]
+    beta_plot = X1[:,7]
     accRearAxle = X1[:,8]
     tv = X1[:,9]
     p1.clear()
@@ -150,26 +151,27 @@ def updatePlot(X1):
     p11.clear()
     p11.plot(x,y, pen=(255,255,255))
     
-    p2.clear()
-    p2.plot(simTime,theta, pen=(255,255,255))
-    
-    p3.clear()
-    p3.plot(simTime,vx, pen=(255,255,255))
-    
-    p4.clear()
-    p4.plot(simTime,vy, pen=(255,255,255))
-    
-    p5.clear()
-    p5.plot(simTime,vrot, pen=(255,255,255))
-    
-    p6.clear()
-    p6.plot(simTime,np.arctan2(vy,vx), pen=(255,255,255))
-
-    p7.clear()
-    p7.plot(simTime,accRearAxle, pen=(255,255,255))
-
-    p8.clear()
-    p8.plot(simTime, tv, pen=(255, 255, 255))
+    # p2.clear()
+    # p2.plot(simTime,theta, pen=(255,255,255))
+    #
+    # p3.clear()
+    # p3.plot(simTime,vx, pen=(255,255,255))
+    #
+    # p4.clear()
+    # p4.plot(simTime,vy, pen=(255,255,255))
+    #
+    # p5.clear()
+    # p5.plot(simTime,vrot, pen=(255,255,255))
+    #
+    # p6.clear()
+    # p6.plot(simTime,np.arctan2(vy,vx), pen=(255,255,255))
+    # p6.plot(simTime,beta_plot, pen=(255,255,255))
+    #
+    # p7.clear()
+    # p7.plot(simTime,accRearAxle, pen=(255,255,255))
+    #
+    # p8.clear()
+    # p8.plot(simTime, tv, pen=(255, 255, 255))
         
 if __name__ == '__main__':
 #    main()
