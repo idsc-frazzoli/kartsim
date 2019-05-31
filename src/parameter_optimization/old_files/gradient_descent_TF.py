@@ -5,7 +5,7 @@ Created 13.05.19 15:33
 
 @author: mvb
 """
-from dataanalysisV2.dataIO import getPKL
+from dataanalysisV2.data_io import getPKL
 from old_files.marcsmodel_paramopt_TF import marc_vehiclemodel
 
 import tensorflow as tf

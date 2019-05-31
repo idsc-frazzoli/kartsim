@@ -23,7 +23,7 @@ import pandas as pd
 import sys
 import matplotlib.pyplot as plt
 
-from dataanalysisV2.dataIO import dataframe_from_csv
+from dataanalysisV2.data_io import dataframe_from_csv
 from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
 import dataanalysisV2.evaluation.evaluation as evalCalc
 import dataanalysisV2.evaluation.evaluationReference as evalRef
@@ -41,7 +41,7 @@ def main():
     mpcsolfiles.sort()
 
 
-    real_time = True
+    real_time = False
     real_time_factor = 1
     _wait_for_real_time = 0
 
@@ -85,8 +85,14 @@ def main():
         X0 = [mpc_sol_data['time'][0], mpc_sol_data['X X'][0], mpc_sol_data['X Y'][0],
               mpc_sol_data['X Psi'][0],
               mpc_sol_data['X Ux'][0],
-              np.subtract(mpc_sol_data['X Uy'][0],mpc_sol_data['X Psi'][0]*0.46),
+              np.add(mpc_sol_data['X Uy'][0],mpc_sol_data['X dotPsi'][0]*0.46),
               mpc_sol_data['X dotPsi'][0]]
+
+        # X0 = [mpc_sol_data['time'][2], mpc_sol_data['X X'][2], mpc_sol_data['X Y'][2],
+        #       mpc_sol_data['X Psi'][2],
+        #       mpc_sol_data['X Ux'][0],
+        #       np.subtract(mpc_sol_data['X Uy'][0], mpc_sol_data['X Psi'][2] * 0.46),
+        #       mpc_sol_data['X dotPsi'][0]]
 
         AB = (mpc_sol_data['U wheel left'] + mpc_sol_data['U wheel right']) / 2.0
         TV = (mpc_sol_data['U wheel right'] - mpc_sol_data['U wheel left']) / 2.0
@@ -98,16 +104,15 @@ def main():
                       BETA.values,
                       AB.values,
                       TV.values))
-        print('U',U)
         Y = np.array((mpc_sol_data['time'], mpc_sol_data['X X'], mpc_sol_data['X Y'],
               mpc_sol_data['X Psi'],
               mpc_sol_data['X Ux'], mpc_sol_data['X Uy'],
               mpc_sol_data['X dotPsi'])).transpose()
+        print(Y[:, 3])
         # ______^^^______
 
 
         print('Simulation with file ', file_name)
-        print(simTime)
         txt_msg = encode_request_msg_to_txt([X0, U, simTime, sim_time_increment])
         # conn.send([X0, U, server_return_interval, sim_time_increment])
         conn.send(txt_msg)
@@ -115,6 +120,7 @@ def main():
         answer_msg = conn.recv()
         X1 = decode_answer_msg_from_txt(answer_msg)
         X1 = X1[:-1,:]
+        X1[:,5] = np.subtract(X1[:,5], X1[:,6] * 0.46)
         # print(X1.shape)
         # print(type(X1))
         # print(type(Y))
@@ -123,10 +129,23 @@ def main():
         # X0 = list(X1[-1,:])
 
         # plt.close('all')
+
+        arrow_length = 1
+
         plt.figure(1)
 
         plt.plot(Y[:,1],Y[:,2],'r')
+        plt.scatter(Y[:,1],Y[:,2],c='r')
         plt.plot(X1[:, 1], X1[:, 2], 'b')
+        plt.scatter(X1[:, 1], X1[:, 2], c='b')
+        for i in range(len(Y[:,1])):
+            plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]), arrow_length * np.sin(Y[i, 3]),color = 'm')
+        # for i in range(len(Y[:,1])):
+        #     plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]+BETA[i]), arrow_length * np.sin(Y[i, 3]+BETA[i]),color='m')
+        for i in range(len(X1[:, 1])):
+            plt.arrow(X1[i, 1], X1[i, 2], arrow_length * np.cos(X1[i, 3]), arrow_length * np.sin(X1[i, 3]),color='c')
+        # for i in range(len(X1[:,1])):
+        #     plt.arrow(X1[i,1],X1[i,2], arrow_length * np.cos(X1[i, 3]+BETA[i]), arrow_length * np.sin(X1[i, 3]+BETA[i]),color='m')
         # plt.plot(Y[:, 0], Y[:, 1], 'r')
         # plt.plot(Y[:, 0], Y[:, 2], 'r')
         # plt.plot(X1[:, 0], X1[:, 1], 'b')
@@ -138,15 +157,19 @@ def main():
         # plt.title('Euler Integration')
         plt.hold
 
-        # plt.figure(2)
+        plt.figure(2)
         # plt.plot(Y[:,0], Y[:,3], 'r')
         # plt.plot(X1[:,0],X1[:,3], 'b')
+        # plt.plot( Y[:, -1], 'r')
+        # plt.plot( X1[:, -1], 'b')
+        plt.plot(Y[:, 0], Y[:, -1], 'r')
+        plt.plot(X1[:, 0], X1[:, -1], 'b')
         #
-        # plt.figure(3)
-        # plt.plot(Y[:, 0], Y[:, 5], 'r')
-        # plt.plot(Y[:, 0], Y[:, 4], 'b')
-        # plt.plot(X1[:, 0], X1[:, 5], 'orange')
-        # plt.plot(X1[:, 0], X1[:, 4], 'm')
+        plt.figure(3)
+        plt.plot(Y[:, 0], Y[:, 5], 'r')
+        plt.plot(Y[:, 0], Y[:, 4], 'b')
+        plt.plot(X1[:, 0], X1[:, 5], 'orange')
+        plt.plot(X1[:, 0], X1[:, 4], 'm')
         # # plt.plot(Y[:, 0], np.sqrt(np.square(Y[:, 4]) + np.square(Y[:, 5])), 'r')
         # # plt.plot(X1[:, 0], np.sqrt(np.square(X1[:, 4]) + np.square(X1[:, 5])), 'b')
 

@@ -6,7 +6,7 @@ Created 14.05.19 15:26
 @author: mvb
 """
 import parameter_optimization.integrate.timeIntegrators as integrators
-from dataanalysisV2.dataIO import getPKL, create_folder_with_time
+from dataanalysisV2.data_io import getPKL, create_folder_with_time
 import numpy as np
 import time
 import datetime

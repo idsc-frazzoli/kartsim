@@ -76,7 +76,7 @@ def create_folder_with_time(save_path, tag = None):
 
     return folder_path
 
-def dict_to_pkl(dict, folder_path):
+def dict_keys_to_pkl(dict, folder_path):
     comp_tot = len(dict)
 
     comp_count = 0

@@ -8,7 +8,7 @@ Created 14.05.19 15:26
 from model.marcsmodel_paramopt_vectorized import \
     marc_vehiclemodel as marc_vehiclemodel_vec  # , Jacobian_marc_vehiclemodel as Jacobian_marc_vehiclemodel_vec
 from model.marcsmodel_paramopt_vectorized_correct import marc_vehiclemodel as marc_vehiclemodel_vec_jcorrect
-from dataanalysisV2.dataIO import getPKL, create_folder_with_time
+from dataanalysisV2.data_io import getPKL, create_folder_with_time
 import numpy as np
 
 np.set_printoptions(precision=4)

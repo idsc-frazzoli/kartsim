@@ -5,8 +5,8 @@ Created on Sun Mar 24 16:38:24 2019
 
 @author: mvb
 """
-import dataanalysisV2.dataIO as dio
-from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
+import dataanalysisV2.data_io as dio
+from gokartpreprocessing.old_files.preprocessing import updateData
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -35,8 +35,8 @@ class Clarity(QtGui.QMainWindow):
     def __init__(self):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
-        self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
-#         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
+#         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
+        self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
         defaultSim = simFolders[-1]
@@ -299,7 +299,7 @@ class Clarity(QtGui.QMainWindow):
         
         kartDataMod = updateData(copy.deepcopy(self.kartData),self.dataNames)
         
-#        self.updateData()
+#        self.filter_raw_data()
         colorIndex = 0
         plotNames = []
         for item in self.p.param('Data in plot').children():
@@ -472,7 +472,7 @@ class Clarity(QtGui.QMainWindow):
         for key in self.kartData:
             self.dataNames.append(key)
             
-#        self.updateData()
+#        self.filter_raw_data()
 
 
 def main():

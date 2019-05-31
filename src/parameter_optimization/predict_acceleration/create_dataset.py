@@ -5,7 +5,7 @@ Created 15.05.19 10:28
 
 @author: mvb
 """
-from dataanalysisV2.dataIO import getPKL, dataframe_to_pkl, create_folder_with_time
+from dataanalysisV2.data_io import getPKL, dataframe_to_pkl, create_folder_with_time
 import numpy as np
 import os
 import time

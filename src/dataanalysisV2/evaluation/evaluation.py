@@ -7,7 +7,7 @@ Created on Thu Mar 28 13:20:04 2019
 """
 import numpy as np
 import os
-import dataanalysisV2.dataIO as dIO
+import dataanalysisV2.data_io as dIO
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
