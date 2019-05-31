@@ -30,7 +30,7 @@ def updateData(kartData, dataNames):
 
 
 def preProcessing(kartData, name):
-    vmu_cog = 0.48  # [m] displacement of cog to vmu wrt vmu
+    vmu_cog = 0.46  # [m] displacement of cog to vmu wrt vmu
 
     differentiate = 'pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'pose ax [m*s^-2]', 'pose ay [m*s^-2]', 'pose atheta [rad*s^-2]'
     differentiateFrom = 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose vtheta [rad*s^-1]'

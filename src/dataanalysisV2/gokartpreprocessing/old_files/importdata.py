@@ -7,7 +7,7 @@ Created 09.05.19 10:25
 """
 import os
 import numpy as np
-from dataanalysisV2.dataIO import getCSV
+from dataanalysisV2.data_io import dataframe_from_csv
 from dataanalysisV2.mathfunction import interpolation
 
 def setListItems(pathLogNr):
@@ -54,7 +54,7 @@ def setListItems(pathLogNr):
     for name, timeIndex, dataIndex, fileName, vis, sig, wid, order, scale in groups:
         allDataNames.append(name)
         try:
-            dataFrame = getCSV(fileName)
+            dataFrame = dataframe_from_csv(fileName)
             xRaw = dataFrame.iloc[:, timeIndex]
             yRaw = dataFrame.iloc[:, dataIndex]
             if name == 'pose theta [rad]':

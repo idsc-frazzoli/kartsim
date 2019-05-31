@@ -5,9 +5,9 @@ Created on Thu Mar 28 13:20:04 2019
 
 @author: mvb
 """
-from dataanalysisV2.dataIO import getDirectories
-from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
-from dataanalysisV2.gokartpreprocessing.importdata import setListItems
+from dataanalysisV2.data_io import getDirectories
+from gokartpreprocessing.old_files.preprocessing import updateData
+from gokartpreprocessing.old_files.importdata import setListItems
 
     
 def stirData(pathRootData, preproParams, requiredList, nono_list):

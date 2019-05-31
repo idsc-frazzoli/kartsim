@@ -8,9 +8,9 @@ Created 09.05.19 10:18
 import numpy as np
 import time
 
-from dataanalysisV2.dataIO import getDirectories
-from dataanalysisV2.gokartpreprocessing.preprocessing import updateData
-from dataanalysisV2.gokartpreprocessing.importdata import setListItems
+from dataanalysisV2.data_io import getDirectories
+from gokartpreprocessing.old_files.preprocessing import updateData
+from gokartpreprocessing.old_files.importdata import setListItems
 
 
 def sort_out(pathRootData, preproParams, redo):
