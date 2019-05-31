@@ -8,7 +8,7 @@ original code from MATLAB written by Marc Heim
 """
 import numpy as np
 
-def marc_vehiclemodel (V, U):
+def mpc_dynamic_vehicle_model(V, U):
     #Parameters from optimizations (Michi's)
     # res = [2.4869, 7.6091 ,2.1568] #gradient descent
     # res = [ 5.6698 ,18.1382 , 0.1669] #least squares
@@ -84,11 +84,11 @@ def pymodelDx(V, U, param):
 
     F2x = AB
 
-    F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.
+    F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.*1.1
     #F2y1 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
-    F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
+    F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.*1.1
     #F2y2 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
-    F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n
+    F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n*1.1
     # if abs(VELX) < 0.05 and abs(VELY) < 0.05:
     #     TV = 0.
     TVTrq = TV*w
