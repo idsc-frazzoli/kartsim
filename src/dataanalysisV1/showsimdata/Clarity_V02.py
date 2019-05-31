@@ -299,7 +299,6 @@ class Clarity(QtGui.QMainWindow):
         
         kartDataMod = bd.updateData(copy.deepcopy(self.kartData),self.dataNames)
         
-#        self.updateData()
         colorIndex = 0
         plotNames = []
         for item in self.p.param('Data in plot').children():
@@ -471,8 +470,6 @@ class Clarity(QtGui.QMainWindow):
         self.dataNames = []
         for key in self.kartData:
             self.dataNames.append(key)
-            
-#        self.updateData()
 
 
 def main():
