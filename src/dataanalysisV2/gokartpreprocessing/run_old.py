@@ -5,10 +5,10 @@ Created 09.05.19 10:18
 
 @author: mvb
 """
-from dataanalysisV2.dataIO import dict_from_csv, dict_to_csv, create_folder_with_time, dict_to_pkl
-from dataanalysisV2.gokartpreprocessing.sortout import sort_out
-from dataanalysisV2.gokartpreprocessing.sampleFromDataset import sample_from_logdata
-from dataanalysisV2.gokartpreprocessing.buildDataSet import stirData
+from dataanalysisV2.data_io import dict_from_csv, dict_to_csv, create_folder_with_time, dict_keys_to_pkl
+from gokartpreprocessing.old_files.sortout import sort_out
+from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
+from gokartpreprocessing.old_files.buildDataSet import stirData
 
 import time
 
@@ -68,7 +68,7 @@ def main():
         path_preprocessed_dataset = create_folder_with_time(saveDatasetPath, dataset_tag)
 
         print('Now writing to file at', path_preprocessed_dataset)
-        dict_to_pkl(kartDataAll, path_preprocessed_dataset)
+        dict_keys_to_pkl(kartDataAll, path_preprocessed_dataset)
 
     if sampleData:
         print('Sampling Data...')
