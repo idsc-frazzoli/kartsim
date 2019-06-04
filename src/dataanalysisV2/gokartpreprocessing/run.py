@@ -27,23 +27,23 @@ def main():
 
     #______________________
     # Filter data and compute inferred data from raw logs
-    # filter_data = True
-    filter_data = False
-    required_tags_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-                     'pose vtheta [rad*s^-1]', 'vehicle slip angle', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-                     'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]',
-                     'multiple laps', 'high slip angles']  # list of signals and tags which should be true for the logs used to build the dataset
+    filter_data = True
+    # filter_data = False
+    required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+                          'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+                          'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']
+    required_tags_list = ['multiple laps', 'high slip angles']  # list of signals and tags which should be true for the logs used to build the dataset
     exclusion_tags_list = ['reverse']
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_filtered_data_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'TF_test'
+    dataset_tag = 'MPC_dynamic_0p1'
 
     # ______________________
     # Sample data
-    # sample_data = True
-    sample_data = False
-    sampling_time_period = 0.01
+    sample_data = True
+    # sample_data = False
+    sampling_time_period = 0.1
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
@@ -57,8 +57,7 @@ def main():
     if filter_data:
         data_tagging.sort_out_data(required_tags_list, exclusion_tags_list)
         print('Data preprocessing started...')
-        filtered_data_dict = prepare_dataset(pathRootData, data_tagging, required_tags_list)
-        print(type(filtered_data_dict))
+        filtered_data_dict = prepare_dataset(pathRootData, data_tagging, required_data_list, required_tags_list)
 
         print('Data preprocessing completed.')
         path_preprocessed_dataset = create_folder_with_time(save_filtered_data_path, dataset_tag)

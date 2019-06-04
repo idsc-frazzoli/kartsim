@@ -27,7 +27,6 @@ def sample_from_logdata(sampling_time_period, path_save_data, path_load_data = N
         for str in folders_preprocessed_data:
             if str.endswith(dataset_tag):
                 defaultSim = str
-                print(defaultSim)
                 break
         # defaultSim = folders_preprocessed_data[-1]
         path_load_data = path_preprocessed_data + '/' + defaultSim

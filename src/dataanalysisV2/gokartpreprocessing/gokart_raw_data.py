@@ -13,20 +13,21 @@ import time
 from copy import copy
 
 class GokartRawData:
-    def __init__(self, load_path=None, required_tags_list=None):
+    def __init__(self, load_path=None, required_data_list=None):
         self.load_path = load_path
         self.kartData = {}
-        self.required_tags_list = required_tags_list
+        self.required_data_list = required_data_list
 
         if self.load_path != None:
+            self.log_nr = self.load_path.split('/')[-1]
+            print('log_nr', self.log_nr)
             self.load_raw_data()
-
 
     def get_key_names(self):
         return list(self.kartData.keys())
 
-    def get_required_tags(self):
-        return self.required_tags_list
+    def get_required_data(self):
+        return self.required_data_list
 
     def get_data(self,name=None):
         if name == None:
@@ -51,8 +52,8 @@ class GokartRawData:
     def set_load_path(self, new_load_path):
         self.load_path = new_load_path
 
-    def set_required_tags_list(self, required_tags_list):
-        self.required_tags_list = required_tags_list
+    def set_required_data_list(self, required_tags_list):
+        self.required_data_list = required_tags_list
 
     def get_attribute(self, data_name, attribute):
         if attribute == 'sigma':
@@ -88,6 +89,7 @@ class GokartRawData:
         groups.append(['pose vx [m*s^-1]', ['pose x [m]'], True, 5, 50, 1, 1])
         groups.append(['pose vy [m*s^-1]', ['pose y [m]'], True, 5, 50, 1, 1])
         groups.append(['pose vtheta [rad*s^-1]', ['pose theta [rad]'], True, 5, 50, 1, 1])
+        groups.append(['vehicle vy [m*s^-1]', ['vehicle vy atvmu [m*s^-1]', 'pose vtheta [rad*s^-1]'], True, 0, 0, 2, 1])
         groups.append(['vehicle ax local [m*s^-2]', ['vehicle vx [m*s^-1]'], True, 0, 0, 1, 1])
         groups.append(['vehicle ay local [m*s^-2]', ['vehicle vy [m*s^-1]'], True, 0, 0, 1, 1])
         groups.append(['pose ax [m*s^-2]', ['pose vx [m*s^-1]'], True, 20, 200, 2, 1])
@@ -141,7 +143,7 @@ class GokartRawData:
                 groups.append(['pose y atvmu [m]', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta [rad]', 0, 3, name, True, 5, 50, 0, 1])
                 groups.append(['vehicle vx [m*s^-1]', 0, 5, name, True, 10, 100, 0, 1])
-                groups.append(['vehicle vy [m*s^-1]', 0, 6, name, True, 10, 100, 0, 1])
+                groups.append(['vehicle vy atvmu [m*s^-1]', 0, 6, name, True, 10, 100, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd [n.a.]', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
@@ -165,8 +167,8 @@ class GokartRawData:
                 groups.append(['vmu vtheta [rad*s^-1]', 0, 4, name, True, 5, 50, 0, 1])
         groups.sort()
 
-        if self.required_tags_list != None:
-            required_list = copy(self.required_tags_list)
+        if self.required_data_list != None:
+            required_list = copy(self.required_data_list)
             required_list = required_list + self.get_dependencies(required_list)
             required_list.reverse()
 
@@ -207,8 +209,8 @@ class GokartRawData:
                 self.kartData[name]['info'] = [[],sig, wid]  # item.info = [visible,
                 # filter_sigma, filter_width, order, scale]
 
-        if required_list != None:
-            self.kartData = dict([ (key,self.kartData[key]) for key in required_list ])
+        if self.required_data_list != None:
+            self.kartData = dict([(key,self.kartData[key]) for key in required_list if key in self.kartData.keys() ])
 
         if len(groups) == 18:
             pass

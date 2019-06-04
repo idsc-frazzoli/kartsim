@@ -40,7 +40,7 @@ def filter_raw_data(raw_data, filter_these=None):
 
 
 def compute_additional_data(filtered_data, name):
-    vmu_cog = 0.46  # [m] displacement of cog to vmu wrt vmu
+    vmu_cog_dx = 0.46  # [m] displacement of cog to vmu wrt vmu in x-direction
 
     kartData = filtered_data.get_data()
     differentiate = 'pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'pose ax [m*s^-2]', 'pose ay [m*s^-2]', 'pose atheta [rad*s^-2]'
@@ -60,14 +60,22 @@ def compute_additional_data(filtered_data, name):
         if name == 'pose x [m]':
             x = kartData['pose x atvmu [m]']['data'][0]
             y = kartData['pose x atvmu [m]']['data'][1]
-            y = y + vmu_cog * np.cos(theta)
+            y = y + vmu_cog_dx * np.cos(theta)
         else:
             x = kartData['pose y atvmu [m]']['data'][0]
             y = kartData['pose y atvmu [m]']['data'][1]
-            y = y + vmu_cog * np.sin(theta)
+            y = y + vmu_cog_dx * np.sin(theta)
 
         filtered_data.set_data(name, x, y)
 
+    elif name == 'vehicle vy [m*s^-1]':
+        x = kartData['vehicle vy atvmu [m*s^-1]']['data'][0]
+        y = kartData['vehicle vy atvmu [m*s^-1]']['data'][1]
+        vtheta = kartData['pose vtheta [rad*s^-1]']['data'][1]
+
+        y = y[:-1] + vmu_cog_dx * vtheta
+
+        filtered_data.set_data(name, x[:-1], y)
 
     elif name == 'vehicle slip angle [rad]':
         x = kartData['pose vx [m*s^-1]']['data'][0]
@@ -107,7 +115,7 @@ def compute_additional_data(filtered_data, name):
         if name == 'vmu ax [m*s^-2]':
             y = a
         else:
-            y = a - atheta * vmu_cog
+            y = a - atheta * vmu_cog_dx
 
         filtered_data.set_data(name, x, y)
 
@@ -262,6 +270,6 @@ def compute_additional_data(filtered_data, name):
     elif name == 'MH BETA [rad]':
         x = kartData['steer position cal [n.a.]']['data'][0]
         steerCal = np.array(kartData['steer position cal [n.a.]']['data'][1])
-        BETA = -0.625 * np.power(steerCal, 3) + 0.939 * steerCal
+        BETA = -0.63 * np.power(steerCal, 3) + 0.94 * steerCal
 
         filtered_data.set_data(name, x, BETA)

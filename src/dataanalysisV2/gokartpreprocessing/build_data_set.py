@@ -10,13 +10,13 @@ from dataanalysisV2.gokartpreprocessing.preprocessing import filter_raw_data
 
 from dataanalysisV2.gokartpreprocessing.gokart_raw_data import GokartRawData
     
-def prepare_dataset(pathRootData, data_tags, required_tags_list):
+def prepare_dataset(pathRootData, data_tags, required_data_list, required_tags_list):
 
     nr_of_good_logs = 0
     total_nr_of_logs = 0
     testDays = getDirectories(pathRootData)
     testDays.sort()
-    for testDay in testDays:
+    for testDay in testDays[-2:-1]:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)
         logNrs.sort()
@@ -35,9 +35,9 @@ def prepare_dataset(pathRootData, data_tags, required_tags_list):
     skipCount = 0
     comp_count = 0
 
-    raw_data = GokartRawData(required_tags_list=required_tags_list)
+    raw_data = GokartRawData(required_data_list=required_data_list)
 
-    for testDay in testDays:
+    for testDay in testDays[-2:-1]:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)
         logNrs.sort()
@@ -58,7 +58,7 @@ def prepare_dataset(pathRootData, data_tags, required_tags_list):
 
                 # Remove data that is not required
                 filtered_required_data = {}
-                for name in filtered_data.get_required_tags():
+                for name in filtered_data.get_required_data():
                     try:
                         filtered_required_data[name] = filtered_data.get_data(name)
                     except:
