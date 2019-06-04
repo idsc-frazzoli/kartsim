@@ -26,10 +26,9 @@ def odeint_dx_dt(X,t):
 
 
 def solveivp_dynamic_dx_dt(t, X):
-    V = [X[4][0], X[5][0], X[6][0]]
-    U = getInput(X[0][0])
+    V = [X[4], X[5], X[6]]
+    U = getInput(X[0])
 
-    print('t',t)
     V_dt = mpc_dynamic_vehicle_model(V, U)
 
     c, s = np.cos(float(X[3])), np.sin(float(X[3]))

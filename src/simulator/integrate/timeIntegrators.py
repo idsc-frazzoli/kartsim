@@ -24,8 +24,10 @@ def odeIntegratorIVP(X0, U, simStep, simIncrement):
     t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
 
     # Dynamic mpc model
-    X1 = solve_ivp(solveivp_dynamic_dx_dt, [0, simStep], X0, t_eval=t_eval, method='RK45', vectorized=True, first_step=None,
-                   rtol=1e-3, atol=1e-6)
+    # X1 = solve_ivp(solveivp_dynamic_dx_dt, [0, simStep], X0, t_eval=t_eval, method='RK45', vectorized=True, first_step=None,
+    #                rtol=1.49012e-8, atol=1.49012e-8)
+    X1 = solve_ivp(solveivp_dynamic_dx_dt, [0, simStep], X0, t_eval=t_eval, method='RK45')
+    # X1 = solve_ivp(solveivp_dynamic_dx_dt, [0, simStep], X0, t_eval=t_eval, method='LSODA', rtol=1e-8)
 
     # Kinematic mpc model
     # X0[5] = X0[6] = 0
