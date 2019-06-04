@@ -52,7 +52,7 @@ def main():
         rmse = []
         for j in range(len(simfiles[index][1:])):
             try:
-                simdataframe = dIO.getCSV(simfiles[index][j+1][0])
+                simdataframe = dIO.dataframe_from_csv(simfiles[index][j+1][0])
             except:
                 print('FileNotFoundError: could not read data from file ', simfiles[index][j+1][0])
                 raise
