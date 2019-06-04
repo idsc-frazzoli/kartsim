@@ -72,6 +72,7 @@ def main():
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
         # X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
         #       preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0], preprodata['pose vtheta [rad*s^-1]'][0]]
+
         X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0],
               preprodata['pose theta [rad]'][0],
               0.1, preprodata['vehicle vy [m*s^-1]'][0],
