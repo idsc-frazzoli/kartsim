@@ -18,7 +18,7 @@ from dataanalysisV2.mathfunction import derivative_X_dX
 
 def preProcessing(self, name):
     availableDataList = [item[0] for item in self.availableData]
-    vmu_cog = 0.48 #[m] displacement of cog to vmu wrt vmu
+    vmu_cog_dx = 0.46 #[m] displacement of cog to vmu wrt vmu
 
     if name in ['pose x', 'pose y']:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
@@ -28,9 +28,25 @@ def preProcessing(self, name):
         theta = self.availableData[availableDataList.index(nameDependency[1])][2]
 
         if name == 'pose x':
-            y = y + vmu_cog * np.cos(theta)
+            y = y + vmu_cog_dx * np.cos(theta)
         else:
-            y = y + vmu_cog * np.sin(theta)
+            y = y + vmu_cog_dx * np.sin(theta)
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+
+    if name == 'vehicle vy':
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[0])][1]
+        y = self.availableData[availableDataList.index(nameDependency[0])][2]
+        vtheta = self.availableData[availableDataList.index(nameDependency[1])][2]
+
+        y = y[:-1] + vmu_cog_dx * vtheta
+        x = x[:-1]
 
         if name in availableDataList:
             index = availableDataList.index(name)
@@ -153,7 +169,7 @@ def preProcessing(self, name):
         if name == 'vmu ax':
             y = a
         else:
-            y = a - atheta * vmu_cog
+            y = a - atheta * vmu_cog_dx
 
         if name in availableDataList:
             index = availableDataList.index(name)
@@ -326,7 +342,7 @@ def preProcessing(self, name):
         x = self.availableData[availableDataList.index(nameDependency[0])][1]
         steerCal = self.availableData[availableDataList.index(nameDependency[0])][2]
         
-        print(-0.63*steerCal[0]*steerCal[0]*steerCal[0]+0.94*steerCal[0])
+        # print(-0.63*steerCal[0]*steerCal[0]*steerCal[0]+0.94*steerCal[0])
         
         beta = -0.63*steerCal*steerCal*steerCal+0.94*steerCal
         
