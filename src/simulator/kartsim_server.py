@@ -85,7 +85,7 @@ def handle_client(c,v,l,visualization,logging):
             if len(msg_list) == 4:
                 X0, U, server_return_interval, sim_time_increment = decode_request_msg_from_txt(request_msg)
 
-                # X = integrators.odeIntegrator(X0, U, server_return_time, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                # X = integrators.odeIntegrator(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
                 X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
                 # X = integrators.euler(X0, U, server_return_interval, sim_time_increment)
 
