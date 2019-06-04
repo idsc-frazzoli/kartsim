@@ -35,8 +35,8 @@ class Clarity(QtGui.QMainWindow):
     def __init__(self):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
-#         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
-        self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
+        self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
+        # self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
         defaultSim = simFolders[-1]
@@ -385,7 +385,7 @@ class Clarity(QtGui.QMainWindow):
         timeTopic = ''
         for csvfile, csvfileName in csvFiles:
             try:
-                dataFrame = dio.getCSV(csvfile)
+                dataFrame = dio.dataframe_from_csv(csvfile)
                 for topic in dataFrame.columns:
                     if 'time' in topic or 'Time' in topic:
                         timeTopic = topic
