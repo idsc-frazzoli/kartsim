@@ -84,11 +84,10 @@ def pymodelDx(V, U, param):
 
     F2x = AB
 
-    F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.*1.1
-    #F2y1 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
-    F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.*1.1
-    #F2y2 = simpleaccy(VELY - l2 * VELROTZ, VELX, (AB) / f2n) * f2n / 2.
-    F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n*1.1
+    F2y1 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB+TV/2.)/f2n)*f2n/2.
+    F2y2 = simpleaccy(VELY-l2*VELROTZ,VELX,(AB-TV/2.)/f2n)*f2n/2.
+    F2y = simpleaccy(VELY-l2*VELROTZ,VELX,AB/f2n)*f2n
+
     # if abs(VELX) < 0.05 and abs(VELY) < 0.05:
     #     TV = 0.
     TVTrq = TV*w
