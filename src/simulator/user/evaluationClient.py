@@ -25,15 +25,16 @@ def main():
     pathsavedata = sys.argv[1]
     pathpreprodata = sys.argv[2]
     preprofiles = sys.argv[3:]
-    print(preprofiles)
+    # print(preprofiles)
 
     # preprofiles = preprofiles.split(',')[:-1]
-    # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190411-135142_MarcsModel' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/_33333333333333' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # preprofiles = ['20190521T101604_03_sampledlogdata.pkl']
 
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = True
+    real_time = False
     server_return_interval = 1  # [s] simulation time after which result is returned from server
     real_time_factor = 1
     _wait_for_real_time = 0
@@ -75,7 +76,7 @@ def main():
 
         X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0],
               preprodata['pose theta [rad]'][0],
-              0.1, preprodata['vehicle vy [m*s^-1]'][0],
+              preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0],
               preprodata['pose vtheta [rad*s^-1]'][0]]
 
         # ______^^^______
@@ -93,6 +94,8 @@ def main():
         ticker = threading.Event()
         i = 0
         tgo = time.time()
+        print('sim_time_increment',sim_time_increment)
+        print('server_return_interval',server_return_interval)
         while not ticker.wait(_wait_for_real_time):
             if i >= int(simTime/server_return_interval):
                 conn.send('simulation finished')

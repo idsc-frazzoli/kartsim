@@ -20,7 +20,7 @@ SIMLOGFILENAMES=()
 #select files
 ITER=0
 FIRSTFILE=0
-LASTFILE=0
+LASTFILE=10000
 for i in $PREPROFOLDERPATH/*.pkl; do if ((ITER >= $FIRSTFILE && ITER <= $LASTFILE)); then SIMLOGFILENAMES+=($(basename "$i")); fi; ITER=$(( $ITER + 1)); done;
 #SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
 #echo $SIMLOGFILENAMES
