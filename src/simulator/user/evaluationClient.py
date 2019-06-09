@@ -94,8 +94,7 @@ def main():
         ticker = threading.Event()
         i = 0
         tgo = time.time()
-        print('sim_time_increment',sim_time_increment)
-        print('server_return_interval',server_return_interval)
+
         while not ticker.wait(_wait_for_real_time):
             if i >= int(simTime/server_return_interval):
                 conn.send('simulation finished')
