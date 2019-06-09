@@ -79,7 +79,7 @@ def pymodelDx(X, W, param):
     
     return ACCX[0], ACCY[0], ACCROTZ[0]
 
-# def rotmat(beta):
+# def _rotmat(beta):
 #     return np.array([[tf.cos(beta),tf.sin(beta)],[-tf.sin(beta), tf.cos(beta)]])
 def rotmat_tf(beta):
     R1 = tf.stack([tf.cos(beta),tf.sin(beta)],axis=0)
@@ -131,7 +131,7 @@ def satfun(x):
     y = tf.cond(tf.equal(isinstance(x,tf.Tensor),True), lambda: ft0(x,l,r), lambda: ff0())
 
     if y == 999.0:
-        print('ERROR: x in satfun(x) is not float!')
+        print('ERROR: x in _satfun(x) is not float!')
         return None
     else:
         y = 0.95 * y
@@ -146,5 +146,5 @@ def satfun(x):
     #         y = 1;
     #     y=0.95*y;
     # else:
-    #     print('ERROR: x in satfun(x) is not float!')
+    #     print('ERROR: x in _satfun(x) is not float!')
 

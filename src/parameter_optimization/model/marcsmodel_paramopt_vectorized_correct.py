@@ -88,15 +88,15 @@ def pymodelDx(X, W, param):
 
     # print('f1y_Jc', f1y[:3])
 
-    # vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
-    # f1y = simplefaccy(vel1[1], vel1[0])
+    # vel1 = np.matmul(_rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
+    # f1y = _simplefaccy(vel1[1], vel1[0])
 
     F1x = np.sum(np.multiply(rotmat(-BETA)[0], np.array([np.zeros(len(f1y)), f1y])), axis=0)*f1n
     F1y = np.sum(np.multiply(rotmat(-BETA)[1], np.array([np.zeros(len(f1y)), f1y])), axis=0)*f1n
 
 
     # F1 = np.concatenate((F1_x,F1_y)) * f1n
-    # F1 = np.matmul(rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
+    # F1 = np.matmul(_rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
     # F1x = F1[0]
     # F1y = F1[1]
 
@@ -158,13 +158,13 @@ def jacobian_of_pymodelDx(X, W, param):
     f1y = simplefaccy(vely, velx)
     print('f1y_Jc',f1y)
 
-    # vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
-    # f1y = simplefaccy(vel1[1], vel1[0])
+    # vel1 = np.matmul(_rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
+    # f1y = _simplefaccy(vel1[1], vel1[0])
 
     F1x = np.sum(np.multiply(rotmat(-BETA)[0], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     F1y = np.sum(np.multiply(rotmat(-BETA)[1], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     # F1 = np.concatenate((F1_x,F1_y)) * f1n
-    # F1 = np.matmul(rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
+    # F1 = np.matmul(_rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
     # F1x = F1[0]
     # F1y = F1[1]
 
@@ -207,7 +207,7 @@ def capfactor(taccx):
 
 
 def capfactor_dD2(taccx):
-    # print('satfun',0.5 * 1./(1-satfun_approx(taccx)[0])**(1/2.))
+    # print('_satfun',0.5 * 1./(1-satfun_approx(taccx)[0])**(1/2.))
     # print(satfun_approx_derivative(taccx)[0])
     # print(taccx[0])
     # print(taccx[0]**2)
@@ -239,14 +239,14 @@ def simpleaccy_dD2(VELY, VELX, taccx):
     # print('linear',linear_part[0])
     # print('cap',cap_part[0])
     # print(' ',capfactor_dD2(taccx)[0])
-    # print(' ',simplediraccy(VELY, VELX, taccx)[0])
-    # print('magic',magic_part[0])
-    # # print(capfactor(taccx)[0])
+    # print(' ',_simplediraccy(VELY, VELX, taccx)[0])
+    # print('_magic',magic_part[0])
+    # # print(_capfactor(taccx)[0])
     # # print(magic_derivative(B2, C2, D2, VELY, VELX, taccx)[0])
     # print('TOTAL', linear_part[0]+cap_part[0]+magic_part[0], '\n')
 
     return linear_part + cap_part + magic_part
-    # return simpleaccy(VELY, VELX, taccx) / D2 + capfactor_dD2(taccx) * simplediraccy(VELY, VELX, taccx) + capfactor(
+    # return _simpleaccy(VELY, VELX, taccx) / D2 + capfactor_dD2(taccx) * _simplediraccy(VELY, VELX, taccx) + _capfactor(
     #     taccx) * magic_derivative(B2, C2, D2, VELY, VELX, taccx)
 
 

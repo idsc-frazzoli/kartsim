@@ -63,18 +63,18 @@ def pymodelDx(X, W, param):
     f1y = simplefaccy(vely, velx)
 
     # vel1 = []
-    # for i in range(rotmat(BETA).shape[2]):
-    #     vel1.append(np.matmul(rotmat(BETA)[:,:,i], np.array([[VELX], [VELY + l1 * VELROTZ]])[:,:,i]))
+    # for i in range(_rotmat(BETA).shape[2]):
+    #     vel1.append(np.matmul(_rotmat(BETA)[:,:,i], np.array([[VELX], [VELY + l1 * VELROTZ]])[:,:,i]))
     #
-    # # vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
-    # f1y = simplefaccy(vel1[1], vel1[0])
+    # # vel1 = np.matmul(_rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
+    # f1y = _simplefaccy(vel1[1], vel1[0])
 
     F1x = np.sum(np.multiply(rotmat(-BETA)[0], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     F1y = np.sum(np.multiply(rotmat(-BETA)[1], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     # F1 = []
-    # for i in range(rotmat(-BETA).shape[2]):
-    #     F1.append(np.matmul(rotmat(-BETA)[:,:,i], np.array([[0], [f1y[0,0]]])) * f1n)
-    # # F1 = np.matmul(rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
+    # for i in range(_rotmat(-BETA).shape[2]):
+    #     F1.append(np.matmul(_rotmat(-BETA)[:,:,i], np.array([[0], [f1y[0,0]]])) * f1n)
+    # # F1 = np.matmul(_rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
     # F1x = F1[0]
     # F1y = F1[1]
     F2x = AB
@@ -131,5 +131,5 @@ def satfun(x):
                 y = 1
             res.append(0.95*y)
     else:
-        print('ERROR: x in satfun(x) is not float!')
+        print('ERROR: x in _satfun(x) is not float!')
     return np.array(res)

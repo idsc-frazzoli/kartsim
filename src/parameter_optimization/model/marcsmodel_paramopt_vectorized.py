@@ -78,13 +78,13 @@ def pymodelDx(X, W, param):
     vely = np.sum(np.multiply(rotmat(BETA)[1], np.array([VELX, VELY + l1 * VELROTZ])), axis=0)
     f1y = simplefaccy(vely, velx)
 
-    # vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
-    # f1y = simplefaccy(vel1[1], vel1[0])
+    # vel1 = np.matmul(_rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
+    # f1y = _simplefaccy(vel1[1], vel1[0])
 
     F1x = np.sum(np.multiply(rotmat(-BETA)[0], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     F1y = np.sum(np.multiply(rotmat(-BETA)[1], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     # F1 = np.concatenate((F1_x,F1_y)) * f1n
-    # F1 = np.matmul(rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
+    # F1 = np.matmul(_rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
     # F1x = F1[0]
     # F1y = F1[1]
 
@@ -140,13 +140,13 @@ def jacobian_of_pymodelDx(X, W, param):
     vely = np.sum(np.multiply(rotmat(BETA)[1], np.array([VELX, VELY + l1 * VELROTZ])), axis=0)
     f1y = simplefaccy(vely, velx)
     print('f1y',f1y)
-    # vel1 = np.matmul(rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
-    # f1y = simplefaccy(vel1[1], vel1[0])
+    # vel1 = np.matmul(_rotmat(BETA), np.array([[VELX], [VELY + l1 * VELROTZ]]))
+    # f1y = _simplefaccy(vel1[1], vel1[0])
 
     F1x = np.sum(np.multiply(rotmat(-BETA)[0], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     F1y = np.sum(np.multiply(rotmat(-BETA)[1], np.array([np.zeros(len(f1y)), f1y])), axis=0)
     # F1 = np.concatenate((F1_x,F1_y)) * f1n
-    # F1 = np.matmul(rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
+    # F1 = np.matmul(_rotmat(-BETA), np.array([[0], [f1y[0]]])) * f1n
     # F1x = F1[0]
     # F1y = F1[1]
 
