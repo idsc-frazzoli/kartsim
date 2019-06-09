@@ -21,4 +21,5 @@ def getInput(time1):
     index = np.argmax(interpTV[0]>time1-0.1)
     # return [interpBETA(time1), interpAB(time1), interpTV(time1)]
     # return [interpBETA[1][index], interpAB[1][index], interpTV[1][index]]
+    # print([interpBETA(time1), interpAB(time1), interpTV[1][index]])
     return [interpBETA(time1), interpAB(time1), interpTV[1][index]]

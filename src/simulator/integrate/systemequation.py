@@ -7,40 +7,59 @@ Created 09.05.19 09:31
 """
 import numpy as np
 
-from model.pymodelDx import mpc_dynamic_vehicle_model
-from model.kinematic_mpc_model import mpc_kinematic_vehicle_model
 from simulator.integrate.systeminputhelper import getInput
 
+class SystemEquation:
+    def __init__(self, vehicle_model):
+        self.vehicle_model = vehicle_model
+        self.vehicle_model_name = vehicle_model.get_name()
+    # def initialize_vehicle_model(model_object):
+    #     global vehicle_model
+    #     vehicle_model = model_object
+    #     print('initialized')
 
-def odeint_dx_dt(X,t):
-    V = X[4:7]
-    U = getInput(X[0])
+    def get_system_equation(self):
+        if self.vehicle_model_name == "dynamic_vehicle_mpc":
+            return self.solveivp_dynamic_dx_dt
+        elif self.vehicle_model_name == "kinematic_vehicle_mpc":
+            return self.solveivp_kinematic_dx_dt
 
-    V_dt = mpc_dynamic_vehicle_model(V, U)
+    def get_vehicle_model_name(self):
+        return self.vehicle_model_name
 
-    c, s = np.cos(float(X[3])), np.sin(float(X[3]))
-    R = np.array(((c, -s), (s, c)))
-    Vabs = np.matmul(V[:2], R.transpose())
+    def odeint_dx_dt(self, X, t):
+        V = X[4:7]
+        U = getInput(X[0])
 
-    return [1,Vabs[0],Vabs[1],V[2],V_dt[0],V_dt[1],V_dt[2]]
+        V_dt = self.vehicle_model.get_accelerations(V, U)
+
+        c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+        R = np.array(((c, -s), (s, c)))
+        Vabs = np.matmul(V[:2], R.transpose())
+
+        return [1,Vabs[0],Vabs[1],V[2],V_dt[0],V_dt[1],V_dt[2]]
 
 
-def solveivp_dynamic_dx_dt(t, X):
-    V = [X[4], X[5], X[6]]
-    U = getInput(X[0])
+    def solveivp_dynamic_dx_dt(self, t, X):
+        V = [X[4], X[5], X[6]]
+        U = getInput(X[0])
 
-    V_dt = mpc_dynamic_vehicle_model(V, U)
+        # V_dt = mpc_dynamic_vehicle_model(V, U)
+        V_dt = self.vehicle_model.get_accelerations(V, U)
 
-    c, s = np.cos(float(X[3])), np.sin(float(X[3]))
-    R = np.array(((c, -s), (s, c)))
-    Vabs = np.matmul(V[:2], R.transpose())
+        c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+        R = np.array(((c, -s), (s, c)))
+        Vabs = np.matmul(V[:2], R.transpose())
 
-    return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
+        return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
 
-def solveivp_kinematic_dx_dt(t, X):
+    def solveivp_kinematic_dx_dt(self, t, X):
 
-    U = getInput(X[0][0])
+        U = getInput(X[0])
 
-    X_dt = mpc_kinematic_vehicle_model(X,U)
+        X_dt = self.vehicle_model.get_state_changes(X,U)
 
-    return [1, X_dt[0], X_dt[1], X_dt[2], X_dt[3], X_dt[4], X_dt[5]]
+        return [1, X_dt[0], X_dt[1], X_dt[2], X_dt[3], X_dt[4], X_dt[5]]
+
+    def euler_dx_dt(self, V, U):
+        return self.vehicle_model.get_accelerations(V, U)

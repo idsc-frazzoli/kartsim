@@ -14,6 +14,8 @@ from threading import Thread
 import numpy as np
 import sys
 import time
+from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.integrate.systemequation import SystemEquation
 
 def main():
     global runThread, noThread, cliConn, logConn, vizConn
@@ -27,6 +29,9 @@ def main():
         visualization = 0
         logging = 0
 
+    # initialize vehicle model
+    vehicle_model = DynamicVehicleMPC()
+    system_equation = SystemEquation(vehicle_model)
 
     clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
@@ -65,7 +70,7 @@ def main():
                 print('client connection accepted from', clientListener.last_accepted)
                 print('Starting simulation:\n')
             
-            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,))
+            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,system_equation,))
             runThread = True
             t.start()
         else:
@@ -75,7 +80,7 @@ def main():
             pass
 
 
-def handle_client(c,v,l,visualization,logging):
+def handle_client(c,v,l,visualization,logging, system_equation):
     global noThread, cliConn, logConn, vizConn
     initSignal = 0
     while runThread:
@@ -84,11 +89,9 @@ def handle_client(c,v,l,visualization,logging):
             msg_list = request_msg.split("\n")
             if len(msg_list) == 4:
                 X0, U, server_return_interval, sim_time_increment = decode_request_msg_from_txt(request_msg)
-
                 # X = integrators.odeIntegrator(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment, system_equation) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
                 # X = integrators.euler(X0, U, server_return_interval, sim_time_increment)
-
                 answer_msg = encode_answer_msg_to_txt(X)
                 # time.sleep(0.01)
                 c.send(answer_msg)
