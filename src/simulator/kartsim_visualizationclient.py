@@ -41,7 +41,7 @@ p11.showGrid(x = True, y = True)
 p11.setAspectLocked(lock=True, ratio=1)
 
     
-# p2 = win.addPlot(title="theta")
+p2 = win.addPlot(title="theta")
 #
 # win.nextRow()
 #
@@ -151,8 +151,8 @@ def updatePlot(X1):
     p11.clear()
     p11.plot(x,y, pen=(255,255,255))
     
-    # p2.clear()
-    # p2.plot(simTime,theta, pen=(255,255,255))
+    p2.clear()
+    p2.plot(simTime,theta, pen=(255,255,255))
     #
     # p3.clear()
     # p3.plot(simTime,vx, pen=(255,255,255))

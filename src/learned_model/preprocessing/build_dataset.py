@@ -41,14 +41,14 @@ def main():
     # Sample data
     # sample_data = True
     sample_data = False
-    sampling_time_period = 0.02
+    sampling_time_period = 0.1
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
     #______________________
     # Preprocess data
-    preprocess_data = True
-    # preprocess_data = False
+    # preprocess_data = True
+    preprocess_data = False
 
 
     # ______________^^^_________________

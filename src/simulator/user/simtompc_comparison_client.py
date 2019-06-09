@@ -61,7 +61,7 @@ def main():
 
     part = 80
     # for file_path, file_name in mpcsolfiles[part:part+1]:
-    for file_path, file_name in mpcsolfiles[110:280]:
+    for file_path, file_name in mpcsolfiles[240:250]:
 
         try:
             mpc_sol_data = pd.read_csv(str(file_path), header=None,
@@ -111,13 +111,13 @@ def main():
 
         print('Simulation with file ', file_name)
 
-        txt_msg = encode_request_msg_to_txt([X0, U, simTime, sim_time_increment])
-        # conn.send([X0, U, server_return_interval, sim_time_increment])
-        conn.send(txt_msg)
-
-        answer_msg = conn.recv()
-        X1 = decode_answer_msg_from_txt(answer_msg)
-        X1 = X1[:-1,:]
+        # txt_msg = encode_request_msg_to_txt([X0, U, simTime, sim_time_increment])
+        # # conn.send([X0, U, server_return_interval, sim_time_increment])
+        # conn.send(txt_msg)
+        #
+        # answer_msg = conn.recv()
+        # X1 = decode_answer_msg_from_txt(answer_msg)
+        # X1 = X1[:-1,:]
         #
         # arrow_length = 1
         #
@@ -143,9 +143,10 @@ def main():
         # plt.legend(['MPC prediction','Kartsim (RK45)'])
         # plt.xlabel('pose x')
         # plt.ylabel('pose y')
+        # plt.axis('equal')
         # # plt.title('Euler Integration')
         # plt.hold
-        #
+
         # # plt.figure(2)
         # # # plt.plot(Y[:,0], Y[:,3], 'r')
         # # # plt.plot(X1[:,0],X1[:,3], 'b')
@@ -192,12 +193,12 @@ def main():
         # plt.plot(X1[1:,0], X1_slip_angle_from_pose, 'c')
         # plt.title('slip angle [rad]')
         #
-        plt.figure(5)
+        # plt.figure(5)
         # plt.plot(Y[1:, 0], vy, 'm')
         # plt.scatter(Y[1:, 0], vy, c='m')
         # plt.plot(Y[:, 0], Y[:, 5], 'r')
-        plt.scatter(Y[0, 0], Y[0, 5], c='r')
-        plt.scatter(Y[0, 0], Y[0, 4], c='orange')
+        # plt.scatter(Y[0, 0], Y[0, 5], c='r')
+        # plt.scatter(Y[0, 0], Y[0, 4], c='orange')
         # plt.plot(X1[:, 0], X1[:, 5], 'orange')
         # plt.scatter(X1[0, 0], X1[0, 5], c='orange')
         # plt.plot(X1[1:, 0], vyx, 'c')
@@ -210,13 +211,16 @@ def main():
         # plt.xlabel('time [s]')
         # plt.ylabel('U y [m/s]')
 
-        # plt.figure(6)
-        plt.scatter(U[0,0], U[1,0],c='m')
-        # plt.scatter(U[0,0], U[2,0],c='b')
-        # plt.scatter(U[0,0], U[3,0],c='g')
+        plt.figure(6)
+        plt.plot(U[0,:], U[1,:],c='m')
+        plt.plot(U[0,:], U[2,:],c='b')
+        plt.plot(U[0,:], U[3,:],c='g')
+        # plt.scatter(U[0, 0], U[1, 0], c='orange')
+        # plt.scatter(U[0, 0], U[2, 0], c='r')
+        # plt.scatter(U[0, 0], U[3, 0], c='g')
         # # plt.scatter(X0[0],X0[1],c='b')
         # # plt.scatter(X0[0],X0[6],c='c')
-        # plt.legend(['BETA','AB','TV'])
+        plt.legend(['BETA','AB','TV'])
         plt.grid('on')
 
 

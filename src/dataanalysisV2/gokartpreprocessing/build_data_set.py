@@ -16,7 +16,7 @@ def prepare_dataset(pathRootData, data_tags, required_data_list, required_tags_l
     total_nr_of_logs = 0
     testDays = getDirectories(pathRootData)
     testDays.sort()
-    for testDay in testDays[-2:-1]:
+    for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)
         logNrs.sort()
@@ -37,7 +37,7 @@ def prepare_dataset(pathRootData, data_tags, required_data_list, required_tags_l
 
     raw_data = GokartRawData(required_data_list=required_data_list)
 
-    for testDay in testDays[-2:-1]:
+    for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)
         logNrs.sort()

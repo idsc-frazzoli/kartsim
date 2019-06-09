@@ -27,8 +27,8 @@ def main():
 
     #______________________
     # Filter data and compute inferred data from raw logs
-    filter_data = True
-    # filter_data = False
+    # filter_data = True
+    filter_data = False
     required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
                           'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
                           'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']
@@ -43,7 +43,7 @@ def main():
     # Sample data
     sample_data = True
     # sample_data = False
-    sampling_time_period = 0.1
+    sampling_time_period = 0.01
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 

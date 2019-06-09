@@ -49,7 +49,6 @@ def mpc_dynamic_vehicle_model(V, U):
 
 def pymodelDx(V, U, param):
     global B1, B2, C1, C2, D1, D2, reg
-
     VELX, VELY, VELROTZ = V
     BETA, AB, TV = U
 
@@ -144,7 +143,7 @@ def satfun(x):
             y = 1;
         y=0.95*y;
     else:
-        print('ERROR: x in satfun(x) is not float!')
+        print('ERROR: x in _satfun(x) is not float!')
     return y
 
 def satfun_approx(x):
