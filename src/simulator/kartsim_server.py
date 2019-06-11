@@ -15,6 +15,7 @@ import numpy as np
 import sys
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.model.only_accelerations_reference_model import AccelerationReferenceModel
 from simulator.integrate.systemequation import SystemEquation
 
 def main():
@@ -30,6 +31,7 @@ def main():
         logging = 0
 
     # initialize vehicle model
+    # vehicle_model = AccelerationReferenceModel()
     vehicle_model = DynamicVehicleMPC()
     system_equation = SystemEquation(vehicle_model)
 
