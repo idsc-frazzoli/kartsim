@@ -9,6 +9,56 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
+def interpolation_w_mean(x, y, xBegin, xStop, timeStep):
+    if isinstance(y, pd.Series):
+        interp = interp1d(x, y)
+
+        if xBegin % timeStep != 0:
+            xBegin = (timeStep - xBegin % timeStep) + xBegin
+        else:
+            pass
+
+        if xStop % timeStep != 0:
+            xStop = xStop - xStop % timeStep
+        else:
+            pass
+
+        xInterp = np.linspace(xBegin, xStop, int((xStop - xBegin) / timeStep)*10)
+
+        yInterp = interp(xInterp)
+
+        return xInterp, yInterp
+
+    elif isinstance(y, list):
+        interp = interp1d(x, y)
+
+        if xBegin % timeStep != 0:
+            xBegin = np.around((timeStep - xBegin % timeStep) + xBegin, 2)
+        else:
+            pass
+
+        if xStop % timeStep != 0:
+            xStop = np.around(xStop - xStop % timeStep, 2)
+        else:
+            pass
+        xInterp = np.linspace(xBegin, xStop, int(np.around((xStop - xBegin) / timeStep)) + 1)
+
+        x_eval = np.linspace(xBegin, xStop, int(np.around((xStop - xBegin) / timeStep)) * 10 + 1)
+        x_eval = np.round(x_eval, 2)
+        y_eval = interp(x_eval)
+
+        yInterp = np.array([])
+        # yInterp = []
+        for i, x in enumerate(xInterp):
+            if i == 0:
+                yInterp = np.array([np.mean(y_eval[0:i * 10 + 6])])
+            elif i == len(xInterp):
+                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:len(xInterp)])))
+            else:
+                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:i * 10 + 6])))
+
+        return xInterp, yInterp
+
 def interpolation(x, y, xBegin, xStop, timeStep):
     if isinstance(y, pd.Series):
         interp = interp1d(x, y)
