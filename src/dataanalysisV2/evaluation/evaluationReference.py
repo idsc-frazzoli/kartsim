@@ -38,9 +38,12 @@ def main():
         vx = 0
         vy = 0
         vtheta = 0
-        evalrefdata = rawdataframe[['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
-                                            'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]',
-                                            'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']].copy(deep=True)
+        evalrefdata = rawdataframe[
+            ['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+             'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+             'pose atheta [rad*s^-2]', 'steer position cal [n.a.]', 'brake position effective [m]',
+             'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']].copy(deep=True)
+                                            # 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']].copy(deep=True)
         for i in range(len(rawdataframe)):
             if i * dt % evaluationhorizon < dt:
                 vxRel = rawdataframe['vehicle vx [m*s^-1]'][i]
@@ -78,7 +81,8 @@ def main():
 
         evalrefdata.to_csv(savePathName, index=False,
                          header=['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]'])
+                                 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]', 'steer position cal [n.a.]', 'brake position effective [m]',
+             'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]'])
         # print('Evaluation reference saved to ', savePathName)
 
 if __name__ == '__main__':

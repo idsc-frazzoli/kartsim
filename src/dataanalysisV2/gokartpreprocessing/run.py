@@ -7,7 +7,7 @@ Created 09.05.19 10:18
 """
 from dataanalysisV2.data_io import create_folder_with_time, dict_keys_to_pkl
 from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
-from dataanalysisV2.gokartpreprocessing.build_data_set import prepare_dataset
+from dataanalysisV2.gokartpreprocessing.prepare_data import prepare_dataset
 from dataanalysisV2.gokartpreprocessing.tag_raw_data import TagRawData
 
 import time
@@ -29,21 +29,24 @@ def main():
     # Filter data and compute inferred data from raw logs
     # filter_data = True
     filter_data = False
+    # required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+    #                       'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+    #                       'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']
     required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
                           'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-                          'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']
+                          'pose atheta [rad*s^-2]', 'steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']
     required_tags_list = ['multiple laps', 'high slip angles']  # list of signals and tags which should be true for the logs used to build the dataset
     exclusion_tags_list = ['reverse']
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_filtered_data_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'MPC_dynamic_0p1'
+    dataset_tag = 'from1405_newinputs_0p1_test'
 
     # ______________________
     # Sample data
     sample_data = True
     # sample_data = False
-    sampling_time_period = 0.01
+    sampling_time_period = 0.2
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
@@ -55,9 +58,10 @@ def main():
         data_tagging.save_prepro_params()
 
     if filter_data:
-        data_tagging.sort_out_data(required_tags_list, exclusion_tags_list)
+        data_tagging.sort_out_data(required_data_list, required_tags_list, exclusion_tags_list)
         print('Data preprocessing started...')
-        filtered_data_dict = prepare_dataset(pathRootData, data_tagging, required_data_list, required_tags_list)
+        filtered_data_dict = prepare_dataset(pathRootData, data_tagging, required_data_list,
+                                             start_from='20190514')
 
         print('Data preprocessing completed.')
         path_preprocessed_dataset = create_folder_with_time(save_filtered_data_path, dataset_tag)

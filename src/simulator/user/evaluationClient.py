@@ -34,7 +34,7 @@ def main():
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = False
+    real_time = True
     server_return_interval = 1  # [s] simulation time after which result is returned from server
     real_time_factor = 1
     _wait_for_real_time = 0
@@ -86,10 +86,13 @@ def main():
         # while runSimulation:
         print('Simulation with file ', fileName)
         firstStep = int(round(server_return_interval/data_time_step))+1
+
         U = np.array((preprodata['time [s]'][0:firstStep].values,
-             preprodata['MH BETA [rad]'][0:firstStep].values,
-             preprodata['MH AB [m*s^-2]'][0:firstStep].values,
-             preprodata['MH TV [rad*s^-2]'][0:firstStep].values))
+                      preprodata['steer position cal [n.a.]'][0:firstStep].values,
+                      preprodata['brake position effective [m]'][0:firstStep].values,
+                      preprodata['motor torque cmd left [A_rms]'][0:firstStep].values,
+                      preprodata['motor torque cmd right [A_rms]'][0:firstStep].values))
+
         # for i in range(0,int(simTime/server_return_interval)):
         ticker = threading.Event()
         i = 0
@@ -101,10 +104,12 @@ def main():
                 break
             elif i > 0:
                 simRange = [int(round(i * server_return_interval/data_time_step)), int(round((i+1) * server_return_interval/data_time_step))+1]
+
                 U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
-                                 preprodata['MH BETA [rad]'][simRange[0]:simRange[1]].values,
-                                 preprodata['MH AB [m*s^-2]'][simRange[0]:simRange[1]].values,
-                                 preprodata['MH TV [rad*s^-2]'][simRange[0]:simRange[1]].values))
+                               preprodata['steer position cal [n.a.]'][simRange[0]:simRange[1]].values,
+                               preprodata['brake position effective [m]'][simRange[0]:simRange[1]].values,
+                               preprodata['motor torque cmd left [A_rms]'][simRange[0]:simRange[1]].values,
+                               preprodata['motor torque cmd right [A_rms]'][simRange[0]:simRange[1]].values))
 
                 if validation and i*server_return_interval % validationhorizon < server_return_interval:
                     currIndex = int(round(i * server_return_interval / data_time_step))
