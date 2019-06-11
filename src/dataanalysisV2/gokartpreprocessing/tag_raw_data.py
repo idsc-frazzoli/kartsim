@@ -16,7 +16,7 @@ class TagRawData:
 
     def __init__(self, pathRootData=None):
         if pathRootData == None:
-            raise ValueError('Path of raw data undefined. Please specify where the raw Gokart log data is located.')
+            raise FileNotFoundError('Path of raw data undefined. Please specify where the raw Gokart log data is located.')
 
         self.pathRootData = pathRootData
         self._preproParamsFileName = 'preproParams'
@@ -33,10 +33,10 @@ class TagRawData:
             print('Parameter file for preprocessing does not exist. Creating file...')
             self.data_tags = {}
 
-        self.initialize_parameters()
+        # self.initialize_parameters()
 
     def good_data(self, test_day, log_nr):
-        return self.data_tags[test_day][log_nr]['goodData']
+        return int(self.data_tags[test_day][log_nr]['goodData'])
 
     def initialize_parameters(self, overwrite=True):
         self.path_logs = ()
@@ -65,14 +65,15 @@ class TagRawData:
                     self.path_logs = self.path_logs + ((testDay, logNr, pathTestDay + '/' + logNr),)
         self.good_number_of_logs = self.total_number_of_logs
 
-    def sort_out_data(self, required_tags_list, exclusion_tags_list):
+    def sort_out_data(self, required_data_list, required_tags_list, exclusion_tags_list):
         self.good_number_of_logs = 0
         for day in self.data_tags:
             for log in self.data_tags[day]:
                 self.good_number_of_logs += 1
                 for topic in self.data_tags[day][log]:
-                    if (topic in required_tags_list and int(self.data_tags[day][log][topic]) == 0) or (
-                            topic in exclusion_tags_list and int(self.data_tags[day][log][topic]) == 1):
+                    if (topic in required_tags_list and int(self.data_tags[day][log][topic]) == 0) or \
+                            (topic in required_data_list and int(self.data_tags[day][log][topic]) == 0) or \
+                            (topic in exclusion_tags_list and int(self.data_tags[day][log][topic]) == 1):
                         self.data_tags[day][log]['goodData'] = 0
                         self.good_number_of_logs -= 1
                         break
@@ -95,7 +96,7 @@ class TagRawData:
 
             raw_data = GokartRawData(path)
             # kartData, allDataNames = setListItems(path)
-            vmuDataNames = ['pose x [m]', 'pose y [m]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'pose atheta [rad*s^-2]',
+            vmuDataNames = ['pose x [m]', 'pose y [m]', 'pose vtheta [rad*s^-1]', 'vehicle vy [m*s^-1]', 'pose atheta [rad*s^-2]',
                             'vmu ax [m*s^-2]', 'vmu ay [m*s^-2]']
             filtered_data = filter_raw_data(raw_data, vmuDataNames)
             kartData = filtered_data.get_data()
