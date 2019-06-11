@@ -20,7 +20,6 @@ class GokartRawData:
 
         if self.load_path != None:
             self.log_nr = self.load_path.split('/')[-1]
-            print('log_nr', self.log_nr)
             self.load_raw_data()
 
     def get_key_names(self):

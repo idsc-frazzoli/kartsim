@@ -39,7 +39,8 @@ class Clarity(QtGui.QMainWindow):
         # self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
-        defaultSim = simFolders[-1]
+        defaultSim = simFolders[-5]
+        defaultSim = '20190611-132906_test'
         self.pathSimData = self.pathRootSimData + '/' + defaultSim
         print('Loading data from', self.pathSimData)
 

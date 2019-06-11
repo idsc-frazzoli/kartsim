@@ -23,7 +23,6 @@ def filter_raw_data(raw_data, filter_these=None):
         data_names = filtered_data.get_key_names()
     else:
         data_names = filter_these
-
     for name in data_names:
         compute_additional_data(filtered_data, name)
         sigma = filtered_data.get_attribute(name,'sigma')
