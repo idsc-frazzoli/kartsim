@@ -50,7 +50,7 @@ fi
 #python3 joystick/joystick_client.py &
 #python3 user/simtompc_comparison_client.py &
 python3 user/evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
-#python3 user/dummyClient.py $SAVEFOLDERPATH &
+#python3 user/dummyClient.py &
 SIMPID=$!
 echo $SIMPID
 
