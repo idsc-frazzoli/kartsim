@@ -9,13 +9,19 @@ from dataanalysisV2.data_io import getDirectories
 from dataanalysisV2.gokartpreprocessing.preprocessing import filter_raw_data
 
 from dataanalysisV2.gokartpreprocessing.gokart_raw_data import GokartRawData
-    
-def prepare_dataset(pathRootData, data_tags, required_data_list, required_tags_list):
+
+
+def prepare_dataset(pathRootData, data_tags, required_data_list, start_from=None):
 
     nr_of_good_logs = 0
     total_nr_of_logs = 0
     testDays = getDirectories(pathRootData)
     testDays.sort()
+
+    if start_from != None:
+        index = testDays.index(start_from)
+        testDays = testDays[index:]
+
     for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)
