@@ -8,7 +8,7 @@ Created on Tue Apr  2 16:24:25 2019
 import numpy as np
 from scipy.integrate import odeint, solve_ivp
 
-from simulator.integrate.systeminputhelper import setInput
+from simulator.integrate.systeminputhelper import setInput, setInputAccel
 from model.pymodelDx import mpc_dynamic_vehicle_model
 import time
 
@@ -21,6 +21,7 @@ def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
 
 def odeIntegratorIVP(X0, U, simStep, simIncrement, system_equation=None):
     setInput(U)
+    # setInputAccel(U)
     t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
     if system_equation.get_vehicle_model_name == "kinematic_vehicle_mpc":
         X0[5] = X0[6] = 0

@@ -7,7 +7,7 @@ Created 09.05.19 09:31
 """
 import numpy as np
 
-from simulator.integrate.systeminputhelper import getInput
+from simulator.integrate.systeminputhelper import getInput, getInputAccel
 
 class SystemEquation:
     def __init__(self, vehicle_model):
@@ -23,6 +23,8 @@ class SystemEquation:
             return self.solveivp_dynamic_dx_dt
         elif self.vehicle_model_name == "kinematic_vehicle_mpc":
             return self.solveivp_kinematic_dx_dt
+        elif self.vehicle_model_name == "acceleration_reference_model":
+            return self.solveivp_reference_dx_dt
 
     def get_vehicle_model_name(self):
         return self.vehicle_model_name
@@ -44,7 +46,6 @@ class SystemEquation:
         V = [X[4], X[5], X[6]]
         U = getInput(X[0])
 
-        # V_dt = mpc_dynamic_vehicle_model(V, U)
         V_dt = self.vehicle_model.get_accelerations(V, U)
 
         c, s = np.cos(float(X[3])), np.sin(float(X[3]))
@@ -63,3 +64,13 @@ class SystemEquation:
 
     def euler_dx_dt(self, V, U):
         return self.vehicle_model.get_accelerations(V, U)
+
+    def solveivp_reference_dx_dt(self, t, X):
+        V = [X[4], X[5], X[6]]
+        V_dt = getInputAccel(X[0])
+
+        c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+        R = np.array(((c, -s), (s, c)))
+        Vabs = np.matmul(V[:2], R.transpose())
+
+        return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
