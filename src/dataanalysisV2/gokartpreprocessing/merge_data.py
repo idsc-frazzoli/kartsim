@@ -54,7 +54,7 @@ def collect(file_list, required_data_list):
             datapool = load_data(file_path, required_data_list)
         else:
             datapool = pd.concat([datapool, load_data(file_path, required_data_list)])
-    # datapool = datapool.values
+    datapool = datapool.reset_index(drop=True)
     return datapool
 
 def load_data(filepath, required_data_list):
