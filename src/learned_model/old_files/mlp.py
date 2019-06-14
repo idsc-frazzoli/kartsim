@@ -33,7 +33,7 @@ def get_coeff_of_determination(labels, predictions):
     return R_squared
 
 
-class MultiLayerPerceptron():
+class MultiLayerPerceptronFirstTry():
     def __init__(self, epochs=20, learning_rate=1e-4, shuffle=True, random_seed=None):
         self.epochs = epochs
         self.learning_rate = learning_rate
@@ -50,7 +50,7 @@ class MultiLayerPerceptron():
 
             self.saver = tf.train.Saver()
 
-            self.session = tf.Session(graph=g)
+        self.session = tf.Session(graph=g)
 
     def build(self):
         """builds the neural network"""
@@ -59,14 +59,14 @@ class MultiLayerPerceptron():
         ph_x = tf.placeholder(shape=(None,7), dtype=tf.float32, name='ph_x')
         ph_y = tf.placeholder(shape=(None,3), dtype=tf.float32, name='ph_y')
 
-        h1 = tf.layers.dense(inputs=ph_x, units=35, activation=tf.tanh, name='hidden_layer_1')
+        h1 = tf.layers.dense(inputs=ph_x, units=30, activation=tf.nn.relu, name='hidden_layer_1')
 
-        h2 = tf.layers.dense(inputs=h1, units=35, activation=tf.tanh, name='hidden_layer_2')
+        h2 = tf.layers.dense(inputs=h1, units=30, activation=tf.nn.relu, name='hidden_layer_2')
 
         prediciton = tf.layers.dense(inputs=h2, units=3, activation=None)
 
         # Loss function
-        mean_squared_loss = tf.losses.mean_squared_error(labels=ph_y, predictions=prediciton, name='mean_squared_loss')
+        mean_squared_loss = tf.reduce_mean(tf.losses.mean_squared_error(labels=ph_y, predictions=prediciton), name='mean_squared_loss')
 
         # Definition of the optimizer
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
@@ -74,42 +74,52 @@ class MultiLayerPerceptron():
         optimizer = optimizer.minimize(mean_squared_loss, name='train_optimizer')
 
 
-    def train(self, training_set, validation_set=None, init_vars=True):
+    def train(self, x_train, y_train, validation_set=None, init_vars=True):
         """trains the neural network"""
 
         # Initialize variables
         if init_vars:
             self.session.run(self.init_gv)
 
-        x_train = training_set[:,:7]
-        y_train = training_set[:,7:]
+        self.get_train_stats(x_train)
 
-        batch_generator = create_batch_generator(x_train, y_train, batch_size=100, shuffle=True)
+        x_train_norm = self.normalize_data(x_train)
 
-        for epoch in range(self.epochs):
+        # batch_generator = create_batch_generator(x_train_norm, y_train, batch_size=100, shuffle=True)
+        #
+        # for epoch in range(self.epochs):
+        #
+        #     avg_loss = 0
+        #
+        #     for x_batch, y_batch in batch_generator:
+        #         feed_data = {'ph_x:0': x_batch, 'ph_y:0': y_batch}
+        #
+        #         loss, _ = self.session.run(['mean_squared_loss:0', 'train_optimizer'], feed_dict=feed_data)
+        #
+        #         avg_loss += loss
+        #
+        #     if not epoch % 5:
+        #         print('Epoch', epoch, ': Average training loss:', avg_loss)
+        #
+        #         # if validation_set is not None:
+        #             # feed_data = {'ph_x:0': x_batch, 'ph_y:0': y_batch}
+        #
+        #             # valid_loss, _ = self.session.run(['mean_squared_loss:0', 'train_optimizer'], feed_dict=feed_data)
 
-            avg_loss = 0
-
-            for x_batch, y_batch in batch_generator:
-                feed_data = {'ph_x:0': x_batch, 'ph_y:0': y_batch}
-
-                loss, _ = self.session.run(['mean_squared_loss:0', 'train_optimizer'], feed_dict=feed_data)
-
-                avg_loss += loss
-
-            if not epoch % 5:
-                print('Epoch', epoch, ': Average training loss:', avg_loss)
-
-                # if validation_set is not None:
-                    # feed_data = {'ph_x:0': x_batch, 'ph_y:0': y_batch}
-
-                    # valid_loss, _ = self.session.run(['mean_squared_loss:0', 'train_optimizer'], feed_dict=feed_data)
-
-    def predict(self, x_test):
-        feed_data = {'ph_x:0': x_test}
+    def predict(self, test_features):
+        test_features_norm = self.normalize_data(test_features)
+        feed_data = {'ph_x:0': test_features_norm}
         return self.session.run('prediction:0', feed_dict=feed_data)
 
-    def save_model(self, epoch, save_path='', model_tag='mlp-model'):
+    def get_train_stats(self, training_features):
+        self.train_stats = training_features.describe()
+        self.train_stats = self.train_stats.traspose()
+        print(self.train_stats)
+
+    def normalize_data(self, x):
+        return (x - self.train_stats['mean']) / self.train_stats['std']
+
+    def save_model(self, epoch, save_path='./tf_models', model_tag='mlp-model'):
         save_path_model = create_folder_with_time(save_path, model_tag)
         print('Saving NN-model to', save_path_model)
         model_path = save_path_model + '/mlp-model.ckpt'
