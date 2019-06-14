@@ -55,8 +55,8 @@ def main():
 
     #______________________
     # Preprocess data
-    # preprocess_data = True
-    preprocess_data = False
+    preprocess_data = True
+    # preprocess_data = False
     path_sampled_data = None
     save_path_merged_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel'
     path_merged_data = None

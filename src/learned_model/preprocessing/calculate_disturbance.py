@@ -50,3 +50,5 @@ def calculate_disturbance(load_path_data=None, tag='test'):
 
     print('Data set with disturbance saved to', file_path)
 
+if __name__ == '__main__':
+    calculate_disturbance()
