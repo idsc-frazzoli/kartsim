@@ -8,9 +8,8 @@ Created on Tue Apr  2 16:24:25 2019
 import numpy as np
 from scipy.integrate import odeint, solve_ivp
 
-from simulator.integrate.systeminputhelper import setInput, setInputAccel
-from model.pymodelDx import mpc_dynamic_vehicle_model
-import time
+from simulator.integrate.systeminputhelper import setInput
+
 
 def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
     setInput(U)
