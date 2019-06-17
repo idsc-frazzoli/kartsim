@@ -17,14 +17,10 @@ from learned_model.preprocessing.shuffle import shuffle_dataframe
 from dataanalysisV2.data_io import create_folder_with_time, getDirectories, dataframe_to_pkl
 import time
 
-def coeff_of_determination(labels, predictions):
-    total_error = tf.reduce_sum(tf.square(tf.subtract(labels, tf.reduce_mean(labels))))
-    unexplained_error = tf.reduce_sum(tf.square(tf.subtract(labels, predictions)))
-    r_squared = tf.subtract(1.0, tf.math.divide(unexplained_error, total_error))
-    return r_squared
 
 class MultiLayerPerceptron():
-    def __init__(self, epochs=20, learning_rate=1e-4, batch_size=100, shuffle=True, random_seed=None, model_name='test'):
+    def __init__(self, epochs=20, learning_rate=1e-4, batch_size=100, shuffle=True, random_seed=None, model_name='test',
+                 predict_only=False):
         self.root_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models'
         self.epochs = epochs
         self.learning_rate = learning_rate
@@ -35,6 +31,9 @@ class MultiLayerPerceptron():
         self.model = None
         self.history = None
         self.new_model = False
+
+        if predict_only:
+            tf.keras.backend.set_learning_phase(0)
 
         self.model_dir = None
         folder_names = getDirectories(self.root_folder)
@@ -48,23 +47,24 @@ class MultiLayerPerceptron():
             self.model_dir = create_folder_with_time(
                 '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models', model_name)
             os.mkdir(os.path.join(self.model_dir, 'model_checkpoints'))
-            os.mkdir(os.path.join(self.model_dir, 'model_checkpoints','best'))
+            os.mkdir(os.path.join(self.model_dir, 'model_checkpoints', 'best'))
             self.new_model = True
-
 
     def load_model(self):
         try:
             load_path = os.path.join(self.model_dir, 'my_model.h5')
-            self.model = tf.keras.models.load_model(load_path)
+            print(load_path)
+            self.model = tf.keras.models.load_model(load_path, custom_objects={
+                'coeff_of_determination': self.coeff_of_determination})
             print('Model successfully loaded from', load_path)
         except:
-            print('No model found in', self.model_dir)
+            print('Model could not be loaded from', self.model_dir)
             raise
 
         try:
             self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
-                           loss='mean_squared_error',
-                           metrics=['mean_absolute_error', 'mean_squared_error', coeff_of_determination])
+                               loss='mean_squared_error',
+                               metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
             print('Compilation successful.')
         except:
             print('Could not compile tf model.')
@@ -72,20 +72,24 @@ class MultiLayerPerceptron():
 
     def load_checkpoint(self, checkpoint_name='best'):
         load_path = os.path.join(self.model_dir, 'model_checkpoints')
-        if checkpoint_name == 'best':
-            best_path = os.path.join(load_path, 'best')
-            print(os.listdir(best_path))
 
-        elif checkpoint_name == 'latest':
+        if checkpoint_name == 'latest':
             checkpoint = tf.train.latest_checkpoint(load_path)
         else:
-            checkpoint = tf.train.latest_checkpoint(load_path)
+            best_path = os.path.join(load_path, 'best')
+            checkpoint = os.path.join(best_path, os.listdir(best_path)[0])
+            print(checkpoint)
 
-        # try:
-        #     self.model.load_weights(checkpoint)
-        # except:
-        #     print('Could not load checkpoint.')
-        #     raise
+        try:
+            self.model.load_weights(checkpoint)
+            print('Checkpoint loaded successfully.')
+        except:
+            print('Could not load checkpoint.')
+            raise
+
+    def load_normalizing_parameters(self):
+        load_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
+        return pd.DataFrame().from_csv(load_path)
 
     def build_new_model(self):
         inputs = tf.keras.Input(shape=(7,))
@@ -99,12 +103,12 @@ class MultiLayerPerceptron():
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
         self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
                            loss='mean_squared_error',
-                           metrics=['mean_absolute_error', 'mean_squared_error', coeff_of_determination])
+                           metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
 
     def train_model(self, features, labels):
         while not self.new_model:
-            answer = input('There may be an existing model. Would you like to overwrite any existing models? (y/n)')
-            if answer in ('y','Y','Yes','yes'):
+            answer = input('There may be an existing model.\nWould you like to overwrite any existing models? (y/n)')
+            if answer in ('y', 'Y', 'Yes', 'yes'):
                 break
             elif answer in ('n', 'N', 'No', 'no'):
                 print('Abort: Script will be terminated.')
@@ -131,7 +135,7 @@ class MultiLayerPerceptron():
                                                                   save_best_only=True, monitor='val_loss', mode='min')
 
         # Callback: Stop training if validation loss does not improve anymore
-        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
 
         self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint, PrintState()],
@@ -141,13 +145,39 @@ class MultiLayerPerceptron():
         self.model.save(os.path.join(self.model_dir, 'my_model.h5'))
         print('Training terminated\nModel saved successfully')
 
+    def get_weights(self, layer='all'):
+        W=[]
+        B=[]
+        if layer == 'all':
+            for i, l in enumerate(self.model.layers):
+                if i == len(self.model.layers) - 1:
+                    # print('Output Layer\n Weights {weights}\n Biases {biases}'.format(weights=l.get_weights()[0],
+                    #                                                                   biases=l.get_weights()[1]))
+                    W.append(l.get_weights()[0])
+                    B.append(l.get_weights()[1])
+                elif i > 0:
+                    # print('Layer {:5.0f}\n Weights {weights}\n Biases {biases}'.format(i, weights=l.get_weights()[0],
+                    #                                                                    biases=l.get_weights()[1]))
+                    W.append(l.get_weights()[0])
+                    B.append(l.get_weights()[1])
+        elif isinstance(layer, int):
+            l = self.model.layers[layer]
+            # print('Layer {:5.0f}\n Weights {weights}\n Biases {biases}'.format(layer, weights=l.get_weights()[0],
+            #                                                                    biases=l.get_weights()[1]))
+            W.append(l.get_weights()[0])
+            B.append(l.get_weights()[1])
+        else:
+            print('layer argument must be an integer or \"all\"')
+            raise ValueError
+        return W,B
+
     def save_training_parameters(self):
         data = np.array([self.epochs, self.learning_rate, self.batch_size, self.shuffle, self.random_seed,
                          self.model_name]).transpose()
         training_parameters = pd.DataFrame(data=data,
                                            columns=['values'],
                                            index=['epochs', 'learning_rate', 'batch_size', 'shuffle', 'random_seed',
-                                                    'model_name'])
+                                                  'model_name'])
 
         train_params_save_path = os.path.join(self.model_dir, 'training_parameters.csv')
         training_parameters.to_csv(train_params_save_path)
@@ -174,7 +204,7 @@ class MultiLayerPerceptron():
             hist.to_csv(hist_save_path)
 
             plt.figure('Mean Squared Error (Loss)')
-            plt.plot(hist[['epoch']].values, hist[['loss','val_loss']].values)
+            plt.plot(hist[['epoch']].values, hist[['loss', 'val_loss']].values)
             plt.legend(['Training Loss', 'Validation Loss'])
             plt.savefig(os.path.join(save_path, 'loss_mean_squ_err.pdf'))
 
@@ -194,6 +224,14 @@ class MultiLayerPerceptron():
             print('No training history found.')
             return 0
 
+    def predict(self, input):
+        # print(type(input))
+        # print(input)
+        # t0 = time.time()
+        result = self.model.predict(x=input, verbose=0)
+        # print('t3 {:5.10f}'.format(time.time() - t0))
+        return result
+
     def show_model_summary(self):
         return self.model.summary()
 
@@ -204,16 +242,21 @@ class MultiLayerPerceptron():
     def normalize_data(self, features):
         return (features - self.train_stats['mean']) / self.train_stats['std']
 
+    def coeff_of_determination(self, labels, predictions):
+        total_error = tf.reduce_sum(tf.square(tf.subtract(labels, tf.reduce_mean(labels))))
+        unexplained_error = tf.reduce_sum(tf.square(tf.subtract(labels, predictions)))
+        r_squared = tf.subtract(1.0, tf.math.divide(unexplained_error, total_error))
+        return r_squared
+
 
 class PrintState(tf.keras.callbacks.Callback):
     def __init__(self):
         self.t0 = time.time()
+
     def on_epoch_end(self, epoch, logs):
-        if epoch % 1 == 0:
+        if epoch % 5 == 0:
             # print(logs)
             # print(type(logs))
-            print('Time: {:5.1f}    Epoch: {:5.0f}    Training Loss: {:10.2f}    Validation Loss: {:10.2f}'.format(time.time() - self.t0, epoch, logs['loss'], logs['val_loss']))
+            print('Time: {:5.1f}    Epoch: {:5.0f}    Training Loss: {:10.2f}    Validation Loss: {:10.2f}'.format(
+                time.time() - self.t0, epoch, logs['loss'], logs['val_loss']))
         # add callbacks=[PrintDot()] to model.fit(callbacks=[.....])
-
-
-
