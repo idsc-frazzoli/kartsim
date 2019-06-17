@@ -18,7 +18,14 @@ import time
 #initializing Client and connect to pyKartsimServer
 time.sleep(1)
 address = ('localhost', 6001)
-conn = Client(address, authkey=b'kartSim2019')
+connected = False
+while not connected:
+    try:
+        conn = Client(address, authkey=b'kartSim2019')
+        connected = True
+    except ConnectionRefusedError:
+        # print('ConnectionRefusedError')
+        pass
 ##wait until initalization msg is sent and Simulation starts
 #_ = conn.recv()
 

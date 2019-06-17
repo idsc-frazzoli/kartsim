@@ -25,14 +25,14 @@ def main():
         server_return_interval = 0.1*real_time_factor  # [s] simulation time after which result is returned from server
         _wait_for_real_time = server_return_interval*0.9*(1.0/real_time_factor)
 
+    address = ('localhost', 6000)
     connected = False
     while not connected:
         try:
-            address = ('localhost', 6000)
             conn = Client(address, authkey=b'kartSim2019')
             connected = True
         except ConnectionRefusedError:
-            print('ConnectionRefusedError')
+            # print('ConnectionRefusedError')
             pass
 
     simTime = 10
@@ -49,8 +49,8 @@ def main():
     u_steering = np.linspace(-0.5,0.5,1001)
 
     u_brake = np.linspace(0,0,1001)
-    u_mot_l = np.linspace(-100,50,1001)
-    u_mot_r = np.linspace(-100,50,1001)
+    u_mot_l = np.linspace(100,500,1001)
+    u_mot_r = np.linspace(100,500,1001)
 
     U = np.array([u_time, u_steering, u_brake, u_mot_l, u_mot_r])
 
@@ -87,8 +87,8 @@ def main():
 
     print('Success! Time overall: ', time.time()-tgo)
 
-    plt.plot(X1[:,1], X1[:,2])
-    plt.show()
+    # plt.plot(X1[:,0], X1[:,1])
+    # plt.show()
 
 if __name__ == '__main__':
     main()

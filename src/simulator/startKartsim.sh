@@ -12,7 +12,6 @@ PREPROFOLDERPATH=$PREPROROOT/$PREPROFOLDER
 SAVEPATH="/home/mvb/0_ETH/01_MasterThesis/SimData"
 FOLDERNAME=$(date +"%Y%m%d-%H%M%S")
 FOLDERPATH=$SAVEPATH/$FOLDERNAME
-#SIMTAG="_MM_original_eval"
 SIMTAG="_test"
 SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
 SIMLOGFILENAMES=()
@@ -25,7 +24,7 @@ for i in $PREPROFOLDERPATH/*.pkl; do if ((ITER >= $FIRSTFILE && ITER <= $LASTFIL
 #SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
 #echo $SIMLOGFILENAMES
 VISUALIZATION=1
-LOGGING=1
+LOGGING=0
 
 mkdir $SAVEFOLDERPATH
 
@@ -52,7 +51,6 @@ fi
 python3 user/evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 #python3 user/dummyClient.py &
 SIMPID=$!
-echo $SIMPID
 
 exit_script() {
     echo " "
