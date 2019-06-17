@@ -21,7 +21,6 @@ import dataanalysisV2.evaluation.evaluationReference as evalRef
 
 def main():
     #___user inputs
-
     pathsavedata = sys.argv[1]
     pathpreprodata = sys.argv[2]
     preprofiles = sys.argv[3:]
@@ -46,9 +45,9 @@ def main():
     # preprodata = getpreprodata(pathpreprodata)
 
     connected = False
+    address = ('localhost', 6000)
     while not connected:
         try:
-            address = ('localhost', 6000)
             conn = Client(address, authkey=b'kartSim2019')
             connected = True
         except ConnectionRefusedError:

@@ -15,24 +15,18 @@ import numpy as np
 import sys
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.integrate.systemequation import SystemEquation
 
 def main():
     global runThread, noThread, cliConn, logConn, vizConn
-
     #simulation default parameters
-
     try:
         visualization = int(sys.argv[1])
         logging = int(sys.argv[2])
     except:
         visualization = 0
         logging = 0
-
-    # initialize vehicle model
-    # vehicle_model = AccelerationReferenceModel()
-    vehicle_model = DynamicVehicleMPC()
-    system_equation = SystemEquation(vehicle_model)
 
     clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
@@ -41,7 +35,7 @@ def main():
         visualizationListener = Listener(visualizationAddress, authkey=b'kartSim2019')
     logAddress = ('localhost', 6002)     # family is deduced to be 'AF_INET'
     logListener = Listener(logAddress, authkey=b'kartSim2019')
-    
+
     noThread = True
     vizConn = None
     logConn = None
@@ -70,8 +64,8 @@ def main():
                 cliConn = clientListener.accept()
                 print('client connection accepted from', clientListener.last_accepted)
                 print('Starting simulation:\n')
-            
-            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,system_equation,))
+
+            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,))
             runThread = True
             t.start()
         else:
@@ -81,9 +75,16 @@ def main():
             pass
 
 
-def handle_client(c,v,l,visualization,logging, system_equation):
+def handle_client(c,v,l,visualization,logging,):
     global noThread, cliConn, logConn, vizConn
     initSignal = 0
+
+    # initialize vehicle model
+    # vehicle_model = AccelerationReferenceModel()
+    # vehicle_model = DynamicVehicleMPC()
+    vehicle_model = DataDrivenVehicleModel()
+    system_equation = SystemEquation(vehicle_model)
+
     while runThread:
         try:
             request_msg = c.recv()

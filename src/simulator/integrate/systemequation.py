@@ -6,7 +6,7 @@ Created 09.05.19 09:31
 @author: mvb
 """
 import numpy as np
-
+import time
 from simulator.integrate.systeminputhelper import getInput, getInputAccel
 
 class SystemEquation:
@@ -19,7 +19,7 @@ class SystemEquation:
     #     print('initialized')
 
     def get_system_equation(self):
-        if self.vehicle_model_name == "dynamic_vehicle_mpc":
+        if self.vehicle_model_name in ["dynamic_vehicle_mpc", "data_driven_vehicle_model"]:
             return self.solveivp_dynamic_dx_dt
         elif self.vehicle_model_name == "kinematic_vehicle_mpc":
             return self.solveivp_kinematic_dx_dt
