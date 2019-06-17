@@ -131,17 +131,17 @@ def simplefaccy(VELY, VELX):
 
 
 def satfun(x):
-    l = 0.8;
-    r = 1-l;
+    l = 0.8
+    r = 1-l
     if isinstance(x, float):
         if x<l:
-            y=x;
+            y=x
         elif x<1+r:
-            d = (1+r-x)/r;
-            y = 1-1/4*r*d**2;
+            d = (1+r-x)/r
+            y = 1-1/4*r*d**2
         else:
-            y = 1;
-        y=0.95*y;
+            y = 1
+        y=0.95*y
     else:
         print('ERROR: x in _satfun(x) is not float!')
     return y
