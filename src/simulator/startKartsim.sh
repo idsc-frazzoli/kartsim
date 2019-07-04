@@ -12,7 +12,7 @@ PREPROFOLDERPATH=$PREPROROOT/$PREPROFOLDER
 SAVEPATH="/home/mvb/0_ETH/01_MasterThesis/SimData"
 FOLDERNAME=$(date +"%Y%m%d-%H%M%S")
 FOLDERPATH=$SAVEPATH/$FOLDERNAME
-SIMTAG="_test"
+SIMTAG="_test_closedloop"
 SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
 SIMLOGFILENAMES=()
 
@@ -22,15 +22,20 @@ FIRSTFILE=0
 LASTFILE=10000
 for i in $PREPROFOLDERPATH/*.pkl; do if ((ITER >= $FIRSTFILE && ITER <= $LASTFILE)); then SIMLOGFILENAMES+=($(basename "$i")); fi; ITER=$(( $ITER + 1)); done;
 #SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
-#echo $SIMLOGFILENAMES
+
 VISUALIZATION=1
-LOGGING=0
+LOGGING=1
+
+# Specify vehicle model to simulate with
+# possible options: "mpc", "learned"
+VEHICLE_MODEL="mpc_dynamic"
+#VEHICLE_MODEL="5x64_relu_reg0p0"
 
 mkdir $SAVEFOLDERPATH
 
 for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
-python3 kartsim_server.py $VISUALIZATION $LOGGING &
+python3 kartsim_server.py $VISUALIZATION $LOGGING $VEHICLE_MODEL &
 SRVPID=$!
 
 if [ $VISUALIZATION = 1 ]
@@ -41,7 +46,8 @@ fi
 
 if [ $LOGGING = 1 ]
 then
-    python3 kartsim_loggerclient.py $SAVEFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+
+    python3 kartsim_loggerclient.py $SAVEFOLDERPATH $VEHICLE_MODEL "${SIMLOGFILENAMES[@]}" &
     LOGPID=$!
 fi
 

@@ -18,22 +18,24 @@ from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.integrate.systemequation import SystemEquation
 
+
 def main():
     global runThread, noThread, cliConn, logConn, vizConn
-    #simulation default parameters
+    # simulation default parameters
     try:
         visualization = int(sys.argv[1])
         logging = int(sys.argv[2])
+        vehicle_model = sys.argv[3]
     except:
         visualization = 0
         logging = 0
 
-    clientAddress = ('localhost', 6000)     # family is deduced to be 'AF_INET'
+    clientAddress = ('localhost', 6000)  # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
     if visualization:
-        visualizationAddress = ('localhost', 6001)     # family is deduced to be 'AF_INET'
+        visualizationAddress = ('localhost', 6001)  # family is deduced to be 'AF_INET'
         visualizationListener = Listener(visualizationAddress, authkey=b'kartSim2019')
-    logAddress = ('localhost', 6002)     # family is deduced to be 'AF_INET'
+    logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
     logListener = Listener(logAddress, authkey=b'kartSim2019')
 
     noThread = True
@@ -65,7 +67,7 @@ def main():
                 print('client connection accepted from', clientListener.last_accepted)
                 print('Starting simulation:\n')
 
-            t = Thread(target=handle_client, args=(cliConn,vizConn,logConn,visualization,logging,))
+            t = Thread(target=handle_client, args=(cliConn, vizConn, logConn, visualization, logging, vehicle_model))
             runThread = True
             t.start()
         else:
@@ -75,14 +77,19 @@ def main():
             pass
 
 
-def handle_client(c,v,l,visualization,logging,):
+def handle_client(c, v, l, visualization, logging, vehicle_model_name):
     global noThread, cliConn, logConn, vizConn
     initSignal = 0
 
     # initialize vehicle model
     # vehicle_model = AccelerationReferenceModel()
-    # vehicle_model = DynamicVehicleMPC()
-    vehicle_model = DataDrivenVehicleModel()
+    if vehicle_model_name == 'mpc_dynamic':
+        vehicle_model = DynamicVehicleMPC()
+    elif 'x' in vehicle_model_name:
+        vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
+
+    # vehicle_model = DynamicVehicleMPC(direct_input=True)
+
     system_equation = SystemEquation(vehicle_model)
 
     while runThread:
@@ -92,7 +99,8 @@ def handle_client(c,v,l,visualization,logging,):
             if len(msg_list) == 4:
                 X0, U, server_return_interval, sim_time_increment = decode_request_msg_from_txt(request_msg)
                 # X = integrators.odeIntegrator(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment, system_equation) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
+                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment,
+                                                 system_equation)  # format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
                 # X = integrators.euler(X0, U, server_return_interval, sim_time_increment)
                 answer_msg = encode_answer_msg_to_txt(X)
                 # time.sleep(0.01)
@@ -106,22 +114,22 @@ def handle_client(c,v,l,visualization,logging,):
                     l.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
                 break
             else:
-                print('FormatError: msg sent to server must be of form:\n   msg = [[simStartTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv],[simTimeStep]]\n e.g. msg = [[0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0],[0.1]]')
+                print(
+                    'FormatError: msg sent to server must be of form:\n   msg = [[simStartTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv],[simTimeStep]]\n e.g. msg = [[0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0],[0.1]]')
         except EOFError:
             print('SimClientError: BrokenPipe', c.fileno())
             cliConn = None
             noThread = True
             break
 
-
         if logging:
             try:
-                l.send([X,U[1:]])
+                l.send([X, U[1:]])
             except:
                 print('LoggerError: BrokenPipe', l.fileno())
                 logConn = None
                 break
-#                print('sendTime l: ', time.time() - tt)
+        #                print('sendTime l: ', time.time() - tt)
         if visualization:
             try:
                 if initSignal < 1:
@@ -129,11 +137,12 @@ def handle_client(c,v,l,visualization,logging,):
                     initSignal = 1
                 if v.poll():
                     v.recv()
-                    v.send([X,U[1:]])
+                    v.send([X, U[1:]])
             except:
                 print('VisualizationError: BrokenPipe', v.fileno())
                 vizConn = None
                 break
-    
+
+
 if __name__ == '__main__':
     main()

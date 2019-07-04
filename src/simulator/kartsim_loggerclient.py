@@ -14,7 +14,8 @@ from dataanalysisV2.mathfunction import derivative_X_dX
 
 def main():
     savePath = sys.argv[1]
-    fileNames = sys.argv[2:]
+    model_name = sys.argv[2]
+    fileNames = sys.argv[3:]
     # fileNames = fileNames.split(',')[:-1]
     fileNameIndex = 0
     print('Simulation data will be saved to ', savePath)
@@ -30,7 +31,7 @@ def main():
 
     while True:
         try:
-            savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_simulationlog.csv'
+            savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_{}_closedloop.csv'.format(model_name)
         except IndexError:
             print('No more files to read. Closing logger.')
         logClient(savePathName, logConn)
