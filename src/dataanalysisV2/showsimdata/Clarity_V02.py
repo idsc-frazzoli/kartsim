@@ -36,11 +36,12 @@ class Clarity(QtGui.QMainWindow):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
         self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData'
-        # self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
+        # self.pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel'
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
-        defaultSim = simFolders[-5]
-        defaultSim = '20190611-132906_test'
+        defaultSim = simFolders[-1]
+        # defaultSim = '_33333333333333'
+        # defaultSim = '20190703-092308_test_eval_final'
         self.pathSimData = self.pathRootSimData + '/' + defaultSim
         print('Loading data from', self.pathSimData)
 
@@ -405,18 +406,22 @@ class Clarity(QtGui.QMainWindow):
             except:
                 print('EmptyDataError: could not read data from file ', csvfile)
                 raise
-                
-            preproTopics = ['pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose ax [m*s^-2]',
-                                  'pose ay [m*s^-2]', 'pose atheta [rad*s^-2]', 'vehicle slip angle [rad]',]
-                                  # 'vehicle ax total', 'vehicle ay total',
-                                  # 'vehicle ax only transl', 'vehicle ay only transl']
-            for topic in preproTopics:
-                rawData[topic] = {}
-                rawData[topic]['data'] = []
-                rawData[topic]['info'] = [1, 0, 0, 1]
-                self.dataNames.append(topic)
 
-            rawData = updateData(rawData,self.dataNames)
+            if 'pose atheta [rad*s^-2]' not in rawData.keys():
+                preproTopics = ['pose vx [m*s^-1]', 'pose vy [m*s^-1]', 'pose ax [m*s^-2]',
+                                      'pose ay [m*s^-2]', 'pose atheta [rad*s^-2]', 'vehicle slip angle [rad]',]
+                                      # 'vehicle ax total', 'vehicle ay total',
+                                      # 'vehicle ax only transl', 'vehicle ay only transl']
+                for topic in preproTopics:
+                    rawData[topic] = {}
+                    rawData[topic]['data'] = [[],[]]
+                    rawData[topic]['info'] = [1, 0, 0, 1]
+                    self.dataNames.append(topic)
+
+                try:
+                    rawData = updateData(rawData,self.dataNames)
+                except KeyError:
+                    print('Some key missing. No preprocessing possible')
 
             for topic in rawData:
                 if timeTopic:
