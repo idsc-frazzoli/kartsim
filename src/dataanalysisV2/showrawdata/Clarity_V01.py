@@ -331,6 +331,7 @@ class Clarity(QtGui.QMainWindow):
                 groups.append(['pose x atvmu', 0, 1, name, True, 0, 0, 0, 1])
                 groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta', 0, 3, name, True, 5, 50, 0, 1])
+                groups.append(['pose quality', 0, 4, name, True, 0, 0, 0, 1])
                 groups.append(['vehicle vx', 0, 5, name, True, 10, 100, 0, 1])
                 groups.append(['vehicle vy atvmu', 0, 6, name, True, 10, 100, 0, 1])
             elif 'steer.put' in name:
@@ -364,6 +365,10 @@ class Clarity(QtGui.QMainWindow):
                 dataFrame = dio.dataframe_from_csv(fileName)
                 xRaw = dataFrame.iloc[:, timeIndex]
                 yRaw = dataFrame.iloc[:, dataIndex]
+
+                if name == 'vmu vtheta':
+                    if int(self.pathLogNr[-14:-10]) > 509:
+                        yRaw = -yRaw
 
                 if name == 'pose theta':
                     for i in range(len(yRaw)):
@@ -404,6 +409,8 @@ class Clarity(QtGui.QMainWindow):
         groups.append(['pose vy', ['pose y'], True, 5, 50, 1, 1])
         groups.append(['pose vtheta', ['pose theta'], True, 5, 50, 1, 1])
         groups.append(['vehicle vy', ['vehicle vy atvmu', 'pose vtheta'], True, 0, 0, 2, 1])
+        groups.append(['vehicle vx from pose', ['pose x', 'pose y', 'pose vx', 'pose vy', 'pose theta'], True, 0, 0, 2, 1])
+        groups.append(['vehicle vy from pose', ['pose x', 'pose y', 'pose vx', 'pose vy', 'pose theta'], True, 0, 0, 2, 1])
         groups.append(['vehicle ax local', ['vehicle vx'], True, 0, 0, 1, 1])
         groups.append(['vehicle ay local', ['vehicle vy'], True, 0, 0, 1, 1])
         groups.append(['pose ax', ['pose x', 'pose vx'], True, 20, 200, 2, 1])
