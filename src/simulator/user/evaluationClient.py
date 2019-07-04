@@ -33,7 +33,7 @@ def main():
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = True
+    real_time = False
     server_return_interval = 1  # [s] simulation time after which result is returned from server
     real_time_factor = 1
     _wait_for_real_time = 0
@@ -51,7 +51,7 @@ def main():
             conn = Client(address, authkey=b'kartSim2019')
             connected = True
         except ConnectionRefusedError:
-            print('ConnectionRefusedError')
+            # print('ConnectionRefusedError')
             pass
 
     for fileName in preprofiles:
@@ -67,7 +67,7 @@ def main():
         #___simulation parameters
         data_time_step = np.round(preprodata['time [s]'].iloc[1] - preprodata['time [s]'].iloc[0],3)  # [s] Log data sampling time step
         sim_time_increment = data_time_step     # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
-        simTime = preprodata['time [s]'].iloc[-1]  # [s] Total simulation time
+        simTime = preprodata['time [s]'].iloc[-1]#/7.0*4.0  # [s] Total simulation time
 
         # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
         # X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
@@ -122,6 +122,7 @@ def main():
             #     tgo = time.time()
 
             txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
+
             # conn.send([X0, U, server_return_interval, sim_time_increment])
             conn.send(txt_msg)
 
@@ -166,14 +167,14 @@ def main():
                 the_file.write('initial conditions:                 ' + str(X0[0]) + '\n')
                 for item in X0[1:]:
                     the_file.write('                                    ' + str(item) + '\n')
-    print('connection closed')
+    # print('connection closed')
     conn.close()
     time.sleep(2)
-    print('Creating reference signal for evaluation...')
-    evalRef.main()
-    print('Evaluating results...')
-    evalCalc.main()
-    print('Evaluation complete!')
+    # print('Creating reference signal for evaluation...')
+    # evalRef.main()
+    # print('Evaluating results...')
+    # evalCalc.main()
+    # print('Evaluation complete!')
 
 
 

@@ -61,7 +61,8 @@ def main():
 
     part = 80
     # for file_path, file_name in mpcsolfiles[part:part+1]:
-    for file_path, file_name in mpcsolfiles[240:250]:
+    # for file_path, file_name in mpcsolfiles[245:246]:
+    for file_path, file_name in mpcsolfiles[100:101]:
 
         try:
             mpc_sol_data = pd.read_csv(str(file_path), header=None,
@@ -111,41 +112,41 @@ def main():
 
         print('Simulation with file ', file_name)
 
-        # txt_msg = encode_request_msg_to_txt([X0, U, simTime, sim_time_increment])
-        # # conn.send([X0, U, server_return_interval, sim_time_increment])
-        # conn.send(txt_msg)
-        #
-        # answer_msg = conn.recv()
-        # X1 = decode_answer_msg_from_txt(answer_msg)
-        # X1 = X1[:-1,:]
-        #
-        # arrow_length = 1
-        #
-        # plt.figure(1)
-        #
-        # plt.plot(Y[:,1],Y[:,2],'r')
-        # plt.scatter(Y[:,1],Y[:,2],c='r')
-        # plt.plot(X1[:, 1], X1[:, 2], 'b')
-        # plt.scatter(X1[:, 1], X1[:, 2], c='b')
+        txt_msg = encode_request_msg_to_txt([X0, U, simTime, sim_time_increment])
+        # conn.send([X0, U, server_return_interval, sim_time_increment])
+        conn.send(txt_msg)
+
+        answer_msg = conn.recv()
+        X1 = decode_answer_msg_from_txt(answer_msg)
+        X1 = X1[:-1,:]
+
+        arrow_length = 1
+
+        plt.figure(1)
+
+        plt.plot(Y[:,1],Y[:,2],'r')
+        plt.scatter(Y[:,1],Y[:,2],c='r')
+        plt.plot(X1[:, 1], X1[:, 2], 'b')
+        plt.scatter(X1[:, 1], X1[:, 2], c='b')
+        for i in range(len(Y[:,1])):
+            plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]), arrow_length * np.sin(Y[i, 3]),color = 'm')
         # for i in range(len(Y[:,1])):
-        #     plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]), arrow_length * np.sin(Y[i, 3]),color = 'm')
-        # # for i in range(len(Y[:,1])):
-        # #     plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]+BETA[i]), arrow_length * np.sin(Y[i, 3]+BETA[i]),color='m')
-        # for i in range(len(X1[:, 1])):
-        #     plt.arrow(X1[i, 1], X1[i, 2], arrow_length * np.cos(X1[i, 3]), arrow_length * np.sin(X1[i, 3]),color='c')
-        # # for i in range(len(X1[:,1])):
-        # #     plt.arrow(X1[i,1],X1[i,2], arrow_length * np.cos(X1[i, 3]+BETA[i]), arrow_length * np.sin(X1[i, 3]+BETA[i]),color='m')
-        # # plt.plot(Y[:, 0], Y[:, 1], 'r')
-        # # plt.plot(Y[:, 0], Y[:, 2], 'r')
-        # # plt.plot(X1[:, 0], X1[:, 1], 'b')
-        # # plt.plot(X1[:, 0], X1[:, 2], 'b')
-        # # plt.axis('equal')
-        # plt.legend(['MPC prediction','Kartsim (RK45)'])
-        # plt.xlabel('pose x')
-        # plt.ylabel('pose y')
+        #     plt.arrow(Y[i,1],Y[i,2], arrow_length * np.cos(Y[i, 3]+BETA[i]), arrow_length * np.sin(Y[i, 3]+BETA[i]),color='m')
+        for i in range(len(X1[:, 1])):
+            plt.arrow(X1[i, 1], X1[i, 2], arrow_length * np.cos(X1[i, 3]), arrow_length * np.sin(X1[i, 3]),color='c')
+        # for i in range(len(X1[:,1])):
+        #     plt.arrow(X1[i,1],X1[i,2], arrow_length * np.cos(X1[i, 3]+BETA[i]), arrow_length * np.sin(X1[i, 3]+BETA[i]),color='m')
+        # plt.plot(Y[:, 0], Y[:, 1], 'r')
+        # plt.plot(Y[:, 0], Y[:, 2], 'r')
+        # plt.plot(X1[:, 0], X1[:, 1], 'b')
+        # plt.plot(X1[:, 0], X1[:, 2], 'b')
         # plt.axis('equal')
-        # # plt.title('Euler Integration')
-        # plt.hold
+        plt.legend(['MPC prediction','Kartsim (RK45)'])
+        plt.xlabel('pose x')
+        plt.ylabel('pose y')
+        plt.axis('equal')
+        # plt.title('Euler Integration')
+        plt.hold
 
         # # plt.figure(2)
         # # # plt.plot(Y[:,0], Y[:,3], 'r')

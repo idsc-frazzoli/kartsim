@@ -10,13 +10,15 @@ from multiprocessing.connection import Client
 import numpy as np
 import time
 import threading
+import os
+import pandas as pd
 
 from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
 import matplotlib.pyplot as plt
 
 def main():
 
-    real_time = False
+    real_time = True
     server_return_interval = 0.1  # [s] simulation time after which result is returned from server
     real_time_factor = 1
     _wait_for_real_time = 0
@@ -35,25 +37,74 @@ def main():
             # print('ConnectionRefusedError')
             pass
 
-    simTime = 10
-    sim_time_increment = 0.01
-    X0 = [0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0]
 
-    u_time = np.linspace(0,10,1001)
-    u_steering = np.linspace(-0.5,0.5,1001)
 
-    u_brake = np.linspace(0,0,1001)
-    u_mot_l = np.linspace(100,500,1001)
-    u_mot_r = np.linspace(100,500,1001)
+    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/simtompc_comparison'  # path where all the raw, sorted data is that you want to sample and or batch and or split
 
-    U = np.array([u_time, u_steering, u_brake, u_mot_l, u_mot_r])
+    mpcsolfiles = []
+    for r, d, f in os.walk(pathmpcsolutiondata):
+        for file in f:
+            if '.csv' in file:
+                mpcsolfiles.append([os.path.join(r, file), file])
+    mpcsolfiles.sort()
 
+    file_path, file_name = mpcsolfiles[100]
+
+    print(file_name)
+
+    try:
+        mpc_sol_data = pd.read_csv(str(file_path), header=None,
+                                   names=["U wheel left", "U wheel right", "U dotS", "U brake", "X U AB", "time",
+                                          "X Ux", "X Uy", "X dotPsi", "X X", "X Y", "X Psi", "X w2L", "X w2R",
+                                          "X s", "X bTemp"])
+    except:
+        print('Could not open file at', file_path)
+        raise
+
+    # ___simulation parameters
+    data_time_step = np.round(mpc_sol_data['time'].iloc[1] - mpc_sol_data['time'].iloc[0],
+                              3)  # [s] Log data sampling time step
+    sim_time_increment = data_time_step  # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
+    simTime = np.round(mpc_sol_data['time'].iloc[-1] - mpc_sol_data['time'].iloc[0])  # [s] Total simulation time
+
+    X0 = [mpc_sol_data['time'][0],
+          mpc_sol_data['X X'][0] + np.cos(mpc_sol_data['X Psi'][0]) * 0.46,
+          mpc_sol_data['X Y'][0] + np.sin(mpc_sol_data['X Psi'][0]) * 0.46,
+          mpc_sol_data['X Psi'][0],
+          mpc_sol_data['X Ux'][0],
+          np.add(mpc_sol_data['X Uy'][0], mpc_sol_data['X dotPsi'][0] * 0.46),
+          mpc_sol_data['X dotPsi'][0]]
+
+    AB = (mpc_sol_data['U wheel left'] + mpc_sol_data['U wheel right']) / 2.0
+    TV = (mpc_sol_data['U wheel right'] - mpc_sol_data['U wheel left']) / 2.0
+    steerCal = mpc_sol_data['X s']
+    BETA = -0.63 * np.power(steerCal, 3) + 0.94 * steerCal
+
+    U = np.array((mpc_sol_data['time'].values,
+                  BETA.values,
+                  AB.values,
+                  TV.values))
+
+    # simTime = 10
+    # sim_time_increment = 0.01
+
+    # X0 = [0,
+    #       0,
+    #       0,
+    #       0,
+    #       0,
+    #       0,
+    #       0]
+    #
+    # u_time = np.linspace(0,10,1001)
+    # u_steering = np.linspace(-0.5,0.5,1001)
+    #
+    # u_brake = np.linspace(0,0,1001)
+    # u_mot_l = np.linspace(100,500,1001)
+    # u_mot_r = np.linspace(100,500,1001)
+    #
+    # U = np.array([u_time, u_steering, u_brake, u_mot_l, u_mot_r])
+    #
     U0 = U[:,:int(round(server_return_interval / sim_time_increment)) + 1]
 
     ticker = threading.Event()
