@@ -38,16 +38,32 @@ class DataDrivenVehicleModel:
         return (input - self.means) / self.stds
 
     def get_accelerations(self, initial_velocities=[0, 0, 0], system_inputs=[0, 0, 0, 0]):
-        input = np.array([initial_velocities+system_inputs])
-        normed_input = self.normalize_input(input)
+        if isinstance(initial_velocities, list):
+            input = np.array([initial_velocities+system_inputs])
 
-        disturbance = self.solve_NN(normed_input[0])
+            normed_input = self.normalize_input(input)
 
-        accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
+            disturbance = self.solve_NN(normed_input[0])
 
-        result = np.array(accelerations).transpose() + disturbance
+            accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
+            # print('disturbance',disturbance)
+            # print('accelerations',accelerations)
+            result = np.array(accelerations).transpose() + disturbance
 
-        return result[0]
+            return result[0]
+        else:
+            input = np.hstack((initial_velocities,system_inputs))
+
+            normed_input = self.normalize_input(input)
+
+            disturbance = self.mlp.predict(normed_input)
+
+            accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
+            # print('disturbance', disturbance)
+            # print('accelerations', np.array(accelerations).transpose())
+            result = np.array(accelerations).transpose() + disturbance
+
+            return result
 
     def solve_NN(self, inputs):
         x = inputs

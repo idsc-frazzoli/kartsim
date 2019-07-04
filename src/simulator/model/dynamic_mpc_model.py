@@ -10,7 +10,7 @@ from simulator.model.dynamic_model_input_converter import MotorFunction, BrakeFu
 
 class DynamicVehicleMPC:
     
-    def __init__(self, model_parameters=[9,1,10,5.2,1.1,10,0.3], wheel_base=1.19, track_width=1.0, dist_cog_front_axle= 0.73):
+    def __init__(self, model_parameters=[9*1.5,1,10,5.2*1.5,1.1,10,0.3], wheel_base=1.19, track_width=1.0, dist_cog_front_axle= 0.73, direct_input=False):
         self.name = "dynamic_vehicle_mpc"
         self.wheel_base = wheel_base
         self.track_width = track_width # real value: 1.08
@@ -21,7 +21,9 @@ class DynamicVehicleMPC:
 
         self.params_tire_front = model_parameters[:3] #B1, C1, D1
         self.params_tire_rear = model_parameters[3:6] #B2, C2, D2
-        self.params_intetia = model_parameters[6]
+        self.params_inertia = model_parameters[6]
+
+        self.direct_input = direct_input
         
         self.regularization_factor = 0.5
 
@@ -33,29 +35,44 @@ class DynamicVehicleMPC:
         return self.name
 
     def get_accelerations(self, initial_velocities=[0,0,0], system_inputs=[0,0,0,0]):
-        if isinstance(initial_velocities, list):
-            velx, vely, velrotz = initial_velocities
-            steering_angle, brake_position, motor_current_l, motor_current_r = system_inputs
-        else:
-            velx = initial_velocities[:, 0]
-            vely = initial_velocities[:, 1]
-            velrotz = initial_velocities[:, 2]
-            steering_angle = system_inputs[:, 0]
-            brake_position = system_inputs[:, 1]
-            motor_current_l = system_inputs[:, 2]
-            motor_current_r = system_inputs[:, 3]
+        if not self.direct_input:
+            if isinstance(initial_velocities, list):
+                velx, vely, velrotz = initial_velocities
+                steering_angle, brake_position, motor_current_l, motor_current_r = system_inputs
+            else:
+                velx = initial_velocities[:, 0]
+                vely = initial_velocities[:, 1]
+                velrotz = initial_velocities[:, 2]
+                steering_angle = system_inputs[:, 0]
+                brake_position = system_inputs[:, 1]
+                motor_current_l = system_inputs[:, 2]
+                motor_current_r = system_inputs[:, 3]
 
-        turning_angle, acceleration_rear_axle, torque_tv = self.transform_inputs(steering_angle,
-                                                                                 brake_position,
-                                                                                 motor_current_l,
-                                                                                 motor_current_r,
-                                                                                 velx)
+            turning_angle, acceleration_rear_axle, torque_tv = self.transform_inputs(steering_angle,
+                                                                                     brake_position,
+                                                                                     motor_current_l,
+                                                                                     motor_current_r,
+                                                                                     velx)
+        else:
+            if isinstance(initial_velocities, list):
+                velx, vely, velrotz = initial_velocities
+                turning_angle, acceleration_rear_axle, torque_tv = system_inputs
+            else:
+                velx = initial_velocities[:, 0]
+                vely = initial_velocities[:, 1]
+                velrotz = initial_velocities[:, 2]
+                turning_angle = system_inputs[:, 0]
+                acceleration_rear_axle = system_inputs[:, 1]
+                torque_tv = system_inputs[:, 2]
 
         f1_velx = np.sum(np.multiply(self._rotmat(turning_angle)[0],
                                      np.array([velx, vely + self.dist_cog_front_axle * velrotz])), axis=0)
         f1_vely = np.sum(np.multiply(self._rotmat(turning_angle)[1],
                                      np.array([velx, vely + self.dist_cog_front_axle * velrotz])), axis=0)
         f1y = self._simplefaccy(f1_vely, f1_velx)
+        print('f1y',f1y)
+        print('f1_velx',f1_velx)
+        print('f1_vely',f1_vely)
 
         if isinstance(f1y, np.float64):
             F1x = np.sum(np.multiply(self._rotmat(-turning_angle)[0], np.array([np.zeros(1), f1y])),
@@ -77,9 +94,10 @@ class DynamicVehicleMPC:
                                acceleration_rear_axle / self.weight_portion_rear) * self.weight_portion_rear
         TVTrq = torque_tv * self.track_width
 
-        ACCROTZ = (TVTrq + F1y * self.dist_cog_front_axle - F2y * self.dist_cog_rear_axle) / self.params_intetia
+        ACCROTZ = (TVTrq + F1y * self.dist_cog_front_axle - F2y * self.dist_cog_rear_axle) / self.params_inertia
         ACCX = F1x + F2x + velrotz * vely
         ACCY = F1y + (F2y1 + F2y2) - velrotz * velx
+        # print('F1y:{:5.2f} F2y1 + F2y2:{:5.2f} velrotz*velx:{:5.2f}'.format(F1y[0], F2y1 + F2y2, velrotz * velx))
 
         return [ACCX, ACCY, ACCROTZ]
 
@@ -118,6 +136,7 @@ class DynamicVehicleMPC:
         return self._capfactor(taccx) * self._simplediraccy(VELY, VELX, taccx)
 
     def _simplefaccy(self, VELY, VELX):
+        print('magic vy', -VELY , 'magic vx', (abs(VELX) + self.regularization_factor))
         return self._magic(-VELY / (abs(VELX) + self.regularization_factor), self.params_tire_front)
 
     def _satfun(self, x):
