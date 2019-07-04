@@ -54,6 +54,25 @@ def preProcessing(self, name):
         else:
             self.availableData.append([name, x, y])
 
+    if name in ['vehicle vx from pose', 'vehicle vy from pose']:
+        for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
+            nameDependency = item.dependencies[0]
+        x = self.availableData[availableDataList.index(nameDependency[2])][1]
+        pvx = self.availableData[availableDataList.index(nameDependency[2])][2]
+        pvy = self.availableData[availableDataList.index(nameDependency[3])][2]
+        theta = self.availableData[availableDataList.index(nameDependency[4])][2]
+
+        if name == 'vehicle vx from pose':
+            y = pvx * np.cos(theta[:-1]) + pvy * np.sin(theta[:-1])
+        else:
+            y = pvx * -np.sin(theta[:-1]) + pvy * np.cos(theta[:-1])
+
+        if name in availableDataList:
+            index = availableDataList.index(name)
+            self.availableData[index][2] = y
+        else:
+            self.availableData.append([name, x, y])
+
     differentiate = 'pose vx', 'pose vy', 'pose vtheta', 'pose atheta'
     if name in differentiate:
         for item in self.dataList.findItems(name, QtCore.Qt.MatchExactly):
