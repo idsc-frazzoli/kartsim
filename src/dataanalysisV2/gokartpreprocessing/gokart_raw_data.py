@@ -189,6 +189,11 @@ class GokartRawData:
 
                     xRaw = dataFrame.iloc[:, timeIndex]
                     yRaw = dataFrame.iloc[:, dataIndex]
+
+                    if name == 'vmu vtheta':
+                        if int(self.log_nr[5:8]) > 509:
+                            yRaw = -yRaw
+
                     if name == 'pose theta [rad]':
                         dy = np.abs(np.subtract(np.array(yRaw[1:]), np.array(yRaw[:-1])))
                         indices = np.where(dy > 1)
