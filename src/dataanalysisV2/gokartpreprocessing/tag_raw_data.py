@@ -12,11 +12,14 @@ from dataanalysisV2.data_io import getDirectories, dict_to_csv, dict_from_csv
 from dataanalysisV2.gokartpreprocessing.preprocessing import filter_raw_data
 # from dataanalysisV2.gokartpreprocessing.importdata import setListItems
 from dataanalysisV2.gokartpreprocessing.gokart_raw_data import GokartRawData
+
+
 class TagRawData:
 
     def __init__(self, pathRootData=None):
         if pathRootData == None:
-            raise FileNotFoundError('Path of raw data undefined. Please specify where the raw Gokart log data is located.')
+            raise FileNotFoundError(
+                'Path of raw data undefined. Please specify where the raw Gokart log data is located.')
 
         self.pathRootData = pathRootData
         self._preproParamsFileName = 'preproParams'
@@ -85,7 +88,6 @@ class TagRawData:
     def get_tags(self):
         return self.data_tags
 
-
     def tag_log_files(self, overwrite):
         t = time.time()
 
@@ -96,14 +98,15 @@ class TagRawData:
 
             raw_data = GokartRawData(path)
             # kartData, allDataNames = setListItems(path)
-            vmuDataNames = ['pose x [m]', 'pose y [m]', 'pose vtheta [rad*s^-1]', 'vehicle vy [m*s^-1]', 'pose atheta [rad*s^-2]',
+            vmuDataNames = ['pose x [m]', 'pose y [m]', 'pose vtheta [rad*s^-1]', 'vehicle vy [m*s^-1]',
+                            'pose atheta [rad*s^-2]',
                             'vmu ax [m*s^-2]', 'vmu ay [m*s^-2]']
             filtered_data = filter_raw_data(raw_data, vmuDataNames)
             kartData = filtered_data.get_data()
 
             statusInfo = logNr + ':  '
 
-            #___distance
+            # ___distance
             dx = np.subtract(kartData['pose x [m]']['data'][1][1:], kartData['pose x [m]']['data'][1][:-1])
             dy = np.subtract(kartData['pose y [m]']['data'][1][1:], kartData['pose y [m]']['data'][1][:-1])
             dist = np.sum(np.sqrt(np.square(dx) + np.square(dy)))
@@ -112,25 +115,42 @@ class TagRawData:
             else:
                 self.data_tags[testDay][logNr]['multiple laps'] = 0
 
-            #___driving style
+            # ___driving style
             if np.std(kartData['vehicle vy [m*s^-1]']['data'][1]) > 0.2:
                 self.data_tags[testDay][logNr]['high slip angles'] = 1
             else:
                 self.data_tags[testDay][logNr]['high slip angles'] = 0
 
-            #___reverse
+            # ___reverse
             if np.min(kartData['vehicle vx [m*s^-1]']['data'][1]) < -0.2:
                 self.data_tags[testDay][logNr]['reverse'] = 1
             else:
                 self.data_tags[testDay][logNr]['reverse'] = 0
 
-            #___steering
+            # ___x velocity
+            if np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12:
+                statusInfo = statusInfo + 'unrealistic vehicle vx,  '
+                self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 0
+            else:
+                self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 1
+
+            # ___y velocity
+            if np.max(kartData['vehicle vy [m*s^-1]']['data'][1]) > 12 or np.min(
+                    kartData['vehicle vy [m*s^-1]']['data'][1]) < -12:
+                statusInfo = statusInfo + 'unrealistic vehicle vy,  '
+                self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 0
+            else:
+                self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 1
+
+            # ___steering
             lenSteerCmd = len(kartData['steer torque cmd [n.a.]']['data'][1])
             if lenSteerCmd == 1:
                 statusInfo = statusInfo + 'steering cmd data missing,  '
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
-            elif kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(0) / len(
-                    kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
+            elif kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(
+                    0) / len(
+                    kartData['steer torque cmd [n.a.]']['data'][1][
+                    int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
                 statusInfo = statusInfo + 'steering cmd data: too many zeros...,  '
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
             elif np.abs(np.mean(kartData['steer torque cmd [n.a.]']['data'][1])) < 0.01 and np.std(
@@ -144,9 +164,11 @@ class TagRawData:
             if lenSteerPos == 1:
                 statusInfo = statusInfo + 'steering pos cal data missing,  '
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 0
-            elif kartData['steer position cal [n.a.]']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)].count(
+            elif kartData['steer position cal [n.a.]']['data'][1][
+                 int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)].count(
                     0) / len(
-                    kartData['steer position cal [n.a.]']['data'][1][int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)]) > 0.05:
+                kartData['steer position cal [n.a.]']['data'][1][
+                int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)]) > 0.05:
                 statusInfo = statusInfo + 'steering pos cal data: too many zeros...,  '
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 0
             elif np.abs(np.mean(kartData['steer position cal [n.a.]']['data'][1])) < 0.01 and np.std(
@@ -156,27 +178,31 @@ class TagRawData:
             else:
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 1
 
-            #___brake
-            if np.max(kartData['brake position cmd [m]']['data'][1]) < 0.025 and np.mean(kartData['brake position cmd [m]']['data'][1]) < 0.004:
+            # ___brake
+            if np.max(kartData['brake position cmd [m]']['data'][1]) < 0.025 and np.mean(
+                    kartData['brake position cmd [m]']['data'][1]) < 0.004:
                 statusInfo = statusInfo + 'brake position cmd [m] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['brake position cmd [m]'] = 0
             else:
                 self.data_tags[testDay][logNr]['brake position cmd [m]'] = 1
 
-            if np.max(kartData['brake position effective [m]']['data'][1]) < 0.025 and np.mean(kartData['brake position effective [m]']['data'][1]) < 0.004:
+            if np.max(kartData['brake position effective [m]']['data'][1]) < 0.025 and np.mean(
+                    kartData['brake position effective [m]']['data'][1]) < 0.004:
                 statusInfo = statusInfo + 'brake position effective [m] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['brake position effective [m]'] = 0
             else:
                 self.data_tags[testDay][logNr]['brake position effective [m]'] = 1
 
-            #___VMU
-            if np.abs(np.mean(kartData['vmu ax [m*s^-2]']['data'][1])) < 0.01 and np.std(kartData['vmu ax [m*s^-2]']['data'][1]) < 0.01:
+            # ___VMU
+            if np.abs(np.mean(kartData['vmu ax [m*s^-2]']['data'][1])) < 0.01 and np.std(
+                    kartData['vmu ax [m*s^-2]']['data'][1]) < 0.01:
                 statusInfo = statusInfo + 'vmu ax [m*s^-2] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['vmu ax [m*s^-2]'] = 0
             else:
                 self.data_tags[testDay][logNr]['vmu ax [m*s^-2]'] = 1
 
-            if np.abs(np.mean(kartData['vmu ay [m*s^-2]']['data'][1])) < 0.01 and np.std(kartData['vmu ay [m*s^-2]']['data'][1]) < 0.05:
+            if np.abs(np.mean(kartData['vmu ay [m*s^-2]']['data'][1])) < 0.01 and np.std(
+                    kartData['vmu ay [m*s^-2]']['data'][1]) < 0.05:
                 statusInfo = statusInfo + 'vmu ay [m*s^-2] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['vmu ay [m*s^-2]'] = 0
             else:
@@ -189,7 +215,7 @@ class TagRawData:
             else:
                 self.data_tags[testDay][logNr]['vmu vtheta [rad*s^-1]'] = 1
 
-            #___MH model specific
+            # ___MH model specific
             if self.data_tags[testDay][logNr]['brake position effective [m]']:
                 self.data_tags[testDay][logNr]['MH AB [m*s^-2]'] = 1
                 self.data_tags[testDay][logNr]['MH TV [rad*s^-2]'] = 1
@@ -205,5 +231,5 @@ class TagRawData:
             statusInfo = statusInfo + 'done'
             comp_count += 1
             print(statusInfo)
-            print(str(int(comp_count / self.total_number_of_logs * 100)), '% completed.  elapsed time:', int(time.time() - t), "s", end='\r')
-
+            print(str(int(comp_count / self.total_number_of_logs * 100)), '% completed.  elapsed time:',
+                  int(time.time() - t), "s", end='\r')
