@@ -24,13 +24,13 @@ def main():
 
     #______________________
     # check and tag all the raw logs for missing/incomplete data and other characteristics
-    # tag_data = True
-    tag_data = False
+    tag_data = True
+    # tag_data = False
 
     #______________________
     # Filter data and compute inferred data from raw logs
-    # filter_data = True
-    filter_data = False
+    filter_data = True
+    # filter_data = False
     # list of signals which should be true for the logs used to build the dataset
     required_data_list = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                           'steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]',
@@ -43,12 +43,12 @@ def main():
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_path_filtered_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'TF_test'
+    dataset_tag = 'TF_filtered_vel'
 
     #______________________
     # Sample data
-    # sample_data = True
-    sample_data = False
+    sample_data = True
+    # sample_data = False
     sampling_time_period = 0.1
     root_path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None

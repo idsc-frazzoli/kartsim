@@ -10,7 +10,6 @@ import pandas as pd
 import os
 import sys
 import tensorflow as tf
-# from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
 from learned_model.preprocessing.shuffle import shuffle_dataframe
@@ -31,6 +30,7 @@ class MultiLayerPerceptron():
         self.model = None
         self.history = None
         self.new_model = False
+        self.train_stats = pd.DataFrame()
 
         if predict_only:
             tf.keras.backend.set_learning_phase(0)
@@ -43,7 +43,7 @@ class MultiLayerPerceptron():
                 self.model_dir = os.path.join(self.root_folder, name)
 
         if self.model_dir is None:
-            print('Could not find model name. Creating new folder...')
+            # print('New model name! Creating new folder...')
             self.model_dir = create_folder_with_time(
                 '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models', model_name)
             os.mkdir(os.path.join(self.model_dir, 'model_checkpoints'))
@@ -56,18 +56,28 @@ class MultiLayerPerceptron():
             print(load_path)
             self.model = tf.keras.models.load_model(load_path, custom_objects={
                 'coeff_of_determination': self.coeff_of_determination})
-            print('Model successfully loaded from', load_path)
+            # print('Model successfully loaded from', load_path)
         except:
             print('Model could not be loaded from', self.model_dir)
             raise
 
         try:
-            self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
+            # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
+            self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
                                loss='mean_squared_error',
                                metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
             print('Compilation successful.')
         except:
             print('Could not compile tf model.')
+            raise
+
+        try:
+            load_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
+            norm_params = pd.DataFrame().from_csv(load_path)
+            self.train_stats = norm_params
+            self.train_stats.columns = ['mean', 'std']
+        except:
+            print('Could not load normalization parameters from', load_path)
             raise
 
     def load_checkpoint(self, checkpoint_name='best'):
@@ -82,7 +92,7 @@ class MultiLayerPerceptron():
 
         try:
             self.model.load_weights(checkpoint)
-            print('Checkpoint loaded successfully.')
+            # print('Checkpoint loaded successfully.')
         except:
             print('Could not load checkpoint.')
             raise
@@ -91,30 +101,48 @@ class MultiLayerPerceptron():
         load_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         return pd.DataFrame().from_csv(load_path)
 
-    def build_new_model(self):
+    def build_new_model(self, layers=2, nodes_per_layer=32, activation_function='relu', regularization=0.01):
         inputs = tf.keras.Input(shape=(7,))
+        h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
+                                  kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                  bias_regularizer=tf.keras.regularizers.l2(regularization))(inputs)
+        if layers > 1:
+            for layer in range(layers - 1):
+                h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
+                                          kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                          bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
+        predictions = tf.keras.layers.Dense(3, activation=None,
+                                            kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                            bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
 
-        h1 = tf.keras.layers.Dense(32, activation='relu')(inputs)
-        h2 = tf.keras.layers.Dense(32, activation='relu')(h1)
-        predictions = tf.keras.layers.Dense(3, activation=None)(h2)
+        # h1 = tf.keras.layers.Dense(32, activation='relu')(inputs)
+        # h2 = tf.keras.layers.Dense(32, activation='relu')(h1)
+        # predictions = tf.keras.layers.Dense(3, activation=None)(h2)
 
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
+        # self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
+        self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
                            loss='mean_squared_error',
                            metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
 
+        self.save_model_parameters(layers, nodes_per_layer, activation_function, regularization)
+
     def train_model(self, features, labels):
-        while not self.new_model:
-            answer = input('There may be an existing model.\nWould you like to overwrite any existing models? (y/n)')
-            if answer in ('y', 'Y', 'Yes', 'yes'):
-                break
-            elif answer in ('n', 'N', 'No', 'no'):
-                print('Abort: Script will be terminated.')
-                sys.exit()
-            else:
-                continue
+        # while not self.new_model:
+        #     answer = input('There may be an existing model.\nWould you like to overwrite any existing models? (y/n)')
+        #     if answer in ('y', 'Y', 'Yes', 'yes'):
+        #         break
+        #     elif answer in ('n', 'N', 'No', 'no'):
+        #         print('Abort: Script will be terminated.')
+        #         sys.exit()
+        #     else:
+        #         continue
+
+        if not self.new_model:
+            print('Model already existing and trained.\nWill skip this model...')
+            return
 
         if self.shuffle:
             features, labels = shuffle_dataframe(features, labels, random_seed=self.random_seed)
@@ -135,19 +163,19 @@ class MultiLayerPerceptron():
                                                                   save_best_only=True, monitor='val_loss', mode='min')
 
         # Callback: Stop training if validation loss does not improve anymore
-        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
 
         self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
-                                      callbacks=[stop_early, save_checkpoints, save_best_checkpoint, PrintState()],
-                                      validation_split=0.2, verbose=0)
+                                      callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
+                                                 PrintState(self.model_name)], validation_split=0.2, verbose=0)
 
         # Save entire model to a HDF5 file
         self.model.save(os.path.join(self.model_dir, 'my_model.h5'))
-        print('Training terminated\nModel saved successfully')
+        # print('Training terminated\nModel saved successfully')
 
     def get_weights(self, layer='all'):
-        W=[]
-        B=[]
+        W = []
+        B = []
         if layer == 'all':
             for i, l in enumerate(self.model.layers):
                 if i == len(self.model.layers) - 1:
@@ -169,7 +197,7 @@ class MultiLayerPerceptron():
         else:
             print('layer argument must be an integer or \"all\"')
             raise ValueError
-        return W,B
+        return W, B
 
     def save_training_parameters(self):
         data = np.array([self.epochs, self.learning_rate, self.batch_size, self.shuffle, self.random_seed,
@@ -192,6 +220,16 @@ class MultiLayerPerceptron():
         norm_params_save_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         normalizing_parameters.to_csv(norm_params_save_path)
 
+    def save_model_parameters(self, layers, nodes_per_layer, activation_function, regularization):
+        data = np.array([layers, nodes_per_layer, activation_function, regularization]).transpose()
+        model_parameters = pd.DataFrame(data=data,
+                                        columns=['values'],
+                                        index=['layers', 'nodes_per_layer', 'activation_function',
+                                               'l2 regularization', ])
+
+        model_params_save_path = os.path.join(self.model_dir, 'model_parameters.csv')
+        model_parameters.to_csv(model_params_save_path)
+
     def save_training_history(self):
         save_path = os.path.join(self.model_dir, 'training_history')
         if not os.path.exists(save_path):
@@ -203,34 +241,56 @@ class MultiLayerPerceptron():
             hist_save_path = os.path.join(save_path, 'history.csv')
             hist.to_csv(hist_save_path)
 
-            plt.figure('Mean Squared Error (Loss)')
-            plt.plot(hist[['epoch']].values, hist[['loss', 'val_loss']].values)
-            plt.legend(['Training Loss', 'Validation Loss'])
-            plt.savefig(os.path.join(save_path, 'loss_mean_squ_err.pdf'))
-
-            plt.figure('Mean Absolute Error')
-            plt.plot(hist[['epoch']].values, hist[['mean_absolute_error', 'val_mean_absolute_error']].values)
-            plt.legend(['Training Error', 'Validation Error'])
-            plt.savefig(os.path.join(save_path, 'mean_abs_err.pdf'))
-
-            plt.figure('Coefficient of Determination R^2')
-            plt.plot(hist[['epoch']].values, hist[['coeff_of_determination', 'val_coeff_of_determination']].values)
-            plt.legend(['Training', 'Validation'])
-            plt.savefig(os.path.join(save_path, 'R_squared.pdf'))
-
-            plt.show()
+            # plt.figure('Mean Squared Error (Loss)')
+            # plt.plot(hist[['epoch']].values, hist[['loss', 'val_loss']].values)
+            # plt.legend(['Training Loss', 'Validation Loss'])
+            # plt.savefig(os.path.join(save_path, 'loss_mean_squ_err.pdf'))
+            #
+            # plt.figure('Mean Absolute Error')
+            # plt.plot(hist[['epoch']].values, hist[['mean_absolute_error', 'val_mean_absolute_error']].values)
+            # plt.legend(['Training Error', 'Validation Error'])
+            # plt.savefig(os.path.join(save_path, 'mean_abs_err.pdf'))
+            #
+            # plt.figure('Coefficient of Determination R^2')
+            # plt.plot(hist[['epoch']].values, hist[['coeff_of_determination', 'val_coeff_of_determination']].values)
+            # plt.legend(['Training', 'Validation'])
+            # plt.savefig(os.path.join(save_path, 'R_squared.pdf'))
+            #
+            # plt.show()
 
         else:
             print('No training history found.')
             return 0
 
     def predict(self, input):
-        # print(type(input))
-        # print(input)
-        # t0 = time.time()
         result = self.model.predict(x=input, verbose=0)
-        # print('t3 {:5.10f}'.format(time.time() - t0))
         return result
+
+    def save_model_performance(self, features, labels):
+        if self.model_name != 'test' and self.history is not None:
+            hist = pd.DataFrame(self.history.history)
+            hist['epoch'] = self.history.epoch
+            best_index = np.argmin(hist['val_loss'].values)
+            best = hist.iloc[best_index, :]
+            best = pd.DataFrame(best).transpose()
+
+            self.load_checkpoint()
+            features_normalized = self.normalize_data(features)
+            test_errors = self.model.evaluate(features_normalized, labels, verbose=0)
+
+            best.insert(0, 'test_coeff_of_determination', test_errors[3])
+            best.insert(0, 'test_mean_squared_error', test_errors[2])
+            best.insert(0, 'test_mean_absolute_error', test_errors[1])
+            best.insert(0, 'test_loss', test_errors[0])
+
+            best.insert(0, 'model_name', self.model_name)
+            best = best.round(3)
+            with open(os.path.join(self.root_folder, 'model_performances.csv'), 'a') as f:
+                best.to_csv(f, header=False, index=False)
+
+    def test_model(self, features, labels):
+        features_normalized = self.normalize_data(features)
+        return self.model.evaluate(features_normalized, labels)
 
     def show_model_summary(self):
         return self.model.summary()
@@ -250,13 +310,15 @@ class MultiLayerPerceptron():
 
 
 class PrintState(tf.keras.callbacks.Callback):
-    def __init__(self):
+    def __init__(self, name):
         self.t0 = time.time()
+        self.name = name
 
     def on_epoch_end(self, epoch, logs):
-        if epoch % 5 == 0:
+        if epoch % 20 == 0:
             # print(logs)
             # print(type(logs))
-            print('Time: {:5.1f}    Epoch: {:5.0f}    Training Loss: {:10.2f}    Validation Loss: {:10.2f}'.format(
-                time.time() - self.t0, epoch, logs['loss'], logs['val_loss']))
+            print(
+                '{} Time: {:5.1f} s   Epoch: {:5.0f}    Training Loss: {:10.2f}    Validation Loss: {:10.2f}'.format(
+                    self.name, time.time() - self.t0, epoch, logs['loss'], logs['val_loss']))
         # add callbacks=[PrintDot()] to model.fit(callbacks=[.....])
