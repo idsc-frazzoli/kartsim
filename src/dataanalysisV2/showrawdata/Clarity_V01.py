@@ -332,8 +332,8 @@ class Clarity(QtGui.QMainWindow):
                 groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta', 0, 3, name, True, 5, 50, 0, 1])
                 groups.append(['pose quality', 0, 4, name, True, 0, 0, 0, 1])
-                groups.append(['vehicle vx', 0, 5, name, True, 10, 100, 0, 1])
-                groups.append(['vehicle vy atvmu', 0, 6, name, True, 10, 100, 0, 1])
+                groups.append(['vehicle vx', 0, 5, name, True, 0, 0, 0, 1])
+                groups.append(['vehicle vy atvmu', 0, 6, name, True, 0, 0, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
@@ -371,20 +371,26 @@ class Clarity(QtGui.QMainWindow):
                         yRaw = -yRaw
 
                 if name == 'pose theta':
-                    for i in range(len(yRaw)):
-                        if yRaw[i] < -np.pi:
-                            yRaw[i] = yRaw[i] + 2 * np.pi
-                        if yRaw[i] > np.pi:
-                            yRaw[i] = yRaw[i] - 2 * np.pi
-                    for i in range(len(yRaw)-1):
-                        if np.abs(yRaw[i + 1] - yRaw[i]) > 1:
-                            yRaw[i + 1:] = yRaw[i + 1:] - np.sign((yRaw[i + 1] - yRaw[i])) * 2 * np.pi
+                    # for i in range(len(yRaw)):
+                    #     if yRaw[i] < -np.pi:
+                    #         yRaw[i] = yRaw[i] + 2 * np.pi
+                    #     if yRaw[i] > np.pi:
+                    #         yRaw[i] = yRaw[i] - 2 * np.pi
+                    # for i in range(len(yRaw)-1):
+                    #     if np.abs(yRaw[i + 1] - yRaw[i]) > 1:
+                    #         yRaw[i + 1:] = yRaw[i + 1:] - np.sign((yRaw[i + 1] - yRaw[i])) * 2 * np.pi
+
+                    dy = np.abs(np.subtract(np.array(yRaw[1:]), np.array(yRaw[:-1])))
+                    indices = np.where(dy > 1)
+                    for index in indices[0]:
+                        yRaw[index + 1:] = yRaw[index + 1:] - np.sign((yRaw[index + 1] - yRaw[index])) * 2 * np.pi
+
                 if name in ['vmu ax atvmu (forward)', 'vmu ay atvmu (left)', 'vmu vtheta']:
                     xRaw, yRaw = interpolation(xRaw, yRaw, xRaw.iloc[0], xRaw.iloc[-1], 0.001)
             except:
                 print('EmptyDataError: could not read data \'', name, '\' from file ', fileName)
                 xRaw, yRaw = [0], [0]
-                raise
+                # raise
 
             item = QtGui.QListWidgetItem(name)
             item.setText(name)
@@ -411,8 +417,8 @@ class Clarity(QtGui.QMainWindow):
         groups.append(['vehicle vy', ['vehicle vy atvmu', 'pose vtheta'], True, 0, 0, 2, 1])
         groups.append(['vehicle vx from pose', ['pose x', 'pose y', 'pose vx', 'pose vy', 'pose theta'], True, 0, 0, 2, 1])
         groups.append(['vehicle vy from pose', ['pose x', 'pose y', 'pose vx', 'pose vy', 'pose theta'], True, 0, 0, 2, 1])
-        groups.append(['vehicle ax local', ['vehicle vx'], True, 0, 0, 1, 1])
-        groups.append(['vehicle ay local', ['vehicle vy'], True, 0, 0, 1, 1])
+        groups.append(['vehicle ax local', ['vehicle vx'], True, 5, 50, 1, 1])
+        groups.append(['vehicle ay local', ['vehicle vy'], True, 8, 80, 1, 1])
         groups.append(['pose ax', ['pose x', 'pose vx'], True, 20, 200, 2, 1])
         groups.append(['pose ay', ['pose y', 'pose vy'], True, 20, 200, 2, 1])
         groups.append(['pose atheta', ['pose vtheta'], True, 0, 0, 2, 1])

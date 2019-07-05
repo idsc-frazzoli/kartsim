@@ -23,36 +23,32 @@ def main():
 
     #______________________
     # check and tag all the raw logs for missing/incomplete data and other characteristics
-    # tag_data = True
-    tag_data = False
+    tag_data = True
 
     #______________________
     # Filter data and compute inferred data from raw logs
-    # filter_data = True
     filter_data = False
-    # required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-    #                       'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-    #                       'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]']
+
     required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
                           'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
                           'pose atheta [rad*s^-2]', 'steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']
-    required_tags_list = ['multiple laps', 'high slip angles']  # list of signals and tags which should be true for the logs used to build the dataset
+    required_tags_list = ['multiple laps', 'high slip angles', 'pose quality']  # list of signals and tags which should be true for the logs used to build the dataset
     exclusion_tags_list = ['reverse']
+
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_filtered_data_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'from1405_newinputs_0p1_test'
+    dataset_tag = 'lookatdata_0p1'
 
     # ______________________
     # Sample data
-    sample_data = True
-    # sample_data = False
-    sampling_time_period = 0.2
+    sample_data = False
+    sampling_time_period = 0.1
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
     # Merge data
-    merge_sampled_data = True
+    merge_sampled_data = False
     save_path_merged_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel'
 
     # ______________^^^_________________

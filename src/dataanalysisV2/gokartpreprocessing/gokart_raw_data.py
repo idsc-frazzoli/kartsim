@@ -89,8 +89,8 @@ class GokartRawData:
         groups.append(['pose vy [m*s^-1]', ['pose y [m]'], True, 5, 50, 1, 1])
         groups.append(['pose vtheta [rad*s^-1]', ['pose theta [rad]'], True, 5, 50, 1, 1])
         groups.append(['vehicle vy [m*s^-1]', ['vehicle vy atvmu [m*s^-1]', 'pose vtheta [rad*s^-1]'], True, 0, 0, 2, 1])
-        groups.append(['vehicle ax local [m*s^-2]', ['vehicle vx [m*s^-1]'], True, 0, 0, 1, 1])
-        groups.append(['vehicle ay local [m*s^-2]', ['vehicle vy [m*s^-1]'], True, 0, 0, 1, 1])
+        groups.append(['vehicle ax local [m*s^-2]', ['vehicle vx [m*s^-1]'], True, 5, 50, 1, 1])
+        groups.append(['vehicle ay local [m*s^-2]', ['vehicle vy [m*s^-1]'], True, 8, 80, 1, 1])
         groups.append(['pose ax [m*s^-2]', ['pose vx [m*s^-1]'], True, 20, 200, 2, 1])
         groups.append(['pose ay [m*s^-2]', ['pose vy [m*s^-1]'], True, 20, 200, 2, 1])
         groups.append(['pose atheta [rad*s^-2]', ['pose vtheta [rad*s^-1]'], True, 0, 0, 2, 1])
@@ -141,8 +141,9 @@ class GokartRawData:
                 groups.append(['pose x atvmu [m]', 0, 1, name, True, 0, 0, 0, 1])
                 groups.append(['pose y atvmu [m]', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta [rad]', 0, 3, name, True, 5, 50, 0, 1])
-                groups.append(['vehicle vx [m*s^-1]', 0, 5, name, True, 10, 100, 0, 1])
-                groups.append(['vehicle vy atvmu [m*s^-1]', 0, 6, name, True, 10, 100, 0, 1])
+                groups.append(['pose quality [n.a.]', 0, 4, name, True, 0, 0, 0, 1])
+                groups.append(['vehicle vx [m*s^-1]', 0, 5, name, True, 0, 0, 0, 1])
+                groups.append(['vehicle vy atvmu [m*s^-1]', 0, 6, name, True, 0, 0, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd [n.a.]', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
@@ -216,7 +217,7 @@ class GokartRawData:
         if self.required_data_list != None:
             self.kartData = dict([(key,self.kartData[key]) for key in required_list if key in self.kartData.keys() ])
 
-        if len(groups) == 18:
+        if len(groups) == 19:
             pass
         else:
             print('ACHTUNG! Missing Data in ', self.load_path)

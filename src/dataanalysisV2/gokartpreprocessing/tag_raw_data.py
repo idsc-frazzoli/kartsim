@@ -13,7 +13,6 @@ from dataanalysisV2.gokartpreprocessing.preprocessing import filter_raw_data
 # from dataanalysisV2.gokartpreprocessing.importdata import setListItems
 from dataanalysisV2.gokartpreprocessing.gokart_raw_data import GokartRawData
 
-
 class TagRawData:
 
     def __init__(self, pathRootData=None):
@@ -98,13 +97,31 @@ class TagRawData:
 
             raw_data = GokartRawData(path)
             # kartData, allDataNames = setListItems(path)
-            vmuDataNames = ['pose x [m]', 'pose y [m]', 'pose vtheta [rad*s^-1]', 'vehicle vy [m*s^-1]',
+            vmuDataNames = ['pose x [m]',
+                            'pose y [m]',
+                            'pose theta [rad]',
+                            'pose vtheta [rad*s^-1]',
+                            'vehicle vy [m*s^-1]',
                             'pose atheta [rad*s^-2]',
-                            'vmu ax [m*s^-2]', 'vmu ay [m*s^-2]']
+                            'vmu ax [m*s^-2]',
+                            'vmu ay [m*s^-2]',
+                            'vehicle ax local [m*s^-2]',
+                            'vehicle ay local [m*s^-2]',]
             filtered_data = filter_raw_data(raw_data, vmuDataNames)
             kartData = filtered_data.get_data()
 
             statusInfo = logNr + ':  '
+
+
+
+            # ___pose quality
+            bad_pose_qual_count = sum(i < 0.5 for i in kartData['pose quality [n.a.]']['data'][1])
+            bad_pose_qual_ratio = bad_pose_qual_count/len(kartData['pose quality [n.a.]']['data'][1])
+            if bad_pose_qual_count > 100 or bad_pose_qual_ratio > 0.25:
+                self.data_tags[testDay][logNr]['pose quality'] = 0
+                statusInfo = statusInfo + 'pose quality insufficient,  '
+            else:
+                self.data_tags[testDay][logNr]['pose quality'] = 1
 
             # ___distance
             dx = np.subtract(kartData['pose x [m]']['data'][1][1:], kartData['pose x [m]']['data'][1][:-1])
@@ -127,8 +144,32 @@ class TagRawData:
             else:
                 self.data_tags[testDay][logNr]['reverse'] = 0
 
-            # ___x velocity
-            if np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12:
+            # ___vehicle ax local
+            if np.max(kartData['vehicle ax local [m*s^-2]']['data'][1]) > 2.5 or np.min(
+                    kartData['vehicle ax local [m*s^-2]']['data'][1]) < -14.0:
+                self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 0
+                statusInfo = statusInfo + 'unrealistic vehicle ax,  '
+            else:
+                self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 1
+
+            # ___vehicle ay local
+            if np.max(kartData['vehicle ay local [m*s^-2]']['data'][1]) > 9.0 or np.min(
+                    kartData['vehicle ay local [m*s^-2]']['data'][1]) < -9.0:
+                self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 0
+                statusInfo = statusInfo + 'unrealistic vehicle ay,  '
+            else:
+                self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 1
+
+            # ___pose atheta
+            if np.max(kartData['pose atheta [rad*s^-2]']['data'][1]) > 12.0 or np.min(
+                    kartData['pose atheta [rad*s^-2]']['data'][1]) < -12.0:
+                self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 0
+                statusInfo = statusInfo + 'unrealistic pose atheta,  '
+            else:
+                self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 1
+
+            #___x velocity
+            if np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12.0:
                 statusInfo = statusInfo + 'unrealistic vehicle vx,  '
                 self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 0
             else:
@@ -142,6 +183,14 @@ class TagRawData:
             else:
                 self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 1
 
+            # ___theta velocity
+            if np.max(kartData['pose vtheta [rad*s^-1]']['data'][1]) > 4.0 or np.min(
+                    kartData['pose vtheta [rad*s^-1]']['data'][1]) < -4.0:
+                statusInfo = statusInfo + 'unrealistic pose vtheta,  '
+                self.data_tags[testDay][logNr]['pose vtheta [rad*s^-1]'] = 0
+            else:
+                self.data_tags[testDay][logNr]['pose vtheta [rad*s^-1]'] = 1
+
             # ___steering
             lenSteerCmd = len(kartData['steer torque cmd [n.a.]']['data'][1])
             if lenSteerCmd == 1:
@@ -149,8 +198,8 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
             elif kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(
                     0) / len(
-                    kartData['steer torque cmd [n.a.]']['data'][1][
-                    int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
+                kartData['steer torque cmd [n.a.]']['data'][1][
+                int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)]) > 0.05:
                 statusInfo = statusInfo + 'steering cmd data: too many zeros...,  '
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
             elif np.abs(np.mean(kartData['steer torque cmd [n.a.]']['data'][1])) < 0.01 and np.std(
@@ -166,7 +215,7 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 0
             elif kartData['steer position cal [n.a.]']['data'][1][
                  int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)].count(
-                    0) / len(
+                0) / len(
                 kartData['steer position cal [n.a.]']['data'][1][
                 int(lenSteerPos / 10):int(lenSteerPos / 10 * 9)]) > 0.05:
                 statusInfo = statusInfo + 'steering pos cal data: too many zeros...,  '
