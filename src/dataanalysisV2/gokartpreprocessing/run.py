@@ -9,6 +9,7 @@ from dataanalysisV2.data_io import create_folder_with_time, dict_keys_to_pkl
 from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
 from dataanalysisV2.gokartpreprocessing.prepare_data import prepare_dataset
 from dataanalysisV2.gokartpreprocessing.tag_raw_data import TagRawData
+from dataanalysisV2.gokartpreprocessing.merge_data import merge_data
 
 import time
 
@@ -50,6 +51,10 @@ def main():
     path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
+    # Merge data
+    merge_sampled_data = True
+    save_path_merged_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel'
+
     # ______________^^^_________________
 
     if tag_data:
@@ -72,6 +77,10 @@ def main():
     if sample_data:
         print('Sampling Data...')
         sample_from_logdata(sampling_time_period, path_sampled_data, path_preprocessed_dataset, dataset_tag)
+
+    if merge_sampled_data:
+        print('Merging Data...')
+        path_merged_data = merge_data(save_path_merged_data, path_sampled_data, dataset_tag, required_data_list)
 
     print('Total computing time: ', int(time.time() - t), "s")
 
