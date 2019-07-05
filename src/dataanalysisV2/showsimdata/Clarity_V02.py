@@ -43,6 +43,7 @@ class Clarity(QtGui.QMainWindow):
         # defaultSim = '_33333333333333'
         # defaultSim = '20190703-092308_test_eval_final'
         self.pathSimData = self.pathRootSimData + '/' + defaultSim
+        # self.pathSimData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/20190625-195955_TF_filtered_vel'
         print('Loading data from', self.pathSimData)
 
         logNrs = []
