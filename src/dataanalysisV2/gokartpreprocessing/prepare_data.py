@@ -12,25 +12,7 @@ from dataanalysisV2.gokartpreprocessing.gokart_raw_data import GokartRawData
 
 
 def prepare_dataset(pathRootData, data_tags, required_data_list, start_from=None):
-
-    nr_of_good_logs = 0
-    total_nr_of_logs = 0
-    testDays = getDirectories(pathRootData)
-    testDays.sort()
-
-    if start_from != None:
-        index = testDays.index(start_from)
-        testDays = testDays[index:]
-
-    for testDay in testDays:
-        pathTestDay = pathRootData + '/' + testDay
-        logNrs = getDirectories(pathTestDay)
-        logNrs.sort()
-        total_nr_of_logs += len(logNrs)
-        for logNr in logNrs:
-            if data_tags.good_data(testDay,logNr):
-                nr_of_good_logs += 1
-    test_log_pairs = get_testday_lognr_pairs(pathRootData)
+    test_log_pairs = get_testday_lognr_pairs(pathRootData, start_from)
     total_nr_of_logs = len(test_log_pairs)
     good_logs_list = [data_tags.good_data(day, log) for day, log in test_log_pairs]
     nr_of_good_logs = sum(good_logs_list)
@@ -43,45 +25,45 @@ def prepare_dataset(pathRootData, data_tags, required_data_list, start_from=None
 
     raw_data = GokartRawData(required_data_list=required_data_list)
 
-    for testDay in testDays:
-        pathTestDay = pathRootData + '/' + testDay
-        logNrs = getDirectories(pathTestDay)
-        logNrs.sort()
-
-        for logNr in logNrs:
-            if data_tags.good_data(testDay,logNr):
-                if skipCount > 0:
-                    print(str(int(comp_count / nr_of_good_logs * 100)), '% completed.   current log:', logNr, '  ', skipCount, 'logs skipped', end='\r')
-                    skipCount = 0
-                else:
-                    print(str(int(comp_count / nr_of_good_logs * 100)), '% completed.   current log:', logNr, end='\r')
-
-                pathLogNr = pathTestDay + '/' + logNr
-                raw_data.set_load_path(pathLogNr)
-                raw_data.load_raw_data()
-
-                filtered_data = filter_raw_data(raw_data)
-
-                # Remove data that is not required
-                filtered_required_data = {}
-                for name in filtered_data.get_required_data():
-                    try:
-                        filtered_required_data[name] = filtered_data.get_data(name)
-                    except:
-                        raise KeyError('No data with name', name, 'found in filtered_data.')
-
-                filtered_kart_data[logNr] = filtered_required_data
-
-                comp_count += 1
-
+    for testDay, logNr in test_log_pairs:
+        if data_tags.good_data(testDay,logNr):
+            if skipCount > 0:
+                print(str(int(comp_count / nr_of_good_logs * 100)), '% completed.   current log:', logNr, '  ', skipCount, 'logs skipped', end='\r')
+                skipCount = 0
             else:
-                skipCount += 1
+                print(str(int(comp_count / nr_of_good_logs * 100)), '% completed.   current log:', logNr, end='\r')
+
+            pathLogNr = pathRootData + '/' + testDay + '/' + logNr
+            raw_data.set_load_path(pathLogNr)
+            raw_data.load_raw_data()
+
+            filtered_data = filter_raw_data(raw_data)
+
+            # Remove data that is not required
+            filtered_required_data = {}
+            for name in filtered_data.get_required_data():
+                try:
+                    filtered_required_data[name] = filtered_data.get_data(name)
+                except:
+                    raise KeyError('No data with name', name, 'found in filtered_data.')
+
+            filtered_kart_data[logNr] = filtered_required_data
+
+            comp_count += 1
+
+        else:
+            skipCount += 1
     return filtered_kart_data
 
-def get_testday_lognr_pairs(pathRootData):
+def get_testday_lognr_pairs(pathRootData, start_from):
     pairs = []
     testDays = getDirectories(pathRootData)
     testDays.sort()
+
+    if start_from != None:
+        index = testDays.index(start_from)
+        testDays = testDays[index:]
+
     for testDay in testDays:
         pathTestDay = pathRootData + '/' + testDay
         logNrs = getDirectories(pathTestDay)

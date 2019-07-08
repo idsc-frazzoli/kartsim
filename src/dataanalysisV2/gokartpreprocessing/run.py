@@ -21,24 +21,37 @@ def main():
 
     pathRootData = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts'  # path where all the raw logfiles are
 
-    #______________________
+    # ______________________
     # check and tag all the raw logs for missing/incomplete data and other characteristics
-    tag_data = True
+    tag_data = False
 
-    #______________________
+    # ______________________
     # Filter data and compute inferred data from raw logs
-    filter_data = False
+    filter_data = True
 
-    required_data_list = ['pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-                          'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-                          'pose atheta [rad*s^-2]', 'steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']
-    required_tags_list = ['multiple laps', 'high slip angles', 'pose quality']  # list of signals and tags which should be true for the logs used to build the dataset
+    required_data_list = ['pose x [m]',
+                          'pose y [m]',
+                          'pose theta [rad]',
+                          'vehicle vx [m*s^-1]',
+                          'vehicle vy [m*s^-1]',
+                          'pose vtheta [rad*s^-1]',
+                          'vehicle ax local [m*s^-2]',
+                          'vehicle ay local [m*s^-2]',
+                          'pose atheta [rad*s^-2]',
+                          'steer position cal [n.a.]',
+                          'brake position effective [m]',
+                          'motor torque cmd left [A_rms]',
+                          'motor torque cmd right [A_rms]']
+
+    required_tags_list = ['trustworthy data',
+                          'multiple laps',
+                          'high slip angles',]  # list of signals and tags which should be true for the logs used to build the dataset
     exclusion_tags_list = ['reverse']
 
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_filtered_data_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'lookatdata_0p1'
+    dataset_tag = 'better_filtered'
 
     # ______________________
     # Sample data
