@@ -63,7 +63,7 @@ class TagRawData:
                     continue
                 else:
                     self.data_tags[testDay][logNr] = {}
-                    self.data_tags[testDay][logNr]['goodData'] = 1
+                    self.data_tags[testDay][logNr]['trustworthy data'] = 1
                     self.path_logs = self.path_logs + ((testDay, logNr, pathTestDay + '/' + logNr),)
         self.good_number_of_logs = self.total_number_of_logs
 
@@ -72,6 +72,11 @@ class TagRawData:
         for day in self.data_tags:
             for log in self.data_tags[day]:
                 self.good_number_of_logs += 1
+                if int(self.data_tags[day][log]['trustworthy data']) == 0:
+                    self.data_tags[day][log]['goodData'] = 0
+                    self.good_number_of_logs -= 1
+                    continue
+                self.data_tags[day][log]['goodData'] = 1
                 for topic in self.data_tags[day][log]:
                     if (topic in required_tags_list and int(self.data_tags[day][log][topic]) == 0) or \
                             (topic in required_data_list and int(self.data_tags[day][log][topic]) == 0) or \
@@ -119,6 +124,7 @@ class TagRawData:
             bad_pose_qual_ratio = bad_pose_qual_count/len(kartData['pose quality [n.a.]']['data'][1])
             if bad_pose_qual_count > 100 or bad_pose_qual_ratio > 0.25:
                 self.data_tags[testDay][logNr]['pose quality'] = 0
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 statusInfo = statusInfo + 'pose quality insufficient,  '
             else:
                 self.data_tags[testDay][logNr]['pose quality'] = 1
@@ -148,6 +154,7 @@ class TagRawData:
             if np.max(kartData['vehicle ax local [m*s^-2]']['data'][1]) > 2.5 or np.min(
                     kartData['vehicle ax local [m*s^-2]']['data'][1]) < -14.0:
                 self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 0
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 statusInfo = statusInfo + 'unrealistic vehicle ax,  '
             else:
                 self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 1
@@ -156,6 +163,7 @@ class TagRawData:
             if np.max(kartData['vehicle ay local [m*s^-2]']['data'][1]) > 9.0 or np.min(
                     kartData['vehicle ay local [m*s^-2]']['data'][1]) < -9.0:
                 self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 0
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 statusInfo = statusInfo + 'unrealistic vehicle ay,  '
             else:
                 self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 1
@@ -164,6 +172,7 @@ class TagRawData:
             if np.max(kartData['pose atheta [rad*s^-2]']['data'][1]) > 12.0 or np.min(
                     kartData['pose atheta [rad*s^-2]']['data'][1]) < -12.0:
                 self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 0
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 statusInfo = statusInfo + 'unrealistic pose atheta,  '
             else:
                 self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 1
@@ -171,6 +180,7 @@ class TagRawData:
             #___x velocity
             if np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12.0:
                 statusInfo = statusInfo + 'unrealistic vehicle vx,  '
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 0
             else:
                 self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 1
@@ -179,6 +189,7 @@ class TagRawData:
             if np.max(kartData['vehicle vy [m*s^-1]']['data'][1]) > 12 or np.min(
                     kartData['vehicle vy [m*s^-1]']['data'][1]) < -12:
                 statusInfo = statusInfo + 'unrealistic vehicle vy,  '
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 0
             else:
                 self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 1
@@ -187,6 +198,7 @@ class TagRawData:
             if np.max(kartData['pose vtheta [rad*s^-1]']['data'][1]) > 4.0 or np.min(
                     kartData['pose vtheta [rad*s^-1]']['data'][1]) < -4.0:
                 statusInfo = statusInfo + 'unrealistic pose vtheta,  '
+                self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 self.data_tags[testDay][logNr]['pose vtheta [rad*s^-1]'] = 0
             else:
                 self.data_tags[testDay][logNr]['pose vtheta [rad*s^-1]'] = 1
