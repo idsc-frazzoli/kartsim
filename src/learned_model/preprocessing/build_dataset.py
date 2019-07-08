@@ -24,26 +24,40 @@ def main():
 
     #______________________
     # check and tag all the raw logs for missing/incomplete data and other characteristics
-    tag_data = True
-    # tag_data = False
+    # tag_data = True
+    tag_data = False
 
     #______________________
     # Filter data and compute inferred data from raw logs
     filter_data = True
     # filter_data = False
     # list of signals which should be true for the logs used to build the dataset
-    required_data_list = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                          'steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]',
+    required_data_list = ['vehicle vx [m*s^-1]',
+                          'vehicle vy [m*s^-1]',
+                          'pose vtheta [rad*s^-1]',
+                          'steer position cal [n.a.]',
+                          'brake position effective [m]',
+                          'motor torque cmd left [A_rms]',
                           'motor torque cmd right [A_rms]',
-                          'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']
+                          'vehicle ax local [m*s^-2]',
+                          'vehicle ay local [m*s^-2]',
+                          'pose atheta [rad*s^-2]'
+                          ]
     # list of tags which should be true for the logs used to build the dataset
-    required_tags_list = ['multiple laps', 'high slip angles']
+    required_tags_list = [
+        # 'multiple laps',
+        # 'high slip angles',
+        'trustworthy data'
+    ]
     # list of signals or tags which should not be true for the logs used to build the dataset
-    exclusion_tags_list = []
+    exclusion_tags_list = [
+        'reverse'
+    ]
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_path_filtered_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'TF_filtered_vel'
+    dataset_tag = 'more_filtered_withlowspeed_learning_data'
+    # dataset_tag = 'lookatdata_more_filtered_multilaptrustnoreverse_1'
 
     #______________________
     # Sample data
