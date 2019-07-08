@@ -32,15 +32,15 @@ def calculate_disturbance(load_path_data=None, tag='test'):
     inputs = data_set[:,3:-3]
     target_output = data_set[:,-3:]
 
-    # # Dynamic MPC model
-    # dynamic_mpc_model = DynamicVehicleMPC()
-    # nominal_model_output = dynamic_mpc_model.get_accelerations(velocities, inputs)
-    # nominal_model_output = np.vstack((nominal_model_output[0],nominal_model_output[1],nominal_model_output[2])).transpose()
+    # Dynamic MPC model
+    dynamic_mpc_model = DynamicVehicleMPC()
+    nominal_model_output = dynamic_mpc_model.get_accelerations(velocities, inputs)
+    nominal_model_output = np.vstack((nominal_model_output[0],nominal_model_output[1],nominal_model_output[2])).transpose()
 
-    # Dynamic MPC model modified
-    vehicle_model_name = '5x64_relu_reg0p0'
-    vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
-    nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
+    # # Dynamic MPC model modified
+    # vehicle_model_name = '5x64_relu_reg0p0'
+    # vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
+    # nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
 
     # # Kinematic MPC model
     # kinematic_mpc_model = KinematicVehicleMPC()
