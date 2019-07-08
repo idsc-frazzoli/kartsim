@@ -70,9 +70,9 @@ class DynamicVehicleMPC:
         f1_vely = np.sum(np.multiply(self._rotmat(turning_angle)[1],
                                      np.array([velx, vely + self.dist_cog_front_axle * velrotz])), axis=0)
         f1y = self._simplefaccy(f1_vely, f1_velx)
-        print('f1y',f1y)
-        print('f1_velx',f1_velx)
-        print('f1_vely',f1_vely)
+        # print('f1y',f1y)
+        # print('f1_velx',f1_velx)
+        # print('f1_vely',f1_vely)
 
         if isinstance(f1y, np.float64):
             F1x = np.sum(np.multiply(self._rotmat(-turning_angle)[0], np.array([np.zeros(1), f1y])),
@@ -136,7 +136,7 @@ class DynamicVehicleMPC:
         return self._capfactor(taccx) * self._simplediraccy(VELY, VELX, taccx)
 
     def _simplefaccy(self, VELY, VELX):
-        print('magic vy', -VELY , 'magic vx', (abs(VELX) + self.regularization_factor))
+        # print('magic vy', -VELY , 'magic vx', (abs(VELX) + self.regularization_factor))
         return self._magic(-VELY / (abs(VELX) + self.regularization_factor), self.params_tire_front)
 
     def _satfun(self, x):
