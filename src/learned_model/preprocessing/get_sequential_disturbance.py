@@ -55,6 +55,14 @@ def get_sequential_disturbance(load_path_data=None, save_path_sequential_data=No
 
     save_folder_path = create_folder_with_time(save_path_sequential_data, tag=tag)
 
+    os.mkdir(os.path.join(save_folder_path,'train_log_files'))
+    os.mkdir(os.path.join(save_folder_path,'test_log_files'))
+
+    for path, name in train_files:
+        os.popen('cp ' + path + ' ' + save_folder_path + '/train_log_files/' + name)
+    for path, name in test_files:
+        os.popen('cp ' + path + ' ' + save_folder_path + '/test_log_files/' + name)
+
     file_path = save_folder_path + '/train_features.pkl'
     dataframe_to_pkl(file_path, train_features)
     file_path = save_folder_path + '/train_labels.pkl'
@@ -105,7 +113,8 @@ def get_sequences(file_list, vehicle_model, sequence_length):
         for row in dataframe.values:
             sequence.append(row[:-3])
             if len(sequence) == sequence_length:
-                sequential_data.append([sequence,row[-3:]])
+                sequential_data.append([np.array(sequence),row[-3:]])
+                # print(np.array(sequence))
 
     random.shuffle(sequential_data)
 
@@ -117,7 +126,6 @@ def get_sequences(file_list, vehicle_model, sequence_length):
         labels.append(disturbance)
 
     return np.array(features), np.array(labels)
-    return 0,0
 
 
 if __name__ == '__main__':
