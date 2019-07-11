@@ -11,7 +11,7 @@ from simulator.model.dynamic_model_input_converter import MotorFunction, BrakeFu
 class DynamicVehicleMPC:
     
     def __init__(self, model_parameters=[9*1.5,1,10,5.2*1.5,1.1,10,0.3], wheel_base=1.19, track_width=1.0, dist_cog_front_axle= 0.73, direct_input=False):
-        self.name = "dynamic_vehicle_mpc"
+        self.name = "mpc_dynamic"
         self.wheel_base = wheel_base
         self.track_width = track_width # real value: 1.08
         self.dist_cog_front_axle = dist_cog_front_axle
@@ -34,15 +34,15 @@ class DynamicVehicleMPC:
     def get_name(self):
         return self.name
 
-    def get_accelerations(self, initial_velocities=[0,0,0], system_inputs=[0,0,0,0]):
+    def get_accelerations(self, velocities=[0, 0, 0], system_inputs=[0, 0, 0, 0]):
         if not self.direct_input:
-            if isinstance(initial_velocities, list):
-                velx, vely, velrotz = initial_velocities
+            if isinstance(velocities, list):
+                velx, vely, velrotz = velocities
                 steering_angle, brake_position, motor_current_l, motor_current_r = system_inputs
             else:
-                velx = initial_velocities[:, 0]
-                vely = initial_velocities[:, 1]
-                velrotz = initial_velocities[:, 2]
+                velx = velocities[:, 0]
+                vely = velocities[:, 1]
+                velrotz = velocities[:, 2]
                 steering_angle = system_inputs[:, 0]
                 brake_position = system_inputs[:, 1]
                 motor_current_l = system_inputs[:, 2]
@@ -54,13 +54,13 @@ class DynamicVehicleMPC:
                                                                                      motor_current_r,
                                                                                      velx)
         else:
-            if isinstance(initial_velocities, list):
-                velx, vely, velrotz = initial_velocities
+            if isinstance(velocities, list):
+                velx, vely, velrotz = velocities
                 turning_angle, acceleration_rear_axle, torque_tv = system_inputs
             else:
-                velx = initial_velocities[:, 0]
-                vely = initial_velocities[:, 1]
-                velrotz = initial_velocities[:, 2]
+                velx = velocities[:, 0]
+                vely = velocities[:, 1]
+                velrotz = velocities[:, 2]
                 turning_angle = system_inputs[:, 0]
                 acceleration_rear_axle = system_inputs[:, 1]
                 torque_tv = system_inputs[:, 2]

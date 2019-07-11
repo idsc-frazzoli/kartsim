@@ -15,7 +15,7 @@ from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 class DataDrivenVehicleModel:
 
     def __init__(self, model_name='FirstTry'):
-        self.name = "data_driven_vehicle_model"
+        self.name = "hybrid_mlp"
 
         # Load the NN
         self.mlp = MultiLayerPerceptron(model_name=model_name, predict_only=True)
