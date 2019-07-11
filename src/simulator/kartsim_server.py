@@ -16,6 +16,7 @@ import sys
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
+from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.integrate.systemequation import SystemEquation
 
 
@@ -25,7 +26,8 @@ def main():
     try:
         visualization = int(sys.argv[1])
         logging = int(sys.argv[2])
-        vehicle_model = sys.argv[3]
+        vehicle_model_type = sys.argv[3]
+        vehicle_model_name = sys.argv[4]
     except:
         visualization = 0
         logging = 0
@@ -67,7 +69,8 @@ def main():
                 print('client connection accepted from', clientListener.last_accepted)
                 print('Starting simulation:\n')
 
-            t = Thread(target=handle_client, args=(cliConn, vizConn, logConn, visualization, logging, vehicle_model))
+            t = Thread(target=handle_client,
+                       args=(cliConn, vizConn, logConn, visualization, logging, vehicle_model_type, vehicle_model_name))
             runThread = True
             t.start()
         else:
@@ -77,16 +80,18 @@ def main():
             pass
 
 
-def handle_client(c, v, l, visualization, logging, vehicle_model_name):
+def handle_client(c, v, l, visualization, logging, vehicle_model_type, vehicle_model_name):
     global noThread, cliConn, logConn, vizConn
     initSignal = 0
 
     # initialize vehicle model
     # vehicle_model = AccelerationReferenceModel()
-    if vehicle_model_name == 'mpc_dynamic':
+    if vehicle_model_type == 'mpc_dynamic':
         vehicle_model = DynamicVehicleMPC()
-    elif 'x' in vehicle_model_name:
+    elif vehicle_model_type == 'hybrid_mlp':
         vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
+    elif vehicle_model_type == 'hybrid_lstm':
+        vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
 
     # vehicle_model = DynamicVehicleMPC(direct_input=True)
 

@@ -27,15 +27,24 @@ VISUALIZATION=1
 LOGGING=1
 
 # Specify vehicle model to simulate with
-# possible options: "mpc", "learned"
-VEHICLE_MODEL="mpc_dynamic"
-#VEHICLE_MODEL="5x64_relu_reg0p0"
+# possible options: "mpc_dynamic", "hybrid_mlp", "hybrid_lstm"
+#VEHICLE_MODEL_TYPE="mpc_dynamic"
+#VEHICLE_MODEL_TYPE="hybrid_mlp"
+VEHICLE_MODEL_TYPE="hybrid_lstm"
+
+# Specify ML model name to be used for model
+# only necessary for vehicle model types "hybrid_mlp" and "hybrid_lstm"
+#VEHICLE_MODEL_NAME="5x64_relu_reg0p0" #for "hybrid_mlp" model
+#VEHICLE_MODEL_NAME="2x32_relu_reg0p0" #for "hybrid_lstm" model
+#VEHICLE_MODEL_NAME="2x32_relu_reg0p01" #for "hybrid_lstm" model
+#VEHICLE_MODEL_NAME="1x32_relu_reg0p01" #for "hybrid_lstm" model
+VEHICLE_MODEL_NAME="2x32_tanh_reg0p1" #for "hybrid_lstm" model
 
 mkdir $SAVEFOLDERPATH
 
 for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
-python3 kartsim_server.py $VISUALIZATION $LOGGING $VEHICLE_MODEL &
+python3 kartsim_server.py $VISUALIZATION $LOGGING $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME &
 SRVPID=$!
 
 if [ $VISUALIZATION = 1 ]
@@ -47,7 +56,7 @@ fi
 if [ $LOGGING = 1 ]
 then
 
-    python3 kartsim_loggerclient.py $SAVEFOLDERPATH $VEHICLE_MODEL "${SIMLOGFILENAMES[@]}" &
+    python3 kartsim_loggerclient.py $SAVEFOLDERPATH $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME "${SIMLOGFILENAMES[@]}" &
     LOGPID=$!
 fi
 
