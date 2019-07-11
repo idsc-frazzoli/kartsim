@@ -33,7 +33,7 @@ def main():
     validation = True
     validationhorizon = 1      #[s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = False
+    real_time = True
     server_return_interval = 1  # [s] simulation time after which result is returned from server
     real_time_factor = 1
     _wait_for_real_time = 0

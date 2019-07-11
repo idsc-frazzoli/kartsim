@@ -43,9 +43,9 @@ def main():
                 network_settings.append([layers,nodes,'relu',0.0])
     print(i,network_settings)
 
-    network_settings = [
-        [40, 16, 'relu', 0.0],
-    ]
+    # network_settings = [
+    #     [40, 16, 'relu', 0.0],
+    # ]
 
     chunks = [network_settings[i::8] for i in range(8)]
     pool = Pool(processes=8)
