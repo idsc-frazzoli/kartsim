@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import sys
 
-from dataanalysisV2.mathfunction import derivative_X_dX
+from data_visualization.mathfunction import derivative_X_dX
 
 def main():
     savePath = sys.argv[1]

@@ -7,7 +7,7 @@ Created 14.06.19 15:50
 """
 import tensorflow as tf
 import numpy as np
-from learned_model.ml_model.mlp_keras import MultiLayerPerceptron
+from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 

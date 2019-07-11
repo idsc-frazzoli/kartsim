@@ -7,7 +7,7 @@ Created 17.06.19 14:14
 """
 import tensorflow as tf
 import numpy as np
-from learned_model.ml_model.mlp_keras import MultiLayerPerceptron
+from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 
 import time

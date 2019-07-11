@@ -8,7 +8,7 @@ Created 14.05.19 15:26
 # from parameter_optimization.model.marcsmodel_paramopt_scipy import marc_vehiclemodel
 # from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec
 from parameter_optimization.model.marcsmodel_paramopt_vectorized_correct import marc_vehiclemodel as marc_vehiclemodel_vec_jcorr
-from dataanalysisV2.data_io import getPKL
+from data_visualization.data_io import getPKL
 import numpy as np
 np.set_printoptions(precision=4)
 import time

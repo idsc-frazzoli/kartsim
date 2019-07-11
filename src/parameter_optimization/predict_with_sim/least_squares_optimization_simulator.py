@@ -9,7 +9,7 @@ Created 17.05.19 10:24
 # from parameter_optimization.model.marcsmodel_paramopt_vectorized import marc_vehiclemodel as marc_vehiclemodel_vec
 import parameter_optimization.integrate.timeIntegrators as integrators
 # import simulator.integrate.timeIntegrators as integrators
-from dataanalysisV2.data_io import getPKL
+from data_visualization.data_io import getPKL
 import numpy as np
 np.set_printoptions(precision=4)
 import time

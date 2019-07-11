@@ -5,15 +5,13 @@ Created 13.06.19 11:09
 
 @author: mvb
 """
-from dataanalysisV2.data_io import getPKL
-from learned_model.ml_model.mlp_keras import MultiLayerPerceptron
+from data_visualization.data_io import getPKL
+from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
 from multiprocessing import Pool
 import pandas as pd
 import os
-from dataanalysisV2.data_io import getDirectories
+from data_visualization.data_io import getDirectories
 import matplotlib.pyplot as plt
-from learned_model.preprocessing.shuffle import shuffle_dataframe
-import numpy as np
 
 
 def main():

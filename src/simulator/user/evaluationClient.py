@@ -16,8 +16,7 @@ import pandas as pd
 import sys
 
 from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
-import dataanalysisV2.evaluation.evaluation as evalCalc
-import dataanalysisV2.evaluation.evaluationReference as evalRef
+
 
 def main():
     #___user inputs

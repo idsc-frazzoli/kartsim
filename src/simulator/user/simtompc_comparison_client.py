@@ -14,19 +14,14 @@ Created on Fri Apr  5 09:11:42 2019
 """
 
 from multiprocessing.connection import Client
-import threading
 import numpy as np
-import time
 import os
 import pickle
 import pandas as pd
-import sys
 import matplotlib.pyplot as plt
 
-from dataanalysisV2.data_io import dataframe_from_csv
 from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
-import dataanalysisV2.evaluation.evaluation as evalCalc
-import dataanalysisV2.evaluation.evaluationReference as evalRef
+
 
 def main():
     #___user inputs

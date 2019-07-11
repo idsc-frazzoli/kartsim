@@ -5,12 +5,12 @@ Created 09.07.19 09:32
 
 @author: mvb
 """
-from dataanalysisV2.data_io import getPKL
-from learned_model.ml_model.rnn_keras import LongShortTermMemoryNetwork
+from data_visualization.data_io import getPKL
+from learned_model.ml_models.rnn_keras import LongShortTermMemoryNetwork
 from multiprocessing import Pool
 import pandas as pd
 import os
-from dataanalysisV2.data_io import getDirectories
+from data_visualization.data_io import getDirectories
 import matplotlib.pyplot as plt
 
 
