@@ -7,7 +7,7 @@ Created 09.05.19 10:18
 """
 from dataanalysisV2.data_io import dict_from_csv, dict_to_csv, create_folder_with_time, dict_keys_to_pkl
 from gokartpreprocessing.old_files.sortout import sort_out
-from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
+from dataanalysisV2.gokartpreprocessing.sample_from_data import sample_from_logdata
 from gokartpreprocessing.old_files.buildDataSet import stirData
 
 import time

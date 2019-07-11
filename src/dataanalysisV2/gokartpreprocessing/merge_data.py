@@ -20,11 +20,12 @@ def merge_data(save_path_merged_data, load_path_sampled_data=None, tag='test', r
         folders_preprocessed_data.sort()
         folders_preprocessed_data.reverse()
         for str in folders_preprocessed_data:
+            print(str, tag)
             if str.endswith(tag):
                 defaultSim = str
                 break
         load_path_sampled_data = path_preprocessed_data + '/' + defaultSim
-
+    print('loadpath', load_path_sampled_data)
     file_list = []
     for r, d, f in os.walk(load_path_sampled_data):
         for file in f:

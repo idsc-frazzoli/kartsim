@@ -6,7 +6,7 @@ Created 31.05.19 08:45
 @author: mvb
 """
 from dataanalysisV2.data_io import create_folder_with_time, dict_keys_to_pkl
-from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
+from dataanalysisV2.gokartpreprocessing.sample_from_data import sample_from_logdata
 from dataanalysisV2.gokartpreprocessing.prepare_data import prepare_dataset
 from dataanalysisV2.gokartpreprocessing.tag_raw_data import TagRawData
 from dataanalysisV2.gokartpreprocessing.merge_data import merge_data

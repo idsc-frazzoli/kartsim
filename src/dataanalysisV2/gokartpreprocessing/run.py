@@ -6,7 +6,7 @@ Created 09.05.19 10:18
 @author: mvb
 """
 from dataanalysisV2.data_io import create_folder_with_time, dict_keys_to_pkl
-from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
+from dataanalysisV2.gokartpreprocessing.sample_from_data import sample_from_logdata
 from dataanalysisV2.gokartpreprocessing.prepare_data import prepare_dataset
 from dataanalysisV2.gokartpreprocessing.tag_raw_data import TagRawData
 from dataanalysisV2.gokartpreprocessing.merge_data import merge_data
@@ -43,25 +43,29 @@ def main():
                           'motor torque cmd left [A_rms]',
                           'motor torque cmd right [A_rms]']
 
-    required_tags_list = ['trustworthy data',
-                          'multiple laps',
-                          'high slip angles',]  # list of signals and tags which should be true for the logs used to build the dataset
-    exclusion_tags_list = ['reverse']
+    required_tags_list = [
+        'trustworthy data',
+        'high slip angles',
+    ]  # list of signals and tags which should be true for the logs used to build the dataset
+    exclusion_tags_list = [
+        'reverse',
+    ]
 
     # Load data tags
     data_tagging = TagRawData(pathRootData)
     save_filtered_data_path = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/PreprocessedData'  # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
-    dataset_tag = 'better_filtered'
+    dataset_tag = 'with_high_slip_angles'
 
     # ______________________
     # Sample data
-    sample_data = False
+    sample_data = True
     sampling_time_period = 0.1
-    path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
+    root_path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'  # parent directory where the sampled data should be saved to (separate folder will be created in this directory)
     path_preprocessed_dataset = None
 
     # Merge data
-    merge_sampled_data = False
+    merge_sampled_data = True
+    path_sampled_data = None
     save_path_merged_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel'
 
     # ______________^^^_________________
@@ -85,11 +89,16 @@ def main():
 
     if sample_data:
         print('Sampling Data...')
-        sample_from_logdata(sampling_time_period, path_sampled_data, path_preprocessed_dataset, dataset_tag)
+        path_sampled_data = sample_from_logdata(sampling_time_period, root_path_sampled_data, path_preprocessed_dataset, dataset_tag)
+
+    if get_disturbance:
+        print('Calcluating disturbance on predicitons with nominal vehicle model...')
+        calculate_disturbance(path_merged_data, dataset_tag)
 
     if merge_sampled_data:
         print('Merging Data...')
         path_merged_data = merge_data(save_path_merged_data, path_sampled_data, dataset_tag, required_data_list)
+
 
     print('Total computing time: ', int(time.time() - t), "s")
 

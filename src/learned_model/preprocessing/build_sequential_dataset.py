@@ -7,7 +7,7 @@ Created 08.07.19 18:08
 """
 
 from dataanalysisV2.data_io import create_folder_with_time, dict_keys_to_pkl
-from dataanalysisV2.gokartpreprocessing.sample_from_dataset import sample_from_logdata
+from dataanalysisV2.gokartpreprocessing.sample_from_data import sample_from_logdata
 from dataanalysisV2.gokartpreprocessing.prepare_data import prepare_dataset
 from dataanalysisV2.gokartpreprocessing.tag_raw_data import TagRawData
 from dataanalysisV2.gokartpreprocessing.merge_data import merge_data
@@ -75,7 +75,6 @@ def main():
     path_sampled_data = None
     save_path_sequential_data = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/SequentialDataSets'
     load_data_set_tag = 'lookatdata_more_filtered_trustnoreverse_1'
-    path_merged_data = None
 
     # ______________^^^_________________
 
