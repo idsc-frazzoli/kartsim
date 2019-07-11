@@ -5,8 +5,8 @@ Created 13.05.19 15:33
 
 @author: mvb
 """
-from dataanalysisV2.data_io import getPKL
-from old_files.marcsmodel_paramopt_TF import marc_vehiclemodel
+from data_visualization.data_io import getPKL
+from file_grave_yard.parameter_optimization_oldfiles.marcsmodel_paramopt_TF import marc_vehiclemodel
 
 import tensorflow as tf
 
