@@ -44,8 +44,7 @@ class MultiLayerPerceptron():
 
         if self.model_dir is None:
             # print('New model name! Creating new folder...')
-            self.model_dir = create_folder_with_time(
-                '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models', model_name)
+            self.model_dir = create_folder_with_time(self.root_folder, model_name)
             os.mkdir(os.path.join(self.model_dir, 'model_checkpoints'))
             os.mkdir(os.path.join(self.model_dir, 'model_checkpoints', 'best'))
             self.new_model = True
@@ -115,10 +114,6 @@ class MultiLayerPerceptron():
                                             kernel_regularizer=tf.keras.regularizers.l2(regularization),
                                             bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
 
-        # h1 = tf.keras.layers.Dense(32, activation='relu')(inputs)
-        # h2 = tf.keras.layers.Dense(32, activation='relu')(h1)
-        # predictions = tf.keras.layers.Dense(3, activation=None)(h2)
-
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
@@ -141,7 +136,7 @@ class MultiLayerPerceptron():
         #         continue
 
         if not self.new_model:
-            print('Model already existing and trained.\nWill skip this model...')
+            print(f'Model \"{self.model_name}\" already existing and trained.\nWill skip this model...')
             return
 
         if self.shuffle:
@@ -165,9 +160,13 @@ class MultiLayerPerceptron():
         # Callback: Stop training if validation loss does not improve anymore
         stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
 
+        # Callback: Tensorboard
+        tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
+
         self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
-                                                 PrintState(self.model_name)], validation_split=0.2, verbose=0)
+                                                 PrintState(self.model_name), tensor_board],
+                                      validation_split=0.2, verbose=0)
 
         # Save entire model to a HDF5 file
         self.model.save(os.path.join(self.model_dir, 'my_model.h5'))
