@@ -98,11 +98,16 @@ class DynamicVehicleMPC:
         ACCX = F1x + F2x + velrotz * vely
         ACCY = F1y + (F2y1 + F2y2) - velrotz * velx
         # print('F1y:{:5.2f} F2y1 + F2y2:{:5.2f} velrotz*velx:{:5.2f}'.format(F1y[0], F2y1 + F2y2, velrotz * velx))
+        # print('F1x:{:5.2f} F2x:{:5.2f} velrotz*vely:{:5.2f}'.format(F1x[0], F2x, velrotz * vely))
 
         return [ACCX, ACCY, ACCROTZ]
 
     def transform_inputs(self, steering_angle, brake_position, motor_current_l, motor_current_r, velx):
+
         brake_acceleration = self.brake_function(brake_position)
+
+        if abs(velx) < 0.05:
+            brake_acceleration /= 10
 
         acceleration_left_wheel = self.motor_function(velx, motor_current_l) - np.sign(velx) * brake_acceleration
         acceleration_right_wheel = self.motor_function(velx, motor_current_r) - np.sign(velx) * brake_acceleration
