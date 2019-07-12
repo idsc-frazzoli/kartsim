@@ -21,7 +21,8 @@ from simulator.model.data_driven_model import DataDrivenVehicleModel
 
 def calculate_disturbance(load_path_data=None, data_set_name='test', test_portion=0.2, random_seed=42,
                           sequential=False, sequence_length=5):
-    save_path_sequential_data = os.path.join(directories['root'], 'Data', 'MLPDatasets')
+    save_path_sequential_data = os.path.join(directories['root'], 'Data', 'Datasets')
+    default_sim = None
     if load_path_data == None:
         path_preprocessed_data = os.path.join(directories['root'], 'Data', 'Sampled')
         folders_preprocessed_data = getDirectories(path_preprocessed_data)
@@ -31,7 +32,11 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
             if str.endswith(data_set_name):
                 default_sim = str
                 break
-        load_path_data = path_preprocessed_data + '/' + default_sim
+        if default_sim is not None:
+            load_path_data = path_preprocessed_data + '/' + default_sim
+        else:
+            raise FileNotFoundError(
+                f'No data with name {data_set_name} was found in path_preprocessed_data!\n Please specify.')
 
     # Dynamic MPC model
     vehicle_model = DynamicVehicleMPC()
@@ -133,9 +138,9 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         else:
             if len(features) == 0:
                 features = dataframe.values[:, :-3]
-                labels = dataframe.values[:, np.array([0,-3,-2,-1])]
+                labels = dataframe.values[:, np.array([0, -3, -2, -1])]
             features = np.vstack((features, dataframe.values[:, :-3]))
-            labels = np.vstack((labels, dataframe.values[:, np.array([0,-3,-2,-1])]))
+            labels = np.vstack((labels, dataframe.values[:, np.array([0, -3, -2, -1])]))
 
     if sequential:
         random.shuffle(sequential_data)
@@ -147,7 +152,7 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         labels = np.array(labels)
     else:
         features = pd.DataFrame(np.array(features), columns=dataframe.columns[:-3])
-        labels = pd.DataFrame(np.array(labels), columns=dataframe.columns[np.array([0,-3,-2,-1])])
+        labels = pd.DataFrame(np.array(labels), columns=dataframe.columns[np.array([0, -3, -2, -1])])
     return features, labels
 
 

@@ -14,8 +14,7 @@ import re
 
 from config import directories
 from data_visualization.mathfunction import interpolation, interpolation_w_mean
-from data_visualization.data_io import create_folder_with_time, data_to_pkl
-import dataIO as dio
+from data_visualization.data_io import create_folder_with_time, data_to_pkl, getDirectories
 
 def sample_from_logdata(sampling_time_period, path_load_data = None, dataset_tag = "test",
                         merge_data=False):
@@ -23,7 +22,7 @@ def sample_from_logdata(sampling_time_period, path_load_data = None, dataset_tag
     #__user input
     if path_load_data == None:
         path_preprocessed_data = os.path.join(directories['root'], 'Data', 'Filtered')
-        folders_preprocessed_data = dio.getDirectories(path_preprocessed_data)
+        folders_preprocessed_data = getDirectories(path_preprocessed_data)
         folders_preprocessed_data.sort()
         folders_preprocessed_data.reverse()
         for str in folders_preprocessed_data:

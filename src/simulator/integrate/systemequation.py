@@ -48,7 +48,6 @@ class SystemEquation:
     def solveivp_dynamic_dx_dt(self, t, X):
         V = [X[4], X[5], X[6]]
         U = getInput(X[0])
-
         V_dt = self.vehicle_model.get_accelerations(V, U)
 
         # if t > 0.999:

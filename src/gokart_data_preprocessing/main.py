@@ -69,7 +69,7 @@ def main():
     mlp_test_portion = 0.2
 
     # Calculate sequential disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    lstm_data_set = False #needs filter_data and sample_data to be True
+    lstm_data_set = True #needs filter_data and sample_data to be True
     # Specify the number of past states considered by the LSTM
     sequence_length = 5
     # Choose portion of test data

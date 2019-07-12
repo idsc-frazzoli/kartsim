@@ -7,7 +7,7 @@ Created on Sun Mar 24 16:38:24 2019
 """
 from config import directories
 import data_visualization.data_io as dio
-from experimental_work.gokart_data_processing_oldfiles.preprocessing import updateData
+from file_grave_yard.gokart_data_processing_oldfiles.preprocessing import updateData
 
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -36,13 +36,14 @@ class Clarity(QtGui.QMainWindow):
     def __init__(self):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
-#         self.pathRootSimData = os.path.join(directories['root'], 'SimLogs')
-        self.pathRootSimData = os.path.join(directories['root'], 'Data', 'MLPDatasets')
+#         self.pathRootSimData = os.path.join(directories['root'][:-14], 'SimData')
+        # self.pathRootSimData = os.path.join(directories['root'], 'Data', 'MLPDatasets')
+        self.pathRootSimData = os.path.join(directories['root'], 'Evaluation')
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
         defaultSim = simFolders[-1]
         # defaultSim = '_33333333333333'
-        defaultSim = '20190711-181156_test'
+        # defaultSim = '20190712-152308_test_eval_final'
         self.pathSimData = os.path.join(self.pathRootSimData, defaultSim)
         print('Loading data from', self.pathSimData)
 
