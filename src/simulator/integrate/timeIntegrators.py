@@ -20,14 +20,10 @@ def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
 
 def odeIntegratorIVP(X0, U, simStep, simIncrement, system_equation=None):
     setInput(U)
-    # setInputAccel(U)
     t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
     if system_equation.get_vehicle_model_name == "kinematic_vehicle_mpc":
         X0[5] = X0[6] = 0
     X1 = solve_ivp(system_equation.get_system_equation(), [0, simStep], X0, t_eval=t_eval, method='RK45', rtol=1e-5)
-    # X1 = solve_ivp(system_equation.solveivp_dynamic_dx_dt, [0, simStep], X0, t_eval=t_eval, method='LSODA', rtol=1e-8)
-
-
     return np.transpose(X1.y)
 
 
@@ -35,7 +31,6 @@ def euler(X0, U, simIncrement, system_equation=None):
     X = X0
     X1 = X
     U = U[1:]
-    # print('U',len(U[0,:]))
     for i in range(len(U[0,:])):
         Ui = U[:,i]
         V = [X[4], X[5], X[6]]
@@ -49,8 +44,6 @@ def euler(X0, U, simIncrement, system_equation=None):
         dX = [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
         X = X + np.multiply(dX,simIncrement)
         X1 = np.vstack((X1,X))
-    # print(X1)
-    # print(type(X1))
     return X1
     
     
