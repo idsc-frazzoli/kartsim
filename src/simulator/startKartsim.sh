@@ -8,6 +8,7 @@
 PREPROROOT='/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets'
 PREPROFOLDER=$(cd /home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets; ls -t | head -1)
 PREPROFOLDERPATH=$PREPROROOT/$PREPROFOLDER
+echo $PREPROFOLDERPATH
 
 SAVEPATH="/home/mvb/0_ETH/01_MasterThesis/SimData"
 FOLDERNAME=$(date +"%Y%m%d-%H%M%S")
@@ -15,7 +16,7 @@ FOLDERPATH=$SAVEPATH/$FOLDERNAME
 SIMTAG="_test_closedloop"
 SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
 SIMLOGFILENAMES=()
-
+PORT="6000"
 #select files
 ITER=0
 FIRSTFILE=0
@@ -35,6 +36,7 @@ VEHICLE_MODEL_TYPE="hybrid_lstm"
 # Specify ML model name to be used for model
 # only necessary for vehicle model types "hybrid_mlp" and "hybrid_lstm"
 #VEHICLE_MODEL_NAME="5x64_relu_reg0p0" #for "hybrid_mlp" model
+#VEHICLE_MODEL_NAME="5x64_relu_reg0p1" #for "hybrid_mlp" model
 #VEHICLE_MODEL_NAME="2x32_relu_reg0p0" #for "hybrid_lstm" model
 #VEHICLE_MODEL_NAME="2x32_relu_reg0p01" #for "hybrid_lstm" model
 #VEHICLE_MODEL_NAME="1x32_relu_reg0p01" #for "hybrid_lstm" model
@@ -44,26 +46,26 @@ mkdir $SAVEFOLDERPATH
 
 for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
-python3 kartsim_server.py $VISUALIZATION $LOGGING $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME &
+python3 kartsim_server.py $PORT $VISUALIZATION $LOGGING $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME &
 SRVPID=$!
 
 if [ $VISUALIZATION = 1 ]
 then
-    python3 kartsim_visualizationclient.py &
+    python3 kartsim_visualizationclient.py $PORT &
     VIZPID=$!
 fi
 
 if [ $LOGGING = 1 ]
 then
 
-    python3 kartsim_loggerclient.py $SAVEFOLDERPATH $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME "${SIMLOGFILENAMES[@]}" &
+    python3 kartsim_loggerclient.py $PORT $SAVEFOLDERPATH $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME "${SIMLOGFILENAMES[@]}" &
     LOGPID=$!
 fi
 
 
 #python3 joystick/joystick_client.py &
 #python3 user/simtompc_comparison_client.py &
-python3 user/evaluationClient.py $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+python3 user/evaluationClient.py $PORT $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 #python3 user/dummyClient.py &
 SIMPID=$!
 

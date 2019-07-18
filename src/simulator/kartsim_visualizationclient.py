@@ -14,10 +14,12 @@ import numpy as np
 import pyqtgraph as pg
 
 import time
+import sys
 
 #initializing Client and connect to pyKartsimServer
 time.sleep(1)
-address = ('localhost', 6001)
+port = int(sys.argv[1])
+address = ('localhost', port+1)
 connected = False
 while not connected:
     try:
