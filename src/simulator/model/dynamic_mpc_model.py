@@ -70,9 +70,6 @@ class DynamicVehicleMPC:
         f1_vely = np.sum(np.multiply(self._rotmat(turning_angle)[1],
                                      np.array([velx, vely + self.dist_cog_front_axle * velrotz])), axis=0)
         f1y = self._simplefaccy(f1_vely, f1_velx)
-        # print('f1y',f1y)
-        # print('f1_velx',f1_velx)
-        # print('f1_vely',f1_vely)
 
         if isinstance(f1y, np.float64):
             F1x = np.sum(np.multiply(self._rotmat(-turning_angle)[0], np.array([np.zeros(1), f1y])),
@@ -97,20 +94,25 @@ class DynamicVehicleMPC:
         ACCROTZ = (TVTrq + F1y * self.dist_cog_front_axle - F2y * self.dist_cog_rear_axle) / self.params_inertia
         ACCX = F1x + F2x + velrotz * vely
         ACCY = F1y + (F2y1 + F2y2) - velrotz * velx
+        # print('f1y :{:5.2f}  velx :{:5.2f}  vely :{:5.2f}  velrotz :{:5.2f}'.format(f1y, velx, vely, velrotz))
+        # print('f1y :{:5.2f}  f1_velx :{:5.2f}  f1_vely :{:5.2f}  ACCX :{:5.2f}  ACCY :{:5.2f}  ACCROTZ :{:5.2f}'.format(f1y, f1_velx, f1_vely, ACCX[0], ACCY[0], ACCROTZ[0]))
         # print('F1y:{:5.2f} F2y1 + F2y2:{:5.2f} velrotz*velx:{:5.2f}'.format(F1y[0], F2y1 + F2y2, velrotz * velx))
         # print('F1x:{:5.2f} F2x:{:5.2f} velrotz*vely:{:5.2f}'.format(F1x[0], F2x, velrotz * vely))
 
         return [ACCX, ACCY, ACCROTZ]
 
     def transform_inputs(self, steering_angle, brake_position, motor_current_l, motor_current_r, velx):
+        brake_acceleration_factor = 1
+        if isinstance(velx, np.float64) or isinstance(velx, float):
+            if abs(velx) < 0.05:
+                brake_acceleration_factor = 0.1
+        else:
+            brake_acceleration_factor = np.add(np.multiply(np.array([abs(vx) < 0.05 for vx in velx]),-0.9),1)
 
         brake_acceleration = self.brake_function(brake_position)
 
-        if abs(velx) < 0.05:
-            brake_acceleration /= 10
-
-        acceleration_left_wheel = self.motor_function(velx, motor_current_l) - np.sign(velx) * brake_acceleration
-        acceleration_right_wheel = self.motor_function(velx, motor_current_r) - np.sign(velx) * brake_acceleration
+        acceleration_left_wheel = self.motor_function(velx, motor_current_l) - np.sign(velx) * brake_acceleration * brake_acceleration_factor
+        acceleration_right_wheel = self.motor_function(velx, motor_current_r) - np.sign(velx) * brake_acceleration * brake_acceleration_factor
 
         acceleration_rear_axle = (acceleration_left_wheel + acceleration_right_wheel) / 2.0
         torque_tv = (acceleration_right_wheel - acceleration_left_wheel) / 2.0
