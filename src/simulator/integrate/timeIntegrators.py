@@ -20,11 +20,14 @@ def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
 
 def odeIntegratorIVP(X0, U, simStep, simIncrement, system_equation=None):
     setInput(U)
-    t_eval = np.linspace(0, simStep, int(simStep / simIncrement) + 1)
+    t_eval = np.linspace(0, simStep, round(simStep / simIncrement,4) + 1)
     if system_equation.get_vehicle_model_name == "kinematic_vehicle_mpc":
         X0[5] = X0[6] = 0
     X1 = solve_ivp(system_equation.get_system_equation(), [0, simStep], X0, t_eval=t_eval, method='RK45', rtol=1e-5)
-    return np.transpose(X1.y)
+    if X1.status == 0:
+        return np.transpose(X1.y)
+    else:
+        return 'Integration step failed. Abort simulation.'
 
 
 def euler(X0, U, simIncrement, system_equation=None):
@@ -45,5 +48,3 @@ def euler(X0, U, simIncrement, system_equation=None):
         X = X + np.multiply(dX,simIncrement)
         X1 = np.vstack((X1,X))
     return X1
-    
-    
