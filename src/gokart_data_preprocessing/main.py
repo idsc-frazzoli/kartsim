@@ -46,6 +46,9 @@ def main():
     # possible tags to choose from are: ('multiple laps', 'high slip angles', 'reverse', 'trustworthy data', 'pose quality')
     required_tags_list = [
         'trustworthy data',
+        # 'high slip angles',
+        # 'multiple laps',
+        # 'pose quality',
     ]  # list of signals and tags which should be true for the logs used to build the dataset
     exclusion_tags_list = [
         'reverse',
@@ -56,10 +59,10 @@ def main():
     redo_data_tagging = False # only needs to be done once
 
     # Filter data and compute inferred data from raw logs
-    filter_data = True
+    filter_data = False
 
     # Sample data
-    sample_data = True
+    sample_data = False
     # Sampling time period used for sampling the raw data
     sampling_time_period = 0.1  # [s]
 
@@ -69,7 +72,7 @@ def main():
     mlp_test_portion = 0.2
 
     # Calculate sequential disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    lstm_data_set = True #needs filter_data and sample_data to be True
+    lstm_data_set = False #needs filter_data and sample_data to be True
     # Specify the number of past states considered by the LSTM
     sequence_length = 5
     # Choose portion of test data
@@ -107,7 +110,7 @@ def main():
         print('Sampling Data...')
         path_sampled_data = sample_from_logdata(sampling_time_period, path_preprocessed_dataset,
                                                 dataset_name, merge_data=False)
-
+    path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190717-211005_high_slip_angles/'
     if mlp_data_set:
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=mlp_test_portion,
