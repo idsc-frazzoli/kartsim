@@ -15,26 +15,26 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    network_settings = []
-    i = 1
-    for layers in range(1, 10):
-        for nodes_exp in range(2, 11):
-            nodes_per_layer = 2 ** nodes_exp
-            tot_params = layers * nodes_per_layer + (
-                    layers - 1) * nodes_per_layer ** 2 + 7 * nodes_per_layer + 3 * nodes_per_layer + 3
-            if tot_params < 35000:
-                i += 1
-                network_settings.append([layers, nodes_per_layer, 'relu', 0.0])
-
-    for layers in range(10, 101, 5):
-        for nodes_exp in range(2, 11):
-            nodes_per_layer = 2 ** nodes_exp
-            tot_params = layers * nodes_per_layer + (
-                    layers - 1) * nodes_per_layer ** 2 + 7 * nodes_per_layer + 3 * nodes_per_layer + 3
-            if tot_params < 35000:
-                i += 1
-                network_settings.append([layers, nodes_per_layer, 'relu', 0.0])
-    print(i, network_settings)
+    # network_settings = []
+    # i = 1
+    # for layers in range(1, 10):
+    #     for nodes_exp in range(2, 11):
+    #         nodes_per_layer = 2 ** nodes_exp
+    #         tot_params = layers * nodes_per_layer + (
+    #                 layers - 1) * nodes_per_layer ** 2 + 7 * nodes_per_layer + 3 * nodes_per_layer + 3
+    #         if tot_params < 35000:
+    #             i += 1
+    #             network_settings.append([layers, nodes_per_layer, 'relu', 0.0])
+    #
+    # for layers in range(10, 101, 5):
+    #     for nodes_exp in range(2, 11):
+    #         nodes_per_layer = 2 ** nodes_exp
+    #         tot_params = layers * nodes_per_layer + (
+    #                 layers - 1) * nodes_per_layer ** 2 + 7 * nodes_per_layer + 3 * nodes_per_layer + 3
+    #         if tot_params < 35000:
+    #             i += 1
+    #             network_settings.append([layers, nodes_per_layer, 'relu', 0.0])
+    # print(i, network_settings)
 
     network_settings = [
         [2, 32, 'relu', 0.1],
