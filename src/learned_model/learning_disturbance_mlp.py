@@ -5,6 +5,7 @@ Created 13.06.19 11:09
 
 @author: mvb
 """
+import config
 from data_visualization.data_io import getPKL
 from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
 from multiprocessing import Pool
@@ -12,7 +13,7 @@ import pandas as pd
 import os
 from data_visualization.data_io import getDirectories
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 
 def main():
     # network_settings = [
@@ -41,9 +42,11 @@ def main():
                 network_settings.append([layers,nodes,'relu',0.0])
     print(i,network_settings)
 
-    # network_settings = [
-    #     [40, 16, 'relu', 0.0],
-    # ]
+    network_settings = [
+        [5, 64, 'relu', 0.0],
+        [5, 64, 'relu', 0.01],
+        [5, 64, 'relu', 0.1],
+    ]
 
     chunks = [network_settings[i::8] for i in range(8)]
     pool = Pool(processes=8)
@@ -55,31 +58,51 @@ def main():
 
 def train_NN(network_settings):
     random_state = 45
+    #
+    # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel/20190625-200000_TF_filtered_vel/disturbance.pkl'
+    # dataframe = getPKL(path_data_set)
+    # dataframe.pop('time [s]')
+    #
+    # # Split data_set into training and test set
+    # train_dataset = dataframe.sample(frac=0.8, random_state=random_state)
+    # train_dataset = train_dataset.reset_index(drop=True)
+    #
+    # test_dataset = dataframe.drop(train_dataset.index)
+    # test_dataset = test_dataset.reset_index(drop=True)
+    #
+    # train_labels = train_dataset[['disturbance vehicle ax local [m*s^-2]',
+    #                               'disturbance vehicle ay local [m*s^-2]',
+    #                               'disturbance pose atheta [rad*s^-2]']]
+    # train_features = train_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                 'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
+    #
+    # test_labels = test_dataset[['disturbance vehicle ax local [m*s^-2]',
+    #                             'disturbance vehicle ay local [m*s^-2]',
+    #                             'disturbance pose atheta [rad*s^-2]']]
+    # test_features = test_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                               'steer position cal [n.a.]', 'brake position effective [m]',
+    #                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-    path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel/20190625-200000_TF_filtered_vel/disturbance.pkl'
-    dataframe = getPKL(path_data_set)
-    dataframe.pop('time [s]')
-
-    # Split data_set into training and test set
-    train_dataset = dataframe.sample(frac=0.8, random_state=random_state)
-    train_dataset = train_dataset.reset_index(drop=True)
-
-    test_dataset = dataframe.drop(train_dataset.index)
-    test_dataset = test_dataset.reset_index(drop=True)
-
-    train_labels = train_dataset[['disturbance vehicle ax local [m*s^-2]',
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_test')
+    train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                    'steer position cal [n.a.]', 'brake position effective [m]',
+                                    'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] # get rid of time values
+    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    train_labels = train_labels[['disturbance vehicle ax local [m*s^-2]',
                                   'disturbance vehicle ay local [m*s^-2]',
                                   'disturbance pose atheta [rad*s^-2]']]
-    train_features = train_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                    'steer position cal [n.a.]', 'brake position effective [m]',
-                                    'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
+    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                     'steer position cal [n.a.]', 'brake position effective [m]',
+                                     'motor torque cmd left [A_rms]',
+                                     'motor torque cmd right [A_rms]']]  # get rid of time values
+    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+    test_labels = test_labels[['disturbance vehicle ax local [m*s^-2]',
+                                 'disturbance vehicle ay local [m*s^-2]',
+                                 'disturbance pose atheta [rad*s^-2]']]
 
-    test_labels = test_dataset[['disturbance vehicle ax local [m*s^-2]',
-                                'disturbance vehicle ay local [m*s^-2]',
-                                'disturbance pose atheta [rad*s^-2]']]
-    test_features = test_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                  'steer position cal [n.a.]', 'brake position effective [m]',
-                                  'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
     i = 1
     for l, npl, af, reg in network_settings:
@@ -134,6 +157,9 @@ def get_loss_pictures():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # get_loss_pictures()
-    train_NN(0)
+    # network_settings = [
+    #     [5, 64, 'relu', 0.0],
+    # ]
+    # train_NN(network_settings)
