@@ -103,7 +103,11 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
                                                 args=(X0, U, server_return_interval, sim_time_increment,
                                                       system_equation, result_queue))
                 numerical_integration.start()
-                numerical_integration.join(server_return_interval* 5.0)
+                if X0[0] < 1.0:
+                    patience = server_return_interval * 10
+                else:
+                    patience = server_return_interval * 5
+                numerical_integration.join(patience)
                 if numerical_integration.is_alive():
                     if visualization:
                         vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
