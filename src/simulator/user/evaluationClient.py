@@ -20,31 +20,30 @@ from simulator.textcommunication import encode_request_msg_to_txt, decode_answer
 
 def main():
     # ___user inputs
-    pathsavedata = sys.argv[1]
-    pathpreprodata = sys.argv[2]
-    preprofiles = sys.argv[3:]
-    # print(preprofiles)
+    port = int(sys.argv[1])
+    pathsavedata = sys.argv[2]
+    pathpreprodata = sys.argv[3]
+    preprofiles = sys.argv[4:]
 
-    # preprofiles = preprofiles.split(',')[:-1]
-    # pathpreprodata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/_33333333333333' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    # preprofiles = ['20190521T101604_03_sampledlogdata.pkl']
-
+    # Choose whether to use simulation over intervals of the duration given by validationhorizon
     validation = False
     validationhorizon = 1  # [s] time inteval after which initial conditions are reset to values from log data
 
-    real_time = False
-    server_return_interval = 1  # [s] simulation time after which result is returned from server
-    real_time_factor = 1
-    _wait_for_real_time = 0
+    # Simulation time after which result is returned from server
+    server_return_interval = 2  # [s]
+    # DO NOT CHANGE! Parameter used for real time simulation (default:0)
+    _wait_for_real_time = 0  # [s]
 
+    # Choose whether to simulate in real-time (mainly for visualization purposes)
+    real_time = False
+    real_time_factor = 2
     if real_time:
         server_return_interval = 0.1 * real_time_factor  # [s] simulation time after which result is returned from server
         _wait_for_real_time = server_return_interval * 0.9 * (1.0 / real_time_factor)
 
-    # preprodata = getpreprodata(pathpreprodata)
-
+    # Connect to simulation server (kartsim_server.py)
     connected = False
-    address = ('localhost', 6000)
+    address = ('localhost', port)
     while not connected:
         try:
             conn = Client(address, authkey=b'kartSim2019')
@@ -62,8 +61,9 @@ def main():
             the_file.write('simulation mode:                    closed loop' + '\n')
         the_file.write('source folder:                      ' + pathpreprodata + '\n')
         the_file.write('simulation time step:               ' + str(server_return_interval) + 's\n')
+    tgo = time.time()
 
-    for fileName in preprofiles:
+    for file_number, fileName in enumerate(preprofiles):
         filePath = pathpreprodata + '/' + fileName
         try:
             with open(filePath, 'rb') as f:
@@ -74,82 +74,24 @@ def main():
             raise
 
         # ___simulation parameters
-        data_time_step = np.round(preprodata['time [s]'].iloc[1] - preprodata['time [s]'].iloc[0],
-                                  3)  # [s] Log data sampling time step
-        sim_time_increment = data_time_step  # [s] time increment used in integration scheme inside simulation server (time step for logged simulation data)
-        simTime = preprodata['time [s]'].iloc[-1]  # /7.0*4.0  # [s] Total simulation time
-        # initial state [simulationTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]
-        # X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0], preprodata['pose theta [rad]'][0],
-        #       preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0], preprodata['pose vtheta [rad*s^-1]'][0]]
-
-        X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0],
-              preprodata['pose theta [rad]'][0],
-              preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0],
-              preprodata['pose vtheta [rad*s^-1]'][0]]
+        # [s] Log data sampling period
+        data_time_step = np.round(preprodata['time [s]'].iloc[1] - preprodata['time [s]'].iloc[0], 3)  # [s]
+        # [s] time increment used in integration method inside simulation server (time step for logged simulation data)
+        sim_time_increment = data_time_step
+        # [s] Total simulation time
+        sim_time = preprodata['time [s]'].iloc[-1]
 
         # ______^^^______
 
-        runSimulation = True
-        ttot = time.time()
-        # while runSimulation:
-        print('Simulation with file ', fileName)
-        firstStep = int(round(server_return_interval / data_time_step)) + 1
+        # print(f'Total time: {int(time.time() - tgo)}s. Simulation with file {file_number}/{len(preprofiles)} {fileName} started...')
+        t_start = time.time()
+        outcome = execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval,
+                           data_time_step, validation, validationhorizon, preprodata, fileName)
+        if 'finished' in outcome:
+            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} successful after {int(time.time() - t_start)}s')
+        elif 'aborted' in outcome:
+            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} aborted after {int(time.time() - t_start)}s')
 
-        U = np.array((preprodata['time [s]'][0:firstStep].values,
-                      preprodata['steer position cal [n.a.]'][0:firstStep].values,
-                      preprodata['brake position effective [m]'][0:firstStep].values,
-                      preprodata['motor torque cmd left [A_rms]'][0:firstStep].values,
-                      preprodata['motor torque cmd right [A_rms]'][0:firstStep].values))
-
-        # for i in range(0,int(simTime/server_return_interval)):
-        ticker = threading.Event()
-        i = 0
-        i_max = simTime / server_return_interval
-        tgo = time.time()
-        while not ticker.wait(_wait_for_real_time):
-            print(X0[0])
-            if i >= int(i_max) + 1:
-                print('fin at', i)
-                conn.send('simulation finished')
-                break
-            elif i > 0:
-                simRange = [int(round(i * server_return_interval / data_time_step)),
-                            int(round((i + 1) * server_return_interval / data_time_step)) + 1]
-                U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
-                               preprodata['steer position cal [n.a.]'][simRange[0]:simRange[1]].values,
-                               preprodata['brake position effective [m]'][simRange[0]:simRange[1]].values,
-                               preprodata['motor torque cmd left [A_rms]'][simRange[0]:simRange[1]].values,
-                               preprodata['motor torque cmd right [A_rms]'][simRange[0]:simRange[1]].values))
-
-                if validation and i * server_return_interval % validationhorizon < server_return_interval:
-                    currIndex = int(round(i * server_return_interval / data_time_step))
-                    X0[1] = preprodata['pose x [m]'][currIndex]
-                    X0[2] = preprodata['pose y [m]'][currIndex]
-                    X0[3] = preprodata['pose theta [rad]'][currIndex]
-                    X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
-                    X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
-                    X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
-
-            if i >= int(i_max):
-                server_return_interval = round(U[0, -1] - U[0, 0], 4)
-
-            txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
-
-            # conn.send([X0, U, server_return_interval, sim_time_increment])
-            conn.send(txt_msg)
-
-            answer_msg = conn.recv()
-            X1 = decode_answer_msg_from_txt(answer_msg)
-
-            X0 = list(X1[-1, :])
-            if i % 1 == 0.0:
-                print(int(round(i / (simTime / server_return_interval) * 100)), '% done, time: ', time.time() - tgo,
-                      end='\r')
-            i += 1
-
-        print('Success! Time overall: ', time.time() - tgo)
-
-    # print('connection closed')
     conn.close()
     time.sleep(2)
     # print('Creating reference signal for evaluation...')
@@ -157,6 +99,70 @@ def main():
     # print('Evaluating results...')
     # evalCalc.main()
     # print('Evaluation complete!')
+
+
+def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval, data_time_step,
+                       validation, reset_interval, preprodata, fileName):
+    firstStep = int(round(server_return_interval / data_time_step)) + 1
+
+    U = np.array((preprodata['time [s]'][0:firstStep].values,
+                  preprodata['steer position cal [n.a.]'][0:firstStep].values,
+                  preprodata['brake position effective [m]'][0:firstStep].values,
+                  preprodata['motor torque cmd left [A_rms]'][0:firstStep].values,
+                  preprodata['motor torque cmd right [A_rms]'][0:firstStep].values))
+    # initial state [simulationTime, x, y, theta, vx, vy, vrot]
+    X0 = [preprodata['time [s]'][0], preprodata['pose x [m]'][0], preprodata['pose y [m]'][0],
+          preprodata['pose theta [rad]'][0],
+          preprodata['vehicle vx [m*s^-1]'][0], preprodata['vehicle vy [m*s^-1]'][0],
+          preprodata['pose vtheta [rad*s^-1]'][0]]
+
+    ticker = threading.Event()
+    i = 0
+    i_max = sim_time / server_return_interval
+    t_sim = time.time()
+    while not ticker.wait(_wait_for_real_time):
+        if i >= i_max:
+            conn.send('simulation finished')
+            return 'simulation finished'
+        elif i > 0:
+            simRange = [int(round(i * server_return_interval / data_time_step)),
+                        int(round((i + 1) * server_return_interval / data_time_step)) + 1]
+            U = np.vstack((preprodata['time [s]'][simRange[0]:simRange[1]].values,
+                           preprodata['steer position cal [n.a.]'][simRange[0]:simRange[1]].values,
+                           preprodata['brake position effective [m]'][simRange[0]:simRange[1]].values,
+                           preprodata['motor torque cmd left [A_rms]'][simRange[0]:simRange[1]].values,
+                           preprodata['motor torque cmd right [A_rms]'][simRange[0]:simRange[1]].values))
+
+            if validation and i * server_return_interval % reset_interval < server_return_interval:
+                currIndex = int(round(i * server_return_interval / data_time_step))
+                X0[1] = preprodata['pose x [m]'][currIndex]
+                X0[2] = preprodata['pose y [m]'][currIndex]
+                X0[3] = preprodata['pose theta [rad]'][currIndex]
+                X0[4] = preprodata['vehicle vx [m*s^-1]'][currIndex]
+                X0[5] = preprodata['vehicle vy [m*s^-1]'][currIndex]
+                X0[6] = preprodata['pose vtheta [rad*s^-1]'][currIndex]
+
+        if i >= i_max-1:
+            server_return_interval = round(U[0, -1] - U[0, 0], 4)
+        # print('send',X0[-1])
+
+        txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
+        conn.send(txt_msg)
+
+        answer_msg = conn.recv()
+
+        if 'Abort' in answer_msg:
+            # print(answer_msg, end='\r')
+            return 'simulation aborted'
+
+        X1 = decode_answer_msg_from_txt(answer_msg)
+
+        X0 = list(X1[-1, :])
+        # print('receive',X0[-1])
+        if i % 1 == 0.0:
+            print(int(round(i / (sim_time / server_return_interval) * 100)), '% done, time: ', round(time.time() - t_sim, 1),
+                  end='\r')
+        i += 1
 
 
 def getpreprodata(pathpreprodata):
