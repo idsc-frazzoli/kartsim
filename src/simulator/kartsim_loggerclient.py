@@ -13,10 +13,11 @@ import sys
 from data_visualization.mathfunction import derivative_X_dX
 
 def main():
-    savePath = sys.argv[1]
-    model_type = sys.argv[2]
-    model_name = sys.argv[3]
-    fileNames = sys.argv[4:]
+    port = int(sys.argv[1])
+    savePath = sys.argv[2]
+    model_type = sys.argv[3]
+    model_name = sys.argv[4]
+    fileNames = sys.argv[5:]
 
     if model_type == "mpc_dynamic":
         model_log_name = model_type
@@ -24,11 +25,11 @@ def main():
         model_log_name = model_type + '_' + model_name
 
     fileNameIndex = 0
-    print('Simulation data will be saved to ', savePath)
+    # print('Simulation data will be saved to ', savePath)
     connected = False
     while not connected:
         try:
-            logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
+            logAddress = ('localhost', port+2)  # family is deduced to be 'AF_INET'
             logConn = Client(logAddress, authkey=b'kartSim2019')
             connected = True
         except ConnectionRefusedError:
@@ -39,7 +40,8 @@ def main():
         try:
             savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_{}_closedloop.csv'.format(model_log_name)
         except IndexError:
-            print('No more files to read. Closing logger.')
+            pass
+            # print('No more files to read. Closing logger.')
         logClient(savePathName, logConn)
         fileNameIndex += 1
 
@@ -61,28 +63,35 @@ def logClient(savePathName, logConn):
             XU = msg
 
 
-        if XU[0,0] != 'finished':
+        if XU[0,0] not in ['finished', 'abort']:
             if Xall.shape[1] < 1:
                 Xall = XU
             else:
                 Xall = Xall[:-1]
                 Xall = np.concatenate((Xall,XU))
-        else:
-            dataFrame = pd.DataFrame(data=Xall)  # 1st row as the column names
-            # dataFrame.to_csv(savePathName, index = False,
-            #                  header = ['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-            #                            'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-            #                            'pose atheta [rad*s^-2]', 'MH BETA [rad]', 'MH AB [m*s^-2]', 'MH TV [rad*s^-2]',])
-            dataFrame.to_csv(savePathName, index=False,
-                             header=['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
-                                     'vehicle vy [m*s^-1]',
-                                     'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
-                                     'pose atheta [rad*s^-2]', 'steer position cal [n.a.]',
-                                     'brake position effective [m]', 'motor torque cmd left [A_rms]',
-                                     'motor torque cmd right [A_rms]'])
+        elif XU[0,0] == 'finished':
+            save_data(Xall, savePathName)
+            runLogger = False
+        elif XU[0, 0] == 'abort':
+            savePathName = savePathName[:-4] + '_unstable.csv'
+            save_data(Xall, savePathName)
 
             runLogger = False
 
+def save_data(X, save_path):
+    if X.shape[0] != 0 and X.shape[1] != 0:
+        dataFrame = pd.DataFrame(data=X)  # 1st row as the column names
+        dataFrame.to_csv(save_path, index=False,
+                         header=['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]',
+                                 'vehicle vy [m*s^-1]',
+                                 'pose vtheta [rad*s^-1]', 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+                                 'pose atheta [rad*s^-2]', 'steer position cal [n.a.]',
+                                 'brake position effective [m]', 'motor torque cmd left [A_rms]',
+                                 'motor torque cmd right [A_rms]'])
+    else:
+        dataFrame = pd.DataFrame(data=X)  # 1st row as the column names
+        dataFrame.to_csv(save_path)
+    # print('Simulation data saved to', save_path)
 
 def add_acceleration(X):
     _,ax = derivative_X_dX("", X[:, 0], X[:, 4])
