@@ -10,15 +10,18 @@ import pandas as pd
 import os
 import tensorflow as tf
 
+import config
 from gokart_data_preprocessing.shuffle import shuffle_dataframe
 from data_visualization.data_io import create_folder_with_time, getDirectories
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
 import time
 
 
 class MultiLayerPerceptron():
     def __init__(self, epochs=20, learning_rate=1e-4, batch_size=100, shuffle=True, random_seed=None, model_name='test',
                  predict_only=False):
-        self.root_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models'
+        self.root_folder = os.path.join(config.directories['root'], 'Models/trained_mlp_models')
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -85,8 +88,6 @@ class MultiLayerPerceptron():
         else:
             best_path = os.path.join(load_path, 'best')
             checkpoint = os.path.join(best_path, os.listdir(best_path)[0])
-            print(checkpoint)
-
         try:
             self.model.load_weights(checkpoint)
             # print('Checkpoint loaded successfully.')
