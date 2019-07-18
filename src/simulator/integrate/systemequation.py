@@ -49,9 +49,10 @@ class SystemEquation:
         V = [X[4], X[5], X[6]]
         U = getInput(X[0])
         V_dt = self.vehicle_model.get_accelerations(V, U)
-
-        # if t > 0.999:
-        #     print('_______')
+        # if t < 0.001:
+        #     print('vtheta',X[6])
+        # if t > 4:
+        #     print(t)
         # if t < 0.5:
         #     # print('t:{:5.4f}'.format(t))
         #     print('t:{:5.4f}, V_dt:[{:5.2f} {:5.2f} {:5.2f}], V:[{:5.4f} {:5.4f} {:5.4f}], U:[{:5.4f} {:5.4f} {:5.2f} {:5.2f}]'.format(t, V_dt[0][0],
@@ -75,7 +76,8 @@ class SystemEquation:
     def solveivp_hybrid_lstm_dx_dt(self, t, X):
         V = [X[4], X[5], X[6]]
         U = getInput(X[0])
-
+        # print(X[0], V, U)
+        # print(type(X[0]), type(V), type(U))
         V_dt = self.vehicle_model.get_accelerations(X[0], V, U)
 
         c, s = np.cos(float(X[3])), np.sin(float(X[3]))
