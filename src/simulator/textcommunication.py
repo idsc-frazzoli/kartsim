@@ -105,8 +105,12 @@ def encode_answer_msg_to_txt(msg):
             for item in msg:
                 txt_msg += " ".join(str(i) for i in item)
                 txt_msg += ","
-            txt_msg = txt_msg[:-2]
+            # print('before', txt_msg)
+            txt_msg = txt_msg[:-1]
+            # print('after', txt_msg)
         except:
             print("ValueError")
             raise
+    else:
+        txt_msg = str(msg)
     return txt_msg
