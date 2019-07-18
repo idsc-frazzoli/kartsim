@@ -13,7 +13,9 @@ import tensorflow as tf
 from gokart_data_preprocessing.shuffle import shuffle_list
 from data_visualization.data_io import create_folder_with_time, getDirectories
 import time
-
+import sys
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
 
 class LongShortTermMemoryNetwork():
     def __init__(self, epochs=20, learning_rate=1e-3, decay=1e-6, batch_size=100, input_sequence_length=5, time_step = 0.1, shuffle=True, random_seed=None, model_name='test',
@@ -33,6 +35,8 @@ class LongShortTermMemoryNetwork():
         self.new_model = False
         self.means = np.array([])
         self.stds = np.array([])
+        self.graph = None
+        self.sess = tf.Session()
 
         if predict_only:
             tf.keras.backend.set_learning_phase(0)
@@ -53,12 +57,14 @@ class LongShortTermMemoryNetwork():
             self.new_model = True
 
     def load_model(self):
+        tf.keras.backend.set_session(self.sess)
         try:
             load_path = os.path.join(self.model_dir, 'my_model.h5')
-            print(load_path)
             self.model = tf.keras.models.load_model(load_path, custom_objects={
                 'coeff_of_determination': self.coeff_of_determination})
-            # print('Model successfully loaded from', load_path)
+            self.model._make_predict_function()
+            self.graph = tf.get_default_graph()
+            print('Model successfully loaded from', load_path)
         except:
             print('Model could not be loaded from', self.model_dir)
             raise
@@ -78,7 +84,6 @@ class LongShortTermMemoryNetwork():
 
     def load_checkpoint(self, checkpoint_name='best'):
         load_path = os.path.join(self.model_dir, 'model_checkpoints')
-
         if checkpoint_name == 'latest':
             checkpoint = tf.train.latest_checkpoint(load_path)
         else:
@@ -88,7 +93,7 @@ class LongShortTermMemoryNetwork():
 
         try:
             self.model.load_weights(checkpoint)
-            # print('Checkpoint loaded successfully.')
+            print('Checkpoint loaded successfully.')
         except:
             print('Could not load checkpoint.')
             raise
@@ -304,7 +309,9 @@ class LongShortTermMemoryNetwork():
 
     def predict(self, input):
         input_normalized = self.normalize_data(input)
-        result = self.model.predict(x=input_normalized, verbose=0)
+        tf.keras.backend.set_session(self.sess)
+        with self.graph.as_default():
+            result = self.model.predict(x=input_normalized, verbose=0)
         return result
 
     def save_model_performance(self, features, labels):
