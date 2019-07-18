@@ -21,7 +21,11 @@ from simulator.model.data_driven_model import DataDrivenVehicleModel
 
 def calculate_disturbance(load_path_data=None, data_set_name='test', test_portion=0.2, random_seed=42,
                           sequential=False, sequence_length=5):
-    save_path_sequential_data = os.path.join(directories['root'], 'Data', 'Datasets')
+    if sequential:
+        save_path_data_set = os.path.join(directories['root'], 'Data', 'RNNDatasets')
+    else:
+        save_path_data_set = os.path.join(directories['root'], 'Data', 'MLPDatasets')
+
     default_sim = None
     if load_path_data == None:
         path_preprocessed_data = os.path.join(directories['root'], 'Data', 'Sampled')
@@ -63,7 +67,7 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
     train_features, train_labels = get_disturbance(train_files, vehicle_model, sequential, sequence_length)
     test_features, test_labels = get_disturbance(test_files, vehicle_model, sequential, sequence_length)
 
-    save_folder_path = create_folder_with_time(save_path_sequential_data, tag=data_set_name)
+    save_folder_path = create_folder_with_time(save_path_data_set, tag=data_set_name)
 
     os.mkdir(os.path.join(save_folder_path, 'train_log_files'))
     os.mkdir(os.path.join(save_folder_path, 'test_log_files'))
@@ -97,16 +101,14 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         # print('Loading file', file_path_data)
         dataframe = getPKL(file_path_data)
         dt = dataframe.values[1, 0] - dataframe.values[0, 0]
-        data_set = dataframe.values[:, 1:]
-        velocities = data_set[:, :3]
-        inputs = data_set[:, 3:-3]
-        target_output = data_set[:, -3:]
-
+        # data_set = dataframe.values[:, 4:]
+        velocities = dataframe[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]']].values
+        inputs = dataframe[['steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']].values
+        target_output = dataframe[['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
         # Dynamic MPC model
         nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
         nominal_model_output = np.vstack(
             (nominal_model_output[0], nominal_model_output[1], nominal_model_output[2])).transpose()
-
         # # Dynamic MPC model modified
         # nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
 
@@ -114,7 +116,6 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         # dBETA = np.append((inputs[1:,0]-inputs[:-1,0])/dt, (inputs[-1,0]-inputs[-2,0])/dt)
         # inputs = np.concatenate([inputs, dBETA[:, None]], axis=1)
         # nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
-
         output_disturbance = target_output - nominal_model_output
 
         # dataframe = dataframe.drop('vehicle ax local [m*s^-2]', axis=1)
