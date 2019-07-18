@@ -86,7 +86,7 @@ def main():
         # print(f'Total time: {int(time.time() - tgo)}s. Simulation with file {file_number}/{len(preprofiles)} {fileName} started...')
         t_start = time.time()
         outcome = execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval,
-                           data_time_step, validation, validationhorizon, preprodata, fileName)
+                           data_time_step, validation, validationhorizon, preprodata)
         if 'finished' in outcome:
             print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} successful after {int(time.time() - t_start)}s')
         elif 'aborted' in outcome:
@@ -102,7 +102,7 @@ def main():
 
 
 def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval, data_time_step,
-                       validation, reset_interval, preprodata, fileName):
+                       validation, reset_interval, preprodata):
     firstStep = int(round(server_return_interval / data_time_step)) + 1
 
     U = np.array((preprodata['time [s]'][0:firstStep].values,
