@@ -13,7 +13,7 @@ echo $PREPROFOLDERPATH
 SAVEPATH="/home/mvb/0_ETH/01_MasterThesis/SimData"
 FOLDERNAME=$(date +"%Y%m%d-%H%M%S")
 FOLDERPATH=$SAVEPATH/$FOLDERNAME
-SIMTAG="_test_closedloop"
+SIMTAG="_test"
 SAVEFOLDERPATH=$SAVEPATH/$FOLDERNAME$SIMTAG
 SIMLOGFILENAMES=()
 PORT="6000"
@@ -25,13 +25,13 @@ for i in $PREPROFOLDERPATH/*.pkl; do if ((ITER >= $FIRSTFILE && ITER <= $LASTFIL
 #SIMLOGFILENAMES=$(cd $PREPROFOLDERPATH; ls -l | egrep -v '^d')
 
 VISUALIZATION=1
-LOGGING=1
+LOGGING=0
 
 # Specify vehicle model to simulate with
 # possible options: "mpc_dynamic", "hybrid_mlp", "hybrid_lstm"
-#VEHICLE_MODEL_TYPE="mpc_dynamic"
+VEHICLE_MODEL_TYPE="mpc_dynamic"
 #VEHICLE_MODEL_TYPE="hybrid_mlp"
-VEHICLE_MODEL_TYPE="hybrid_lstm"
+#VEHICLE_MODEL_TYPE="hybrid_lstm"
 
 # Specify ML model name to be used for model
 # only necessary for vehicle model types "hybrid_mlp" and "hybrid_lstm"
@@ -41,10 +41,6 @@ VEHICLE_MODEL_TYPE="hybrid_lstm"
 #VEHICLE_MODEL_NAME="2x32_relu_reg0p01" #for "hybrid_lstm" model
 #VEHICLE_MODEL_NAME="1x32_relu_reg0p01" #for "hybrid_lstm" model
 VEHICLE_MODEL_NAME="2x32_tanh_reg0p1" #for "hybrid_lstm" model
-
-mkdir $SAVEFOLDERPATH
-
-for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
 python3 kartsim_server.py $PORT $VISUALIZATION $LOGGING $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME &
 SRVPID=$!
@@ -57,6 +53,8 @@ fi
 
 if [ $LOGGING = 1 ]
 then
+    mkdir $SAVEFOLDERPATH
+    for i in "${SIMLOGFILENAMES[@]}"; do cp $PREPROFOLDERPATH/"${i}" $SAVEFOLDERPATH; done
 
     python3 kartsim_loggerclient.py $PORT $SAVEFOLDERPATH $VEHICLE_MODEL_TYPE $VEHICLE_MODEL_NAME "${SIMLOGFILENAMES[@]}" &
     LOGPID=$!
@@ -65,7 +63,7 @@ fi
 
 #python3 joystick/joystick_client.py &
 #python3 user/simtompc_comparison_client.py &
-python3 user/evaluationClient.py $PORT $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
+python3 user/real_time_sim_client.py $PORT $LOGGING $SAVEFOLDERPATH $PREPROFOLDERPATH "${SIMLOGFILENAMES[@]}" &
 #python3 user/dummyClient.py &
 SIMPID=$!
 
