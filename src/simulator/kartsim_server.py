@@ -10,7 +10,8 @@ Created on Fri Mar 29 16:19:49 2019
 import integrate.timeIntegrators as integrators
 from textcommunication import decode_request_msg_from_txt, encode_answer_msg_to_txt
 from multiprocessing.connection import Listener
-from threading import Thread
+from multiprocessing import Queue, Process
+# from threading import Thread
 import numpy as np
 import sys
 import time
@@ -18,26 +19,31 @@ from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.integrate.systemequation import SystemEquation
-
+from thread2 import Thread
+import tensorflow as tf
+sess = tf.Session()
 
 def main():
-    global runThread, noThread, cliConn, logConn, vizConn
+    # global runThread, noThread, cliConn, logConn, vizConn
     # simulation default parameters
     try:
-        visualization = int(sys.argv[1])
-        logging = int(sys.argv[2])
-        vehicle_model_type = sys.argv[3]
-        vehicle_model_name = sys.argv[4]
+        port = int(sys.argv[1])
+        visualization = int(sys.argv[2])
+        logging = int(sys.argv[3])
+        vehicle_model_type = sys.argv[4]
+        vehicle_model_name = sys.argv[5]
     except:
         visualization = 0
         logging = 0
+        vehicle_model_type = 'mpc_dynamic'
+        vehicle_model_name = ''
 
-    clientAddress = ('localhost', 6000)  # family is deduced to be 'AF_INET'
+    clientAddress = ('localhost', port)  # family is deduced to be 'AF_INET'
     clientListener = Listener(clientAddress, authkey=b'kartSim2019')
     if visualization:
-        visualizationAddress = ('localhost', 6001)  # family is deduced to be 'AF_INET'
+        visualizationAddress = ('localhost', port+1)  # family is deduced to be 'AF_INET'
         visualizationListener = Listener(visualizationAddress, authkey=b'kartSim2019')
-    logAddress = ('localhost', 6002)  # family is deduced to be 'AF_INET'
+    logAddress = ('localhost', port+2)  # family is deduced to be 'AF_INET'
     logListener = Listener(logAddress, authkey=b'kartSim2019')
 
     noThread = True
@@ -45,44 +51,6 @@ def main():
     logConn = None
     cliConn = None
     runServer = True
-
-    while runServer:
-        if noThread:
-            noThread = False
-
-            if visualization and vizConn is None:
-                print("waiting for visualization connection at", visualizationAddress)
-                vizConn = visualizationListener.accept()
-                print('visualization connection accepted from', visualizationListener.last_accepted)
-            else:
-                pass
-
-            if logging and logConn is None:
-                print("waiting for logger connection at", logAddress)
-                logConn = logListener.accept()
-                print('logger connection accepted from', logListener.last_accepted)
-            else:
-                pass
-            if cliConn is None:
-                print("waiting for client connection at", clientAddress)
-                cliConn = clientListener.accept()
-                print('client connection accepted from', clientListener.last_accepted)
-                print('Starting simulation:\n')
-
-            t = Thread(target=handle_client,
-                       args=(cliConn, vizConn, logConn, visualization, logging, vehicle_model_type, vehicle_model_name))
-            runThread = True
-            t.start()
-        else:
-            time.sleep(0.1)
-            # if active_count() < 2:
-            #     noThread = True
-            pass
-
-
-def handle_client(c, v, l, visualization, logging, vehicle_model_type, vehicle_model_name):
-    global noThread, cliConn, logConn, vizConn
-    initSignal = 0
 
     # initialize vehicle model
     # vehicle_model = AccelerationReferenceModel()
@@ -97,57 +65,111 @@ def handle_client(c, v, l, visualization, logging, vehicle_model_type, vehicle_m
 
     system_equation = SystemEquation(vehicle_model)
 
+    while runServer:
+        if visualization and vizConn is None:
+            # print("waiting for visualization connection at", visualizationAddress)
+            vizConn = visualizationListener.accept()
+            print('visualization connection accepted from', visualizationListener.last_accepted)
+        else:
+            pass
+
+        if logging and logConn is None:
+            # print("waiting for logger connection at", logAddress)
+            logConn = logListener.accept()
+            print('logger connection accepted from', logListener.last_accepted)
+        else:
+            pass
+        if cliConn is None:
+            # print("waiting for client connection at", clientAddress)
+            cliConn = clientListener.accept()
+            print('client connection accepted from', clientListener.last_accepted)
+            print('Starting simulation:\n')
+
+        noThread, cliConn, vizConn, logConn = interprocess_communication(noThread, cliConn, vizConn, logConn,
+                                                                         visualization, logging, system_equation, )
+
+def interprocess_communication(noThread, cliConn, vizConn, logConn, visualization, logging, system_equation, ):
+    initSignal = 0
+    runThread = True
+    result_queue = Queue()
     while runThread:
         try:
-            request_msg = c.recv()
+            request_msg = cliConn.recv()
             msg_list = request_msg.split("\n")
             if len(msg_list) == 4:
                 X0, U, server_return_interval, sim_time_increment = decode_request_msg_from_txt(request_msg)
-                # X = integrators.odeIntegrator(X0, U, server_return_interval, sim_time_increment) #format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment,
-                                                 system_equation)  # format: X0 = [simTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv]; X0 = [0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0]
-                # X = integrators.euler(X0, U, server_return_interval, sim_time_increment)
+
+                numerical_integration = Thread(target=execute_integration,
+                                                args=(X0, U, server_return_interval, sim_time_increment,
+                                                      system_equation, result_queue))
+                numerical_integration.start()
+                numerical_integration.join(server_return_interval* 5.0)
+                if numerical_integration.is_alive():
+                    if visualization:
+                        vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                    if logging:
+                        logConn.send(np.array([['abort', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                    answer_msg = encode_answer_msg_to_txt(
+                        'Numerical integration unstable and timed out. Abort simulation.')
+                    cliConn.send(answer_msg)
+                    numerical_integration.terminate()
+                    return noThread, cliConn, vizConn, logConn
+                X = result_queue.get()
+                # print('server send', X[-1])
                 answer_msg = encode_answer_msg_to_txt(X)
-                # time.sleep(0.01)
-                c.send(answer_msg)
+                # print('server send', answer_msg)
+                cliConn.send(answer_msg)
+                if 'failed' in answer_msg:
+                    if visualization:
+                        vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                    if logging:
+                        logConn.send(np.array([['abort', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                    return noThread, cliConn, vizConn, logConn
 
             elif request_msg == 'simulation finished':
                 noThread = True
                 if visualization:
-                    v.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                    vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
                 if logging:
-                    l.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                break
+                    logConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+                return noThread, cliConn, vizConn, logConn
             else:
-                print(
-                    'FormatError: msg sent to server must be of form:\n   msg = [[simStartTime, x, y, theta, vx, vy, vrot, beta, accRearAxle, tv],[simTimeStep]]\n e.g. msg = [[0, 0, 0, 0, 1, 0, 0, 0.5, 0, 0],[0.1]]')
+                print('FormatError: wrong message format.')
+                raise ValueError
         except EOFError:
-            print('SimClientError: BrokenPipe', c.fileno())
+            # print('SimClientError: BrokenPipe', cliConn.fileno())
             cliConn = None
             noThread = True
-            break
+            return noThread, cliConn, vizConn, logConn
 
         if logging:
             try:
-                l.send([X, U[1:]])
+                logConn.send([X, U[1:]])
             except:
-                print('LoggerError: BrokenPipe', l.fileno())
+                print('LoggerError: BrokenPipe', logConn.fileno())
                 logConn = None
-                break
-        #                print('sendTime l: ', time.time() - tt)
+                return noThread, cliConn, vizConn, logConn
+        #                print('sendTime logConn: ', time.time() - tt)
         if visualization:
             try:
                 if initSignal < 1:
-                    v.send(np.array([['init', 0, 0, 0, 1, 0, 0, 0.5, 0, 0]]))
+                    vizConn.send(np.array([['init', 0, 0, 0, 1, 0, 0, 0.5, 0, 0]]))
                     initSignal = 1
-                if v.poll():
-                    v.recv()
-                    v.send([X, U[1:]])
+                if vizConn.poll():
+                    vizConn.recv()
+                    vizConn.send([X, U[1:]])
             except:
-                print('VisualizationError: BrokenPipe', v.fileno())
+                print('VisualizationError: BrokenPipe', vizConn.fileno())
                 vizConn = None
-                break
+                return noThread, cliConn, vizConn, logConn
+
+
+def execute_integration(X0, U, server_return_interval, sim_time_increment, system_equation, result_queue):
+    X = integrators.odeIntegratorIVP(X0, U, server_return_interval, sim_time_increment, system_equation)
+    # X = integrators.euler(X0, U, server_return_interval, sim_time_increment)
+    result_queue.put(X)
 
 
 if __name__ == '__main__':
+    # tf.keras.backend.set_session(sess)
     main()
