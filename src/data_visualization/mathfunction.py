@@ -41,6 +41,7 @@ def interpolation_w_mean(x, y, xBegin, xStop, timeStep):
             xStop = np.around(xStop - xStop % timeStep, 2)
         else:
             pass
+
         xInterp = np.linspace(xBegin, xStop, int(np.around((xStop - xBegin) / timeStep)) + 1)
 
         x_eval = np.linspace(xBegin, xStop, int(np.around((xStop - xBegin) / timeStep)) * 10 + 1)

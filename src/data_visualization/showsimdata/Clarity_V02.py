@@ -36,15 +36,15 @@ class Clarity(QtGui.QMainWindow):
     def __init__(self):
         super(Clarity, self).__init__()
 #        self.pathRootData = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190411-154017'
-        self.pathRootSimData = os.path.join(directories['root'][:-14], 'SimData')
+#         self.pathRootSimData = os.path.join(directories['root'][:-14], 'SimData')
         # self.pathRootSimData = os.path.join(directories['root'], 'Data', 'MLPDatasets')
-#         self.pathRootSimData = os.path.join(directories['root'], 'Data', 'Sampled')
-        # self.pathRootSimData = os.path.join(directories['root'], 'Evaluation')
+        #         self.pathRootSimData = os.path.join(directories['root'], 'Data', 'Sampled')
+        self.pathRootSimData = os.path.join(directories['root'], 'Evaluation')
         simFolders = dio.getDirectories(self.pathRootSimData)
         simFolders.sort()
         defaultSim = simFolders[-1]
         # defaultSim = '_33333333333333'
-        defaultSim = '20190718-143331_test_mpc'
+        defaultSim = '20190722-101020_hybrid_lstm_2x32_relu_reg0p1/open_loop_simulation_files'
         self.pathSimData = os.path.join(self.pathRootSimData, defaultSim)
         print('Loading data from', self.pathSimData)
 
