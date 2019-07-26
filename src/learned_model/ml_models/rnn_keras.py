@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import tensorflow as tf
 
+import config
 from gokart_data_preprocessing.shuffle import shuffle_list
 from data_visualization.data_io import create_folder_with_time, getDirectories
 import time
@@ -20,7 +21,7 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 class LongShortTermMemoryNetwork():
     def __init__(self, epochs=20, learning_rate=1e-3, decay=1e-6, batch_size=100, input_sequence_length=5, time_step = 0.1, shuffle=True, random_seed=None, model_name='test',
                  predict_only=False):
-        self.root_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_rnn_models'
+        self.root_folder = os.path.join(config.directories['root'], 'Models/trained_rnn_models')
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.learning_rate_decay = decay
@@ -80,7 +81,7 @@ class LongShortTermMemoryNetwork():
             raise
 
         self.load_normalizing_parameters()
-        # self.load_model_parameters() #TODO activate this line as soon as new model is trained!
+        self.load_model_parameters()
 
     def load_checkpoint(self, checkpoint_name='best'):
         load_path = os.path.join(self.model_dir, 'model_checkpoints')
@@ -113,8 +114,8 @@ class LongShortTermMemoryNetwork():
         load_path = os.path.join(self.model_dir, 'training_parameters.csv')
         model_params = pd.DataFrame().from_csv(load_path)
         values = model_params['values']
-        self.input_sequence_length = values['input_sequence_length']
-        self.time_step = values['time_step']
+        self.input_sequence_length = int(values['input_sequence_length'])
+        self.time_step = float(values['time_step'])
         return self.input_sequence_length, self.time_step
 
 
@@ -155,8 +156,8 @@ class LongShortTermMemoryNetwork():
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate, self.learning_rate_decay),
-        # self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate, self.learning_rate_decay),
-        self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate, self.learning_rate_decay),
+        # self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
                            loss='mean_squared_error',
                            metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
 
@@ -203,7 +204,7 @@ class LongShortTermMemoryNetwork():
         self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
                                                  PrintState(self.model_name), tensor_board],
-                                      validation_split=0.2, verbose=1)
+                                      validation_split=0.2, verbose=0)
 
         # Save entire model to a HDF5 file
         self.model.save(os.path.join(self.model_dir, 'my_model.h5'))
@@ -266,7 +267,7 @@ class LongShortTermMemoryNetwork():
         normalizing_parameters.to_csv(norm_params_save_path)
 
     def save_model_parameters(self, layers, nodes_per_layer, activation_function, regularization):
-        data = np.array([layers, nodes_per_layer, activation_function, regularization]).transpose()
+        data = np.array([layers, nodes_per_layer, activation_function, regularization, ]).transpose()
         model_parameters = pd.DataFrame(data=data,
                                         columns=['values'],
                                         index=['layers', 'nodes_per_layer', 'activation_function',

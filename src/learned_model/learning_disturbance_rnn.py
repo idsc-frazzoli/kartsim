@@ -5,6 +5,7 @@ Created 09.07.19 09:32
 
 @author: mvb
 """
+import config
 from data_visualization.data_io import getPKL
 from learned_model.ml_models.rnn_keras import LongShortTermMemoryNetwork
 from multiprocessing import Pool
@@ -37,18 +38,20 @@ def main():
     # print(i, network_settings)
 
     network_settings = [
-        [2, 32, 'relu', 0.1],
-        [2, 32, 'tanh', 0.0],
-        [2, 32, 'tanh', 0.01],
-        [2, 32, 'tanh', 0.1],
-        [1, 32, 'tanh', 0.0],
-        [1, 32, 'tanh', 0.01],
-        [1, 32, 'tanh', 0.1],
+        [2, 32, 'relu', 0.2],
+        [2, 32, 'relu', 0.3],
+        [2, 32, 'relu', 0.5],
+        # [2, 32, 'relu', 0.8],
+        # [2, 32, 'relu', 1],
     ]
-    if len(network_settings) > 1:
+    if len(network_settings) >= 8:
         chunks = [network_settings[i::8] for i in range(8)]
         pool = Pool(processes=8)
-
+        pool.map(train_RNN, chunks)
+    elif len(network_settings) > 1:
+        no_settings = len(network_settings)
+        chunks = [network_settings[i::no_settings] for i in range(no_settings)]
+        pool = Pool(processes=no_settings)
         pool.map(train_RNN, chunks)
     else:
         train_RNN(network_settings)
@@ -60,15 +63,16 @@ def train_RNN(network_settings):
     random_state = 45
 
     # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/SequentialDataSets/20190709-121738_more_filtered_withlowspeed_learning_data'
-    path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/SequentialDataSets/20190710-151912_more_filtered_withlowspeed_learning_data'
+    # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/SequentialDataSets/20190710-151912_more_filtered_withlowspeed_learning_data'
+    path_data_set = os.path.join(config.directories['root'], 'Data/RNNDatasets/20190717-101005_trustworthy_data')
 
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    time_step = round(train_features[0, 1, 0] - train_features[0, 0, 0], 5)
     train_features = train_features[:,:,1:] #get rid of time values
     train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
     test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
     test_features = test_features[:,:,1:] #get rid of time values
     test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
-    time_step = round(train_features[0, 1, 0] - train_features[0, 0, 0], 5)
 
     i = 1
     for l, npl, af, reg in network_settings:
@@ -86,7 +90,7 @@ def train_RNN(network_settings):
         lstm.build_new_model(layers=l, input_shape=train_features.shape[1:], nodes_per_layer=npl,
                              activation_function=af, regularization=reg)
 
-        print(lstm.show_model_summary())
+        # print(lstm.show_model_summary())
 
         lstm.train_model(train_features, train_labels)
         lstm.save_training_history()

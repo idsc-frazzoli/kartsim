@@ -24,28 +24,33 @@ def main():
 
     network_settings = []
 
-    i=1
-    for layers in range(1,10):
-        for nodes_exp in range(2,11):
-            nodes = 2 ** nodes_exp
-            tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
-            if tot_params < 35000:
-                i += 1
-                network_settings.append([layers,nodes,'relu',0.0])
-
-    for layers in range(10,101,5):
-        for nodes_exp in range(2,11):
-            nodes = 2 ** nodes_exp
-            tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
-            if tot_params < 35000:
-                i += 1
-                network_settings.append([layers,nodes,'relu',0.0])
-    print(i,network_settings)
+    # i=1
+    # for layers in range(1,10):
+    #     for nodes_exp in range(2,11):
+    #         nodes = 2 ** nodes_exp
+    #         tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
+    #         if tot_params < 35000:
+    #             i += 1
+    #             network_settings.append([layers,nodes,'relu',0.0])
+    #
+    # for layers in range(10,101,5):
+    #     for nodes_exp in range(2,11):
+    #         nodes = 2 ** nodes_exp
+    #         tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
+    #         if tot_params < 35000:
+    #             i += 1
+    #             network_settings.append([layers,nodes,'relu',0.0])
+    # print(i,network_settings)
 
     network_settings = [
-        [5, 64, 'relu', 0.0],
-        [5, 64, 'relu', 0.01],
-        [5, 64, 'relu', 0.1],
+        [2, 32, 'relu', 0.0],
+        [2, 32, 'relu', 0.0005],
+        [2, 32, 'relu', 0.001],
+        [2, 32, 'relu', 0.005],
+        [2, 32, 'relu', 0.008],
+        [2, 32, 'relu', 0.01],
+        [2, 32, 'relu', 0.02],
+        [2, 32, 'relu', 0.05],
     ]
 
     chunks = [network_settings[i::8] for i in range(8)]
@@ -84,7 +89,7 @@ def train_NN(network_settings):
     #                               'steer position cal [n.a.]', 'brake position effective [m]',
     #                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_test')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                     'steer position cal [n.a.]', 'brake position effective [m]',
@@ -108,7 +113,7 @@ def train_NN(network_settings):
     for l, npl, af, reg in network_settings:
         name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
         print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
-        mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
+        mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
                                    model_name=name)
 
         # mlp.load_model()
@@ -124,9 +129,13 @@ def train_NN(network_settings):
 
 
 def get_loss_pictures():
-    root_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models'
+    # root_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models'
+    root_folder = os.path.join(config.directories['root'], 'Models/trained_mlp_models')
 
     folder_names = getDirectories(root_folder)
+    print(folder_names)
+    folder_names.remove('logs')
+    print(folder_names)
     # folder_names = ['/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models/20190624-134333_3x32_relu_reg0p005',
     #                 '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models/20190624-134333_3x32_relu_reg0p01']
     for name in folder_names:
@@ -160,6 +169,6 @@ if __name__ == '__main__':
     main()
     # get_loss_pictures()
     # network_settings = [
-    #     [5, 64, 'relu', 0.0],
+    #     [2, 32, 'linear', 0.0],
     # ]
     # train_NN(network_settings)
