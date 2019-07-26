@@ -104,8 +104,9 @@ class DynamicVehicleMPC:
     def transform_inputs(self, steering_angle, brake_position, motor_current_l, motor_current_r, velx):
         brake_acceleration_factor = 1
         if isinstance(velx, np.float64) or isinstance(velx, float):
-            if abs(velx) < 0.05:
-                brake_acceleration_factor = 0.1
+            if abs(velx) < 0.25:
+                brake_acceleration_factor = abs(velx) * 4.0
+            # pass
         else:
             brake_acceleration_factor = np.add(np.multiply(np.array([abs(vx) < 0.05 for vx in velx]),-0.9),1)
 
