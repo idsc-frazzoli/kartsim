@@ -26,11 +26,11 @@ def main():
     preprofiles = sys.argv[4:]
 
     # Choose whether to use simulation over intervals of the duration given by validationhorizon
-    validation = False
-    validationhorizon = 1  # [s] time inteval after which initial conditions are reset to values from log data
+    validation = True
+    validationhorizon = 10  # [s] time inteval after which initial conditions are reset to values from log data
 
     # Simulation time after which result is returned from server
-    server_return_interval = 2  # [s]
+    server_return_interval = 10  # [s]
     # DO NOT CHANGE! Parameter used for real time simulation (default:0)
     _wait_for_real_time = 0  # [s]
 
@@ -90,14 +90,16 @@ def main():
         if 'finished' in outcome:
             print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} successful after {int(time.time() - t_start)}s')
         elif 'aborted' in outcome:
-            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} aborted after {int(time.time() - t_start)}s')
+            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} timed out after {int(time.time() - t_start)}s')
+        elif 'failed' in outcome:
+            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} failed after {int(time.time() - t_start)}s')
 
     conn.close()
     time.sleep(2)
     # print('Creating reference signal for evaluation...')
-    # evalRef.main()
+    # evalRef.evaluate()
     # print('Evaluating results...')
-    # evalCalc.main()
+    # evalCalc.evaluate()
     # print('Evaluation complete!')
 
 
@@ -154,6 +156,8 @@ def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, 
         if 'Abort' in answer_msg:
             # print(answer_msg, end='\r')
             return 'simulation aborted'
+        elif 'Kill' in answer_msg:
+            return 'simulation failed'
 
         X1 = decode_answer_msg_from_txt(answer_msg)
 

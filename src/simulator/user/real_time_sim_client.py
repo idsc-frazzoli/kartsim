@@ -36,7 +36,7 @@ def main():
     _wait_for_real_time = 0  # [s]
 
     # Choose whether to simulate in real-time (mainly for visualization purposes)
-    real_time = True
+    real_time = False
     real_time_factor = 2
     if real_time:
         server_return_interval = 0.1 * real_time_factor  # [s] simulation time after which result is returned from server
@@ -90,18 +90,14 @@ def main():
         outcome = execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval,
                            data_time_step, validation, validationhorizon, preprodata)
         if 'finished' in outcome:
-            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} successful after {int(time.time() - t_start)}s')
+            print(f'Total time: {int(time.time() - tgo)}s {file_number + 1}/{len(preprofiles)} {fileName} successful after {int(time.time() - t_start)}s')
         elif 'aborted' in outcome:
-            print(f'Total time: {int(time.time() - tgo)}s {file_number+1}/{len(preprofiles)} {fileName} aborted after {int(time.time() - t_start)}s')
+            print(f'Total time: {int(time.time() - tgo)}s {file_number + 1}/{len(preprofiles)} {fileName} timed out after {int(time.time() - t_start)}s')
+        elif 'failed' in outcome:
+            print(f'Total time: {int(time.time() - tgo)}s {file_number + 1}/{len(preprofiles)} {fileName} failed after {int(time.time() - t_start)}s')
 
     conn.close()
     time.sleep(2)
-    # print('Creating reference signal for evaluation...')
-    # evalRef.main()
-    # print('Evaluating results...')
-    # evalCalc.main()
-    # print('Evaluation complete!')
-
 
 def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, server_return_interval, data_time_step,
                        validation, reset_interval, preprodata):
@@ -155,6 +151,8 @@ def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, 
         if 'Abort' in answer_msg:
             # print(answer_msg, end='\r')
             return 'simulation aborted'
+        elif 'Kill' in answer_msg:
+            return 'simulation failed'
 
         X1 = decode_answer_msg_from_txt(answer_msg)
 
