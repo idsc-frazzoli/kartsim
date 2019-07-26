@@ -53,7 +53,6 @@ class MultiLayerPerceptron():
     def load_model(self):
         try:
             load_path = os.path.join(self.model_dir, 'my_model.h5')
-            print(load_path)
             self.model = tf.keras.models.load_model(load_path, custom_objects={
                 'coeff_of_determination': self.coeff_of_determination})
             # print('Model successfully loaded from', load_path)
@@ -99,7 +98,7 @@ class MultiLayerPerceptron():
         load_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         return pd.DataFrame().from_csv(load_path)
 
-    def build_new_model(self, layers=2, nodes_per_layer=32, activation_function='relu', regularization=0.01):
+    def build_new_model(self, layers=2, nodes_per_layer=32, activation_function=None, regularization=0.01):
         inputs = tf.keras.Input(shape=(7,))
         h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
                                   kernel_regularizer=tf.keras.regularizers.l2(regularization),
@@ -143,7 +142,6 @@ class MultiLayerPerceptron():
 
         self.get_train_stats(features)
         normalized_features = self.normalize_data(features)
-
         self.save_training_parameters()
 
         self.save_path_checkpoints = os.path.join(self.model_dir, 'model_checkpoints', 'mpl-{epoch:04d}.ckpt')
