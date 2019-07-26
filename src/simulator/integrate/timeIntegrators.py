@@ -27,7 +27,7 @@ def odeIntegratorIVP(X0, U, simStep, simIncrement, system_equation=None):
     if X1.status == 0:
         return np.transpose(X1.y)
     else:
-        return 'Integration step failed. Abort simulation.'
+        return 'Integration step failed. Kill simulation.'
 
 
 def euler(X0, U, simIncrement, system_equation=None):

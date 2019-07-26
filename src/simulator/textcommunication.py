@@ -87,6 +87,8 @@ def decode_answer_msg_from_txt(msg):
         except:
             print("ValueError: could not resolve X1")
             raise
+    else:
+        X1 = msg
     return X1
 
 

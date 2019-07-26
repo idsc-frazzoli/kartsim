@@ -71,7 +71,7 @@ def updatePlot(axes_list):
 
 
 if __name__ == '__main__':
-#    main()
+#    evaluate()
     import sys
     try:
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):

@@ -44,11 +44,9 @@ class DataDrivenVehicleModel:
             normed_input = self.normalize_input(input)
 
             disturbance = self.solve_NN(normed_input[0])
-            # print('b')
-            # print(self.mlp.get_weights())
-            # print('a')
+
             accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
-            # print('disturbance',disturbance)
+            # print(f'disturbance {disturbance}   acceleration {accelerations}')
             # print('accelerations',accelerations)
             result = np.array(accelerations).transpose() + disturbance
 

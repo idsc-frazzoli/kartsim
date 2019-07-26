@@ -16,8 +16,8 @@ import pandas as pd
 import sys
 
 from simulator.textcommunication import encode_request_msg_to_txt, decode_answer_msg_from_txt
-import evaluation.evaluation as evalCalc
-import evaluation.evaluationReference as evalRef
+from file_grave_yard.evaluation_oldfiles import evaluation as evalCalc
+import file_grave_yard.evaluation_oldfiles.evaluationReference as evalRef
 
 def main():
     #___user inputs

@@ -55,17 +55,17 @@ class SystemEquation:
         #     print(t)
         # if t < 0.5:
         #     # print('t:{:5.4f}'.format(t))
-        #     print('t:{:5.4f}, V_dt:[{:5.2f} {:5.2f} {:5.2f}], V:[{:5.4f} {:5.4f} {:5.4f}], U:[{:5.4f} {:5.4f} {:5.2f} {:5.2f}]'.format(t, V_dt[0][0],
-        #                                                                                           V_dt[1][0],
-        #                                                                                           V_dt[2][0],
-        #                                                                                           V[0],
-        #                                                                                           V[1],
-        #                                                                                           V[2],
-        #                                                                                           U[0],
-        #                                                                                           U[1],
-        #                                                                                           U[2],
-        #                                                                                           U[3],
-        #                                                                                           ))
+        # print('t:{:5.4f}, V_dt:[{:5.2f} {:5.2f} {:5.2f}], V:[{:5.4f} {:5.4f} {:5.4f}], U:[{:5.4f} {:5.4f} {:5.2f} {:5.2f}]'.format(t, V_dt[0],
+        #                                                                                       V_dt[1],
+        #                                                                                       V_dt[2],
+        #                                                                                       V[0],
+        #                                                                                       V[1],
+        #                                                                                       V[2],
+        #                                                                                       U[0],
+        #                                                                                       U[1],
+        #                                                                                       U[2],
+        #                                                                                       U[3],
+        #                                                                                       ))
 
         c, s = np.cos(float(X[3])), np.sin(float(X[3]))
         R = np.array(((c, -s), (s, c)))
@@ -76,8 +76,7 @@ class SystemEquation:
     def solveivp_hybrid_lstm_dx_dt(self, t, X):
         V = [X[4], X[5], X[6]]
         U = getInput(X[0])
-        # print(X[0], V, U)
-        # print(type(X[0]), type(V), type(U))
+
         V_dt = self.vehicle_model.get_accelerations(X[0], V, U)
 
         c, s = np.cos(float(X[3])), np.sin(float(X[3]))
