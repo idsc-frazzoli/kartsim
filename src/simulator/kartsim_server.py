@@ -63,9 +63,12 @@ def main():
 
     # vehicle_model = DynamicVehicleMPC(direct_input=True)
 
-    system_equation = SystemEquation(vehicle_model)
+    # system_equation = SystemEquation(vehicle_model)
 
     while runServer:
+        if vehicle_model_type == 'hybrid_lstm':
+            vehicle_model.reinitialize_variables()
+        system_equation = SystemEquation(vehicle_model)
         if visualization and vizConn is None:
             # print("waiting for visualization connection at", visualizationAddress)
             vizConn = visualizationListener.accept()
@@ -85,10 +88,10 @@ def main():
             print('client connection accepted from', clientListener.last_accepted)
             print('Starting simulation:\n')
 
-        noThread, cliConn, vizConn, logConn = interprocess_communication(noThread, cliConn, vizConn, logConn,
+        cliConn, vizConn, logConn = interprocess_communication(cliConn, vizConn, logConn,
                                                                          visualization, logging, system_equation, )
 
-def interprocess_communication(noThread, cliConn, vizConn, logConn, visualization, logging, system_equation, ):
+def interprocess_communication(cliConn, vizConn, logConn, visualization, logging, system_equation, ):
     initSignal = 0
     runThread = True
     result_queue = Queue()
@@ -103,10 +106,10 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
                                                 args=(X0, U, server_return_interval, sim_time_increment,
                                                       system_equation, result_queue))
                 numerical_integration.start()
-                if X0[0] < 1.0:
-                    patience = server_return_interval * 10
-                else:
-                    patience = server_return_interval * 5
+
+                patience = server_return_interval * 10
+                if patience < 10:
+                    patience = 10
                 numerical_integration.join(patience)
                 if numerical_integration.is_alive():
                     if visualization:
@@ -116,8 +119,11 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
                     answer_msg = encode_answer_msg_to_txt(
                         'Numerical integration unstable and timed out. Abort simulation.')
                     cliConn.send(answer_msg)
-                    numerical_integration.terminate()
-                    return noThread, cliConn, vizConn, logConn
+                    try:
+                        numerical_integration.terminate()
+                    except RuntimeError:
+                        pass
+                    return cliConn, vizConn, logConn
                 X = result_queue.get()
                 # print('server send', X[-1])
                 answer_msg = encode_answer_msg_to_txt(X)
@@ -128,23 +134,21 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
                         vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
                     if logging:
                         logConn.send(np.array([['abort', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                    return noThread, cliConn, vizConn, logConn
+                    return cliConn, vizConn, logConn
 
             elif request_msg == 'simulation finished':
-                noThread = True
                 if visualization:
                     vizConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
                 if logging:
                     logConn.send(np.array([['finished', 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-                return noThread, cliConn, vizConn, logConn
+                return cliConn, vizConn, logConn
             else:
                 print('FormatError: wrong message format.')
                 raise ValueError
         except EOFError:
             # print('SimClientError: BrokenPipe', cliConn.fileno())
             cliConn = None
-            noThread = True
-            return noThread, cliConn, vizConn, logConn
+            return cliConn, vizConn, logConn
 
         if logging:
             try:
@@ -152,7 +156,7 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
             except:
                 print('LoggerError: BrokenPipe', logConn.fileno())
                 logConn = None
-                return noThread, cliConn, vizConn, logConn
+                return cliConn, vizConn, logConn
         #                print('sendTime logConn: ', time.time() - tt)
         if visualization:
             try:
@@ -165,7 +169,7 @@ def interprocess_communication(noThread, cliConn, vizConn, logConn, visualizatio
             except:
                 print('VisualizationError: BrokenPipe', vizConn.fileno())
                 vizConn = None
-                return noThread, cliConn, vizConn, logConn
+                return cliConn, vizConn, logConn
 
 
 def execute_integration(X0, U, server_return_interval, sim_time_increment, system_equation, result_queue):
