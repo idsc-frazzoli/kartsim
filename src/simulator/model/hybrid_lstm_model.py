@@ -24,12 +24,10 @@ class HybridLSTMModel:
         self.lstm.load_checkpoint('best')
         # self.weights, self.biases = self.lstm.get_weights()
 
-        # Load parameters for normalizing inputs
-        self.sequence_length = 5
-        self.time_step = 0.1
+        # Load parameters
+        self.sequence_length, self.time_step = self.lstm.load_model_parameters()
         self.time_for_next_sequence_element = self.time_step
         self.disturbance = [0, 0, 0]
-        # self.sequence_length, self.time_step = self.lstm.load_model_parameters() #TODO activate this line as soon as new model is trained!
 
         self.data_sequence = deque(maxlen=self.sequence_length)
 
@@ -38,6 +36,11 @@ class HybridLSTMModel:
 
     def get_name(self):
         return self.name
+
+    def reinitialize_variables(self):
+        self.time_for_next_sequence_element = self.time_step
+        self.disturbance = [0, 0, 0]
+        self.data_sequence = deque(maxlen=self.sequence_length)
 
     def get_accelerations(self, t, initial_velocities=[0, 0, 0], system_inputs=[0, 0, 0, 0]):
         if isinstance(initial_velocities, list):
@@ -55,7 +58,7 @@ class HybridLSTMModel:
             accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
             result = np.array(accelerations).transpose() + self.disturbance
             return result[0]
-        elif initial_velocities.shape[0] >= self.sequence_length:
+        elif np.array(initial_velocities).shape[0] >= self.sequence_length:
             self.disturbance = np.zeros((self.sequence_length-1,3))
             sequence = deque(maxlen=self.sequence_length)
             input = np.hstack((initial_velocities, system_inputs))
