@@ -20,7 +20,7 @@ from simulator.model.data_driven_model import DataDrivenVehicleModel
 
 
 def calculate_disturbance(load_path_data=None, data_set_name='test', test_portion=0.2, random_seed=42,
-                          sequential=False, sequence_length=5):
+                          sequential=False, sequence_length=5, mirror_data=True, mpc_inputs=False):
     if sequential:
         save_path_data_set = os.path.join(directories['root'], 'Data', 'RNNDatasets')
     else:
@@ -42,8 +42,11 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
             raise FileNotFoundError(
                 f'No data with name {data_set_name} was found in path_preprocessed_data!\n Please specify.')
 
-    # Dynamic MPC model
-    vehicle_model = DynamicVehicleMPC()
+    if mpc_inputs:
+        vehicle_model = DynamicVehicleMPC(direct_input=True)
+    else:
+        # Dynamic MPC model
+        vehicle_model = DynamicVehicleMPC()
 
     # # Dynamic MPC model modified
     # vehicle_model_name = '5x64_relu_reg0p0'
@@ -61,21 +64,36 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
     random.seed(random_seed)
     random.shuffle(pkl_files)
 
+    # Split logfiles into train and test set
     train_files = pkl_files[:int(len(pkl_files) * (1 - test_portion))]
     test_files = pkl_files[int(len(pkl_files) * (1 - test_portion)):]
 
-    train_features, train_labels = get_disturbance(train_files, vehicle_model, sequential, sequence_length)
-    test_features, test_labels = get_disturbance(test_files, vehicle_model, sequential, sequence_length)
-
+    # Save the files in seperate folders
     save_folder_path = create_folder_with_time(save_path_data_set, tag=data_set_name)
 
-    os.mkdir(os.path.join(save_folder_path, 'train_log_files'))
-    os.mkdir(os.path.join(save_folder_path, 'test_log_files'))
+    save_path_train_log_files = os.path.join(save_folder_path, 'train_log_files')
+    save_path_test_log_files = os.path.join(save_folder_path, 'test_log_files')
+    os.mkdir(save_path_train_log_files)
+    os.mkdir(save_path_test_log_files)
 
     for path, name in train_files:
-        os.popen('cp ' + path + ' ' + save_folder_path + '/train_log_files/' + name)
+        os.popen('cp ' + path + ' ' + os.path.join(save_path_train_log_files, name))
     for path, name in test_files:
-        os.popen('cp ' + path + ' ' + save_folder_path + '/test_log_files/' + name)
+        os.popen('cp ' + path + ' ' + os.path.join(save_path_test_log_files, name))
+
+    if mirror_data:
+        # Generate mirrored log files (w.r.t. x-axis)
+        mirror_logfiles(save_path_train_log_files)
+        mirror_logfiles(save_path_test_log_files)
+
+    if mpc_inputs:
+        get_mpc_inputs(save_path_train_log_files)
+        get_mpc_inputs(save_path_test_log_files)
+
+    train_features, train_labels = get_disturbance(save_path_train_log_files, vehicle_model, sequential,
+                                                   sequence_length, mpc_inputs)
+    test_features, test_labels = get_disturbance(save_path_test_log_files, vehicle_model, sequential, sequence_length,
+                                                 mpc_inputs)
 
     file_path = save_folder_path + '/train_features.pkl'
     data_to_pkl(file_path, train_features)
@@ -89,7 +107,14 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
     print('Data set with disturbance saved to', save_folder_path)
 
 
-def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
+def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, mpc_inputs):
+    file_list = []
+    for r, d, f in os.walk(load_path_data):
+        for file in f:
+            if '.pkl' in file:
+                file_list.append([os.path.join(r, file), file])
+    file_list.sort()
+
     features = []
     labels = []
     sequential_data = []
@@ -101,10 +126,18 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         # print('Loading file', file_path_data)
         dataframe = getPKL(file_path_data)
         dt = dataframe.values[1, 0] - dataframe.values[0, 0]
-        # data_set = dataframe.values[:, 4:]
+        # data_set = features.values[:, 4:]
         velocities = dataframe[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]']].values
-        inputs = dataframe[['steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']].values
-        target_output = dataframe[['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
+        if mpc_inputs:
+            inputs = dataframe[
+                ['turning angle [n.a]', 'acceleration rear axle [m*s^-2]',
+                 'acceleration torque vectoring [rad*s^-2]']].values
+        else:
+            inputs = dataframe[
+                ['steer position cal [n.a.]', 'brake position effective [m]', 'motor torque cmd left [A_rms]',
+                 'motor torque cmd right [A_rms]']].values
+        target_output = dataframe[
+            ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
         # Dynamic MPC model
         nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
         nominal_model_output = np.vstack(
@@ -118,13 +151,17 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         # nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
         output_disturbance = target_output - nominal_model_output
 
-        # dataframe = dataframe.drop('vehicle ax local [m*s^-2]', axis=1)
-        # dataframe = dataframe.drop('vehicle ay local [m*s^-2]', axis=1)
-        # dataframe = dataframe.drop('pose atheta [rad*s^-2]', axis=1)
-
-        dataframe = dataframe[['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                               'steer position cal [n.a.]', 'brake position effective [m]',
-                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
+        # features = features.drop('vehicle ax local [m*s^-2]', axis=1)
+        # features = features.drop('vehicle ay local [m*s^-2]', axis=1)
+        # features = features.drop('pose atheta [rad*s^-2]', axis=1)
+        if mpc_inputs:
+            dataframe = dataframe[['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                   'turning angle [n.a]', 'acceleration rear axle [m*s^-2]',
+                                   'acceleration torque vectoring [rad*s^-2]']]
+        else:
+            dataframe = dataframe[['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                   'steer position cal [n.a.]', 'brake position effective [m]',
+                                   'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
         dataframe['disturbance vehicle ax local [m*s^-2]'] = output_disturbance[:, 0]
         dataframe['disturbance vehicle ay local [m*s^-2]'] = output_disturbance[:, 1]
@@ -155,6 +192,58 @@ def get_disturbance(file_list, vehicle_model, sequential, sequence_length):
         features = pd.DataFrame(np.array(features), columns=dataframe.columns[:-3])
         labels = pd.DataFrame(np.array(labels), columns=dataframe.columns[np.array([0, -3, -2, -1])])
     return features, labels
+
+
+def mirror_logfiles(load_path_data):
+    pkl_files = []
+    for r, d, f in os.walk(load_path_data):
+        for file in f:
+            if '.pkl' in file:
+                pkl_files.append([os.path.join(r, file), file])
+    pkl_files.sort()
+
+    for file_path_data, file_name in pkl_files:
+        dataframe = getPKL(file_path_data)
+        dataframe['steer position cal [n.a.]'] = dataframe['steer position cal [n.a.]'] * -1
+        dataframe['vehicle vy [m*s^-1]'] = dataframe['vehicle vy [m*s^-1]'] * -1
+        dataframe['pose vtheta [rad*s^-1]'] = dataframe['pose vtheta [rad*s^-1]'] * -1
+        dataframe['vehicle ay local [m*s^-2]'] = dataframe['vehicle ay local [m*s^-2]'] * -1
+        dataframe['pose atheta [rad*s^-2]'] = dataframe['pose atheta [rad*s^-2]'] * -1
+        dataframe['pose y [m]'] = dataframe['pose y [m]'] * -1
+        dataframe['pose theta [rad]'] = dataframe['pose theta [rad]'] * -1
+        temp_rimo_l = dataframe['motor torque cmd left [A_rms]'].copy()
+        dataframe['motor torque cmd left [A_rms]'] = dataframe['motor torque cmd right [A_rms]']
+        dataframe['motor torque cmd right [A_rms]'] = temp_rimo_l
+        file_path = os.path.join(load_path_data, file_name[:-4] + '_mirrored.pkl')
+        data_to_pkl(file_path, dataframe)
+
+
+def get_mpc_inputs(load_path_data):
+    pkl_files = []
+    for r, d, f in os.walk(load_path_data):
+        for file in f:
+            if '.pkl' in file:
+                pkl_files.append([os.path.join(r, file), file])
+    pkl_files.sort()
+
+    for file_path_data, file_name in pkl_files:
+        dataframe = getPKL(file_path_data)
+        dataframe = transform_inputs(dataframe)
+        data_to_pkl(file_path_data, dataframe)
+
+
+def transform_inputs(dataframe):
+    turning_angle, acceleration_rear_axle, torque_tv = DynamicVehicleMPC().transform_inputs(
+        dataframe['steer position cal [n.a.]'].values,
+        dataframe['brake position effective [m]'].values,
+        dataframe['motor torque cmd left [A_rms]'].values,
+        dataframe['motor torque cmd right [A_rms]'].values,
+        dataframe['vehicle vx [m*s^-1]'].values,
+    )
+    dataframe['turning angle [n.a]'] = turning_angle
+    dataframe['acceleration rear axle [m*s^-2]'] = acceleration_rear_axle
+    dataframe['acceleration torque vectoring [rad*s^-2]'] = torque_tv
+    return dataframe
 
 
 if __name__ == '__main__':

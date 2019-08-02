@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a name for the data set
-    dataset_name = 'test'
+    dataset_name = 'trustworthy_mirrored_mpc'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -59,10 +59,10 @@ def main():
     redo_data_tagging = False # only needs to be done once
 
     # Filter data and compute inferred data from raw logs
-    filter_data = False
+    filter_data = True
 
     # Sample data
-    sample_data = False
+    sample_data = True
     # Sampling time period used for sampling the raw data
     sampling_time_period = 0.1  # [s]
 
@@ -110,16 +110,18 @@ def main():
         print('Sampling Data...')
         path_sampled_data = sample_from_logdata(sampling_time_period, path_preprocessed_dataset,
                                                 dataset_name, merge_data=False)
-    path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190717-211005_high_slip_angles/'
     if mlp_data_set:
+        if path_sampled_data is None:
+            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190717-211005_high_slip_angles/'
+
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=mlp_test_portion,
-                              random_seed=random_seed, sequential=False)
+                              random_seed=random_seed, sequential=False, mirror_data=True, mpc_inputs=True)
 
     if lstm_data_set:
         print('Get sequential disturbance data...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=lstm_test_portion, random_seed=random_seed,
-                              sequential=True, sequence_length=sequence_length)
+                              sequential=True, sequence_length=sequence_length, mirror_data=True, mpc_inputs=False)
 
     print('Total computing time: ', int(time.time() - t), "s")
 

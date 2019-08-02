@@ -74,8 +74,12 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
             accelerations = np.array(accelerations).transpose()
             final_dataframe = pd.DataFrame(np.hstack((dataset, accelerations)))
 
-            save_file_path = os.path.join(save_path, simulation_file[:-19] +
-                                          '_{}_openloop.csv'.format(vehicle_model_type))
+            if 'mirrored' in simulation_file:
+                save_file_path = os.path.join(save_path, simulation_file[:18] +
+                                              '_mirrored_{}_openloop.csv'.format(vehicle_model_type))
+            else:
+                save_file_path = os.path.join(save_path, simulation_file[:18] +
+                                              '_{}_openloop.csv'.format(vehicle_model_type))
 
             final_dataframe.to_csv(save_file_path, index=False,
                                    header=['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
@@ -110,8 +114,12 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
             # accelerations = np.array(accelerations).transpose()
             final_dataframe = pd.DataFrame(np.hstack((dataset, accelerations)))
 
-            save_file_path = os.path.join(save_path, simulation_file[:-19] +
-                                          '_{}_openloop.csv'.format(vehicle_model_type + '_' + vehicle_model_name))
+            if 'mirrored' in simulation_file:
+                save_file_path = os.path.join(save_path, simulation_file[:18] +
+                                              '_mirrored_{}_openloop.csv'.format(vehicle_model_type + '_' + vehicle_model_name))
+            else:
+                save_file_path = os.path.join(save_path, simulation_file[:18] +
+                                              '_{}_openloop.csv'.format(vehicle_model_type + '_' + vehicle_model_name))
 
             final_dataframe.to_csv(save_file_path, index=False,
                                    header=['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
@@ -169,7 +177,7 @@ def run_simulation(arguments):
     if logging:
         log_args = [port, save_path, vehicle_model_type, vehicle_model_name] + str(simulation_files)[2:-2].split(
             '\', \'')
-        log_path = "/home/mvb/0_ETH/01_MasterThesis/kartsim/src/simulator/kartsim_loggerclient.py"
+        log_path = "/home/mvb/0_ETH/01_MasterThesis/kartsim/src/simulator/kartsim_loggerclient_evaluation.py"
         log_process = Popen(["python3", log_path] + log_args,
                             preexec_fn=os.setsid)  # , stdout=FNULL, stderr=STDOUT)
         # print('Logger started at', log_process.pid)
@@ -221,16 +229,23 @@ def generate_results(save_root_path, save_path, sim_folder):
         mae_list = []
         cod_list = []
         stability_list = []
-        for _, name in grouped_files[0][:-1]:
-            model_name = name[19:-4]
-            if 'unstable' in model_name:
-                model_name = model_name[:-9]
-            mse_list.append([model_name, pd.DataFrame()])
-            mae_list.append([model_name, pd.DataFrame()])
-            cod_list.append([model_name, pd.DataFrame()])
-            stability_list.append(pd.DataFrame(index=['stable_sim']))
-
+        for _, name in grouped_files[0][:-2]:
+            if 'mirrored' not in name:
+                model_name = name[19:-4]
+                if 'unstable' in model_name:
+                    model_name = model_name[:-9]
+                mse_list.append([model_name, pd.DataFrame()])
+                mae_list.append([model_name, pd.DataFrame()])
+                cod_list.append([model_name, pd.DataFrame()])
+                stability_list.append(pd.DataFrame(index=['stable_sim']))
         for files in grouped_files:
+            m_reference = files.pop()
+            m_log_name = m_reference[1][:18] + '_mirrored'
+            m_ref_dataframe = getPKL(m_reference[0])
+            m_reference_data = m_ref_dataframe[['vehicle vx [m*s^-1]',
+                                                'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                                'vehicle ax local [m*s^-2]',
+                                                'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
             reference = files.pop()
             log_name = reference[1][:18]
             ref_dataframe = getPKL(reference[0])
@@ -238,37 +253,71 @@ def generate_results(save_root_path, save_path, sim_folder):
                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                             'vehicle ax local [m*s^-2]',
                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
-            for index, file in enumerate(files):
-                if 'unstable' in file[1]:
-                    stability_list[index][log_name] = np.array([0])
-                    # ref = reference_data.drop(['time [s]'], axis=1)
-                    empty_results = np.mean(np.square(reference_data))
-                    for i in range(len(empty_results)):
-                        empty_results[i] = np.nan
-                    mse_list[index][1][log_name] = empty_results
-                    mae_list[index][1][log_name] = empty_results
-                    cod_list[index][1][log_name] = empty_results
-                    continue
-                stability_list[index][log_name] = np.array([1])
-                sim_dataframe = dataframe_from_csv(file[0])
-                try:
-                    simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
-                                                     'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                                     'vehicle ax local [m*s^-2]',
-                                                     'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
-                except KeyError:
-                    print('Empty Dataframe. Coninuing with next file')
-                    continue
+            for index, file_pair in enumerate(zip(files[::2], files[1::2])):
+                for file in file_pair:
+                    if 'unstable' in file[1]:
+                        if 'mirrored' in file[1]:
+                            stability_list[index][m_log_name] = np.array([0])
+                            # ref = reference_data.drop(['time [s]'], axis=1)
+                            empty_results = np.mean(np.square(m_reference_data))
+                            for i in range(len(empty_results)):
+                                empty_results[i] = np.nan
+                            mse_list[index][1][m_log_name] = empty_results
+                            mae_list[index][1][m_log_name] = empty_results
+                            cod_list[index][1][m_log_name] = empty_results
+                            continue
+                        else:
+                            stability_list[index][log_name] = np.array([0])
+                            # ref = reference_data.drop(['time [s]'], axis=1)
+                            empty_results = np.mean(np.square(reference_data))
+                            for i in range(len(empty_results)):
+                                empty_results[i] = np.nan
+                            mse_list[index][1][log_name] = empty_results
+                            mae_list[index][1][log_name] = empty_results
+                            cod_list[index][1][log_name] = empty_results
+                            continue
+                    if 'mirrored' in file[1]:
+                        stability_list[index][m_log_name] = np.array([1])
+                        sim_dataframe = dataframe_from_csv(file[0])
+                        try:
+                            simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
+                                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                                             'vehicle ax local [m*s^-2]',
+                                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+                        except KeyError:
+                            print('Empty Dataframe. Coninuing with next file')
+                            continue
 
-                # ref = reference_data.drop(['time [s]'], axis=1)
-                # sim = simulation_data.drop(['time [s]'], axis=1)
-                error = reference_data - simulation_data
-                mean_squared_error = np.mean(np.square(error))
-                mean_absolute_error = np.mean(np.abs(error))
-                coeff_of_det = coeff_of_determination(reference_data, simulation_data)
-                mse_list[index][1][log_name] = mean_squared_error
-                mae_list[index][1][log_name] = mean_absolute_error
-                cod_list[index][1][log_name] = coeff_of_det
+                        # ref = reference_data.drop(['time [s]'], axis=1)
+                        # sim = simulation_data.drop(['time [s]'], axis=1)
+                        error = m_reference_data - simulation_data
+                        mean_squared_error = np.mean(np.square(error))
+                        mean_absolute_error = np.mean(np.abs(error))
+                        coeff_of_det = coeff_of_determination(m_reference_data, simulation_data)
+                        mse_list[index][1][m_log_name] = mean_squared_error
+                        mae_list[index][1][m_log_name] = mean_absolute_error
+                        cod_list[index][1][m_log_name] = coeff_of_det
+                    else:
+                        stability_list[index][log_name] = np.array([1])
+                        sim_dataframe = dataframe_from_csv(file[0])
+                        try:
+                            simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
+                                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                                             'vehicle ax local [m*s^-2]',
+                                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+                        except KeyError:
+                            print('Empty Dataframe. Coninuing with next file')
+                            continue
+
+                        # ref = reference_data.drop(['time [s]'], axis=1)
+                        # sim = simulation_data.drop(['time [s]'], axis=1)
+                        error = reference_data - simulation_data
+                        mean_squared_error = np.mean(np.square(error))
+                        mean_absolute_error = np.mean(np.abs(error))
+                        coeff_of_det = coeff_of_determination(reference_data, simulation_data)
+                        mse_list[index][1][log_name] = mean_squared_error
+                        mae_list[index][1][log_name] = mean_absolute_error
+                        cod_list[index][1][log_name] = coeff_of_det
         results = pd.DataFrame()
         for (name, mse), (name, mae), (name, cod), stability in zip(mse_list, mae_list, cod_list, stability_list):
             detailed_results = pd.DataFrame()
@@ -348,15 +397,15 @@ def signal_handler(sig, frame):
 
 if __name__ == '__main__':
     vehicle_models = [
-        ['mpc_dynamic', ''],
-        ['hybrid_mlp', '5x64_relu_reg0p01'],
-        ['hybrid_mlp', '2x32_linear_reg0p02'],
-        ['hybrid_lstm', '2x32_relu_reg0p1'],
+        # ['mpc_dynamic', ''],
+        ['hybrid_mlp', '5x64_relu_reg0p01_m'],
+        # ['hybrid_mlp', '2x32_linear_reg0p02'],
+        # ['hybrid_lstm', '2x32_relu_reg0p1'],
     ]
 
     for model_type, model_name in vehicle_models:
         if 'mlp' in model_type or 'mpc' in model_type:
-            evaluation_data_set_name = '20190717-100934_trustworthy_data'
+            evaluation_data_set_name = '20190729-162122_trustworthy_mirrored'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
         elif 'lstm' in model_type:

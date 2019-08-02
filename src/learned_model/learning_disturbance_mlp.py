@@ -14,6 +14,7 @@ import os
 from data_visualization.data_io import getDirectories
 import matplotlib.pyplot as plt
 import seaborn as sns
+from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 
 def main():
     # network_settings = [
@@ -63,33 +64,8 @@ def main():
 
 def train_NN(network_settings):
     random_state = 45
-    #
-    # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel/20190625-200000_TF_filtered_vel/disturbance.pkl'
-    # dataframe = getPKL(path_data_set)
-    # dataframe.pop('time [s]')
-    #
-    # # Split data_set into training and test set
-    # train_dataset = dataframe.sample(frac=0.8, random_state=random_state)
-    # train_dataset = train_dataset.reset_index(drop=True)
-    #
-    # test_dataset = dataframe.drop(train_dataset.index)
-    # test_dataset = test_dataset.reset_index(drop=True)
-    #
-    # train_labels = train_dataset[['disturbance vehicle ax local [m*s^-2]',
-    #                               'disturbance vehicle ay local [m*s^-2]',
-    #                               'disturbance pose atheta [rad*s^-2]']]
-    # train_features = train_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-    #                                 'steer position cal [n.a.]', 'brake position effective [m]',
-    #                                 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
-    #
-    # test_labels = test_dataset[['disturbance vehicle ax local [m*s^-2]',
-    #                             'disturbance vehicle ay local [m*s^-2]',
-    #                             'disturbance pose atheta [rad*s^-2]']]
-    # test_features = test_dataset[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-    #                               'steer position cal [n.a.]', 'brake position effective [m]',
-    #                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190729-162122_trustworthy_mirrored')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                     'steer position cal [n.a.]', 'brake position effective [m]',
@@ -111,7 +87,10 @@ def train_NN(network_settings):
 
     i = 1
     for l, npl, af, reg in network_settings:
-        name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
+        if 'mirrored' in path_data_set:
+            name = '{}x{}_{}_reg{}_m'.format(l, npl, af, str(reg).replace('.', 'p'))
+        else:
+            name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
         print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
         mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
                                    model_name=name)
@@ -133,11 +112,7 @@ def get_loss_pictures():
     root_folder = os.path.join(config.directories['root'], 'Models/trained_mlp_models')
 
     folder_names = getDirectories(root_folder)
-    print(folder_names)
     folder_names.remove('logs')
-    print(folder_names)
-    # folder_names = ['/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models/20190624-134333_3x32_relu_reg0p005',
-    #                 '/home/mvb/0_ETH/01_MasterThesis/kartsim/src/learned_model/trained_models/20190624-134333_3x32_relu_reg0p01']
     for name in folder_names:
         train_history_dir = os.path.join(root_folder, name, 'training_history')
 
@@ -166,9 +141,9 @@ def get_loss_pictures():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
     # get_loss_pictures()
-    # network_settings = [
-    #     [2, 32, 'linear', 0.0],
-    # ]
-    # train_NN(network_settings)
+    network_settings = [
+        [5, 64, 'relu', 0.01],
+    ]
+    train_NN(network_settings)
