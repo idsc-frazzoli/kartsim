@@ -328,15 +328,15 @@ def generate_results(save_root_path, save_path, sim_folder):
             mae.index = mae_names
             cod.index = cod_names
             detailed_results = detailed_results.append(stability)
-            detailed_results = detailed_results.append(mse.round(2))
-            detailed_results = detailed_results.append(mae.round(2))
-            detailed_results = detailed_results.append(cod.round(2))
+            detailed_results = detailed_results.append(mse.round(5))
+            detailed_results = detailed_results.append(mae.round(5))
+            detailed_results = detailed_results.append(cod.round(5))
             detailed_results = detailed_results.transpose()
             if mode == 'open_loop':
                 for name_list in [mse_names, mae_names, cod_names]:
                     for topic in name_list[:3]:
                         detailed_results.pop(topic)
-            means = pd.DataFrame(np.mean(detailed_results), columns=['means'])
+            means = pd.DataFrame(np.mean(detailed_results), columns=['means']).round(5)
             detailed_results = detailed_results.append(means.transpose())
             detailed_results.to_csv(os.path.join(save_path, f'{name}_detailed_results.csv'))
 
