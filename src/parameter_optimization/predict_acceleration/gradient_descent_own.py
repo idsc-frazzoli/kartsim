@@ -94,7 +94,7 @@ def main():
             # for epoch in range(epochs):
             #     """Create random batches"""
             #     batch_size = 100
-            #     data_batched, no_of_training_batches = create_batches(dataframe, batch_size)
+            #     data_batched, no_of_training_batches = create_batches(features, batch_size)
 
             """Shuffle continuous batches"""
             random.shuffle(training_data_batched)

@@ -15,7 +15,7 @@ from integrate import timeIntegrators as integrator
 
 #p2.plot(np.random.normal(size=120)+10, pen=(0,0,255), name="Blue curve")
 
-#def main():
+#def evaluate():
 #___________________Connect to Matlab Session________________________
 #eng = None
 #print('Looking for shared Matlab session...\n')
