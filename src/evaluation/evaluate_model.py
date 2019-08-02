@@ -49,7 +49,7 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
                          logging)
     simulate_open_loop(vehicle_model_type, vehicle_model_name, load_path, simulation_files, save_path)
 
-    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190722-101020_hybrid_lstm_2x32_relu_reg0p1')
+    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190730-114423_hybrid_mlp_5x64_relu_reg0p01_directinput_mpcinputs')
     generate_results(save_root_path, save_path, load_path)
 
 
@@ -321,10 +321,6 @@ def generate_results(save_root_path, save_path, sim_folder):
         results = pd.DataFrame()
         for (name, mse), (name, mae), (name, cod), stability in zip(mse_list, mae_list, cod_list, stability_list):
             detailed_results = pd.DataFrame()
-            mean_mse = np.round(np.mean(np.mean(mse, axis=1)), 4)
-            mean_mae = np.round(np.mean(np.mean(mae, axis=1)), 4)
-            mean_cod = np.round(np.mean(np.mean(cod, axis=1)), 4)
-            mean_stability = np.round(np.mean(np.mean(stability, axis=1)), 4)
             mse_names = ['mse_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
             mae_names = ['mae_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
             cod_names = ['cod_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
@@ -336,17 +332,20 @@ def generate_results(save_root_path, save_path, sim_folder):
             detailed_results = detailed_results.append(mae.round(2))
             detailed_results = detailed_results.append(cod.round(2))
             detailed_results = detailed_results.transpose()
+            if mode == 'open_loop':
+                for name_list in [mse_names, mae_names, cod_names]:
+                    for topic in name_list[:3]:
+                        detailed_results.pop(topic)
             means = pd.DataFrame(np.mean(detailed_results), columns=['means'])
             detailed_results = detailed_results.append(means.transpose())
             detailed_results.to_csv(os.path.join(save_path, f'{name}_detailed_results.csv'))
-            results = results.append({'Name': name, 'mean squared error': mean_mse, 'mean absolute error': mean_mae,
-                                      'coefficient of determination': mean_cod, 'stability ratio': mean_stability, },
-                                     ignore_index=True)
-        # print(results.head())
-        results.to_csv(os.path.join(save_path, 'overall_' + mode + '_results.csv'), index=False)
+
+            means.columns = [os.path.basename(os.path.normpath(save_path))]
+            results = results.append(means.transpose())
+        results.to_csv(os.path.join(save_path, 'overall_' + mode + '_results.csv'), index=True)
 
         with open(os.path.join(save_root_path, 'model_performances_' + mode + '.csv'), 'a') as f:
-            results.to_csv(f, header=False, index=False)
+            results.to_csv(f, header=False, index=True)
 
 
 def sort_out_files(sim_files, log_files):
