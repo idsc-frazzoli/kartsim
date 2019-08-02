@@ -10,7 +10,7 @@ from simulator.model.dynamic_model_input_converter import MotorFunction, BrakeFu
 
 class DynamicVehicleMPC:
     
-    def __init__(self, model_parameters=[9*1.5,1,10,5.2*1.5,1.1,10,0.3], wheel_base=1.19, track_width=1.0, dist_cog_front_axle= 0.73, direct_input=False):
+    def __init__(self, model_parameters=[9,1,10,5.2,1.1,10,0.3], wheel_base=1.19, track_width=1.0, dist_cog_front_axle= 0.73, direct_input=False):
         self.name = "mpc_dynamic"
         self.wheel_base = wheel_base
         self.track_width = track_width # real value: 1.08
@@ -33,6 +33,9 @@ class DynamicVehicleMPC:
 
     def get_name(self):
         return self.name
+
+    def get_direct_input_mode(self):
+        return self.direct_input
 
     def get_accelerations(self, velocities=[0, 0, 0], system_inputs=[0, 0, 0, 0]):
         if not self.direct_input:

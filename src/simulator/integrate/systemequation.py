@@ -7,13 +7,19 @@ Created 09.05.19 09:31
 """
 import numpy as np
 import time
-from simulator.integrate.systeminputhelper import getInput, getInputAccel
-
+from simulator.integrate.systeminputhelper import get_input, getInputAccel
+from simulator.integrate.systeminputhelper import get_input, get_input_direct
 
 class SystemEquation:
     def __init__(self, vehicle_model):
         self.vehicle_model = vehicle_model
         self.vehicle_model_name = vehicle_model.get_name()
+        self.direct_input = vehicle_model.get_direct_input_mode()
+
+        if self.direct_input:
+            self.get_input = get_input_direct
+        else:
+            self.get_input = get_input
 
     # def initialize_vehicle_model(model_object):
     #     global vehicle_model
@@ -35,7 +41,7 @@ class SystemEquation:
 
     def odeint_dx_dt(self, X, t):
         V = X[4:7]
-        U = getInput(X[0])
+        U = self.get_input(X[0])
 
         V_dt = self.vehicle_model.get_accelerations(V, U)
 
@@ -47,7 +53,7 @@ class SystemEquation:
 
     def solveivp_dynamic_dx_dt(self, t, X):
         V = [X[4], X[5], X[6]]
-        U = getInput(X[0])
+        U = self.get_input(X[0])
         V_dt = self.vehicle_model.get_accelerations(V, U)
         # if t < 0.001:
         #     print('vtheta',X[6])
@@ -75,7 +81,7 @@ class SystemEquation:
 
     def solveivp_hybrid_lstm_dx_dt(self, t, X):
         V = [X[4], X[5], X[6]]
-        U = getInput(X[0])
+        U = self.get_input(X[0])
 
         V_dt = self.vehicle_model.get_accelerations(X[0], V, U)
 
@@ -87,7 +93,7 @@ class SystemEquation:
 
     def solveivp_kinematic_dx_dt(self, t, X):
 
-        U = getInput(X[0])
+        U = self.get_input(X[0])
 
         X_dt = self.vehicle_model.get_state_changes(X, U)
 

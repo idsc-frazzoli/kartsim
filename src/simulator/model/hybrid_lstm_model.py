@@ -16,8 +16,9 @@ from collections import deque
 
 class HybridLSTMModel:
 
-    def __init__(self, model_name='FirstTry'):
+    def __init__(self, model_name='FirstTry', direct_input=False):
         self.name = "hybrid_lstm"
+        self.direct_input = direct_input
         # Load the NN
         self.lstm = LongShortTermMemoryNetwork(model_name=model_name, predict_only=True)
         self.lstm.load_model()
@@ -36,6 +37,9 @@ class HybridLSTMModel:
 
     def get_name(self):
         return self.name
+
+    def get_direct_input_mode(self):
+        return self.direct_input
 
     def reinitialize_variables(self):
         self.time_for_next_sequence_element = self.time_step
