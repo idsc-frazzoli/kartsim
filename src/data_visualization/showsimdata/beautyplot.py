@@ -140,14 +140,14 @@ def training_data():
     random_state = 42
 
     # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel/20190625-200000_TF_filtered_vel/disturbance.pkl'
-    # dataframe = getPKL(path_data_set)
-    # dataframe.pop('time [s]')
+    # features = getPKL(path_data_set)
+    # features.pop('time [s]')
     #
     # # Split data_set into training and test set
-    # train_dataset = dataframe.sample(frac=0.8, random_state=random_state)
+    # train_dataset = features.sample(frac=0.8, random_state=random_state)
     # train_dataset = train_dataset.reset_index(drop=True)
     #
-    # test_dataset = dataframe.drop(train_dataset.index)
+    # test_dataset = features.drop(train_dataset.index)
     # test_dataset = test_dataset.reset_index(drop=True)
     #
     # train_labels_old = train_dataset[['disturbance vehicle ax local [m*s^-2]',
@@ -164,7 +164,7 @@ def training_data():
     #                               'steer position cal [n.a.]', 'brake position effective [m]',
     #                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworty_data')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
     train_features_trustworthy = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_features_trustworthy = train_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                     'steer position cal [n.a.]', 'brake position effective [m]',
@@ -202,31 +202,34 @@ def training_data():
     test_labels_high_slip = test_labels_high_slip[['disturbance vehicle ax local [m*s^-2]',
                                        'disturbance vehicle ay local [m*s^-2]',
                                        'disturbance pose atheta [rad*s^-2]']]
-    plot_this = [
-        [train_features_trustworthy, train_features_high_slip, ],
-        # [test_features_trustworthy, test_features_high_slip, ],
-    ]
 
-    i=1
-    topics = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                     'steer position cal [n.a.]', 'brake position effective [m]',
-                                     'motor torque cmd left [A_rms]',
-                                     'motor torque cmd right [A_rms]']
-    pdffilepath = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Evaluation/' + '_data_density_of_observations.pdf'
-    pdf = PdfPages(pdffilepath)
-    for topic in topics:
-        plt.figure(i)
-        for num, data_pair in enumerate(plot_this):
-            # plt.subplot(2, 1, num + 1)
-            for data in data_pair:
-                sns.distplot(data[topic])
-        plt.ylabel('density')
-        plt.legend(['fast and slow driving', 'only fast driving'])
-        i+=1
-        pdf.savefig()
-        plt.close()
+    sns.pairplot(train_features_trustworthy[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]']])
 
-    pdf.close()
+    # plot_this = [
+    #     [train_features_trustworthy, train_features_high_slip, ],
+    #     # [test_features_trustworthy, test_features_high_slip, ],
+    # ]
+    #
+    # i=1
+    # topics = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                  'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                  'motor torque cmd left [A_rms]',
+    #                                  'motor torque cmd right [A_rms]']
+    # # pdffilepath = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Evaluation/' + '_data_density_of_observations.pdf'
+    # # pdf = PdfPages(pdffilepath)
+    # for topic in topics:
+    #     plt.figure(i)
+    #     for num, data_pair in enumerate(plot_this):
+    #         # plt.subplot(2, 1, num + 1)
+    #         for data in data_pair:
+    #             sns.distplot(data[topic])
+    #     plt.ylabel('density')
+    #     plt.legend(['fast and slow driving', 'only fast driving'])
+    #     i+=1
+    #     # pdf.savefig()
+    #     # plt.close()
+    #
+    # # pdf.close()
 
 
 
@@ -237,5 +240,5 @@ if __name__ == '__main__':
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()
     else:
-        # evaluate()
+        # main()
         training_data()
