@@ -259,7 +259,6 @@ class MultiLayerPerceptron():
             return 0
 
     def predict(self, input):
-        print(input.shape)
         result = self.model.predict(x=input, verbose=0)
         return result
 
