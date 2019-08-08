@@ -10,9 +10,11 @@ import time
 from simulator.integrate.systeminputhelper import get_input, getInputAccel
 from simulator.integrate.systeminputhelper import get_input, get_input_direct
 
+
 class SystemEquation:
     def __init__(self, vehicle_model):
         self.vehicle_model = vehicle_model
+        print(vehicle_model.name)
         self.vehicle_model_name = vehicle_model.get_name()
         self.direct_input = vehicle_model.get_direct_input_mode()
 
@@ -31,7 +33,7 @@ class SystemEquation:
             return self.solveivp_dynamic_dx_dt
         elif self.vehicle_model_name in ["hybrid_lstm"]:
             return self.solveivp_hybrid_lstm_dx_dt
-        elif self.vehicle_model_name == "kinematic_vehicle_mpc":
+        elif self.vehicle_model_name == "mpc_kinematic":
             return self.solveivp_kinematic_dx_dt
         elif self.vehicle_model_name == "acceleration_reference_model":
             return self.solveivp_reference_dx_dt
@@ -55,23 +57,34 @@ class SystemEquation:
         V = [X[4], X[5], X[6]]
         U = self.get_input(X[0])
         V_dt = self.vehicle_model.get_accelerations(V, U)
-        # if t < 0.001:
-        #     print('vtheta',X[6])
-        # if t > 4:
-        #     print(t)
-        # if t < 0.5:
-        #     # print('t:{:5.4f}'.format(t))
-        # print('t:{:5.4f}, V_dt:[{:5.2f} {:5.2f} {:5.2f}], V:[{:5.4f} {:5.4f} {:5.4f}], U:[{:5.4f} {:5.4f} {:5.2f} {:5.2f}]'.format(t, V_dt[0],
-        #                                                                                       V_dt[1],
-        #                                                                                       V_dt[2],
-        #                                                                                       V[0],
-        #                                                                                       V[1],
-        #                                                                                       V[2],
-        #                                                                                       U[0],
-        #                                                                                       U[1],
-        #                                                                                       U[2],
-        #                                                                                       U[3],
-        #                                                                                       ))
+
+        # V_dt_a, V_dt_d = self.vehicle_model.get_accelerations(V, U)
+        # V_dt = V_dt_a + V_dt_d
+        # V_dt = V_dt[0]
+        # if X[0] < 1.0:
+        #     print(
+        #         't,{:5.4f}, V_dt,{:5.4f}, {:5.4f}, {:5.4f}, V,{:5.4f}, {:5.4f}, {:5.4f}, U,{:5.4f}, {:5.4f}, {:5.4f}'.format(
+        #             X[0],
+        #             V_dt[0][0],
+        #             V_dt[1][0],
+        #             V_dt[2][0],
+        #             # V_dt[0],
+        #             # V_dt[1],
+        #             # V_dt[2],
+        #             V[0],
+        #             V[1],
+        #             V[2],
+        #             U[0],
+        #             U[1],
+        #             U[2],
+        #             # U[3],
+        #             # V_dt_d[0],
+        #             # V_dt_d[1],
+        #             # V_dt_d[2],
+        #             # V_dt_a[0][0],
+        #             # V_dt_a[0][1],
+        #             # V_dt_a[0][2],
+        #         ))
 
         c, s = np.cos(float(X[3])), np.sin(float(X[3]))
         R = np.array(((c, -s), (s, c)))
