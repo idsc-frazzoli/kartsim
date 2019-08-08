@@ -107,6 +107,9 @@ def execute_simulation(conn, _wait_for_real_time, sim_time, sim_time_increment, 
                        validation, reset_interval, preprodata):
     firstStep = int(round(server_return_interval / data_time_step)) + 1
 
+    # preprodata = preprodata.iloc[180:]
+    # preprodata = preprodata.reset_index()
+
     U = np.array((preprodata['time [s]'][0:firstStep].values,
                   preprodata['turning angle [n.a]'][0:firstStep].values,
                   preprodata['acceleration rear axle [m*s^-2]'][0:firstStep].values,
