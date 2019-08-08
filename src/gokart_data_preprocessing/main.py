@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a name for the data set
-    dataset_name = 'trustworthy_mirrored_mpc'
+    dataset_name = 'trustworthy_paramopt_data'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -67,7 +67,7 @@ def main():
     sampling_time_period = 0.1  # [s]
 
     # Calculate disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    mlp_data_set = True #needs filter_data and sample_data to be True
+    mlp_data_set = False #needs filter_data and sample_data to be True
     # Choose portion of test data
     mlp_test_portion = 0.2
 
@@ -87,8 +87,7 @@ def main():
     # ______________^^^_________________
     # Load data tags
     data_tagging = TagRawData(root_path_raw_data)
-
-    if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and not redo_data_tagging:
+    if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and redo_data_tagging:
         data_tagging = TagRawData(root_path_raw_data)
         data_tagging.tag_log_files(overwrite=True)
         data_tagging.save_prepro_params()
@@ -109,10 +108,10 @@ def main():
     if sample_data:
         print('Sampling Data...')
         path_sampled_data = sample_from_logdata(sampling_time_period, path_preprocessed_dataset,
-                                                dataset_name, merge_data=False)
+                                                dataset_name, merge_data=True)
     if mlp_data_set:
         if path_sampled_data is None:
-            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190717-211005_high_slip_angles/'
+            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190806-110941_trustworthy_mirrored_mpc_newsplit/'
 
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=mlp_test_portion,

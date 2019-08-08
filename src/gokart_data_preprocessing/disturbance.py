@@ -26,7 +26,7 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
     else:
         save_path_data_set = os.path.join(directories['root'], 'Data', 'MLPDatasets')
 
-    default_sim = None
+    default_data_set = None
     if load_path_data == None:
         path_preprocessed_data = os.path.join(directories['root'], 'Data', 'Sampled')
         folders_preprocessed_data = getDirectories(path_preprocessed_data)
@@ -34,10 +34,10 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
         folders_preprocessed_data.reverse()
         for str in folders_preprocessed_data:
             if str.endswith(data_set_name):
-                default_sim = str
+                default_data_set = str
                 break
-        if default_sim is not None:
-            load_path_data = path_preprocessed_data + '/' + default_sim
+        if default_data_set is not None:
+            load_path_data = path_preprocessed_data + '/' + default_data_set
         else:
             raise FileNotFoundError(
                 f'No data with name {data_set_name} was found in path_preprocessed_data!\n Please specify.')
@@ -56,17 +56,20 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
     # vehicle_model = KinematicVehicleMPC()
 
     pkl_files = []
+    train_files = []
+    test_files = []
     for r, d, f in os.walk(load_path_data):
         for file in f:
             if '.pkl' in file:
-                pkl_files.append([os.path.join(r, file), file])
+                # pkl_files.append([os.path.join(r, file), file])
+                if int(file[:8]) < 20190608:
+                    train_files.append([os.path.join(r, file), file])
+                else:
+                    test_files.append([os.path.join(r, file), file])
 
-    random.seed(random_seed)
-    random.shuffle(pkl_files)
-
-    # Split logfiles into train and test set
-    train_files = pkl_files[:int(len(pkl_files) * (1 - test_portion))]
-    test_files = pkl_files[int(len(pkl_files) * (1 - test_portion)):]
+    # random.seed(random_seed)
+    # random.shuffle(train_files)
+    # random.shuffle(test_files)
 
     # Save the files in seperate folders
     save_folder_path = create_folder_with_time(save_path_data_set, tag=data_set_name)
@@ -247,4 +250,4 @@ def transform_inputs(dataframe):
 
 
 if __name__ == '__main__':
-    calculate_disturbance(data_set_name='test', sequential=True)
+    calculate_disturbance(data_set_name='trustworthy_mirrored', sequential=False)
