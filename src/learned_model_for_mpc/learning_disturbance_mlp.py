@@ -45,18 +45,20 @@ def main():
 
     network_settings = [
         # [2, 32, 'softplus', 0.0],
-        [2, 32, 'softplus', 0.0005],
-        [2, 32, 'softplus', 0.001],
-        [2, 32, 'softplus', 0.005],
-        [2, 32, 'softplus', 0.008],
-        [2, 32, 'softplus', 0.01],
-        [2, 32, 'softplus', 0.02],
+        [5, 64, 'relu', 0.01],
         [2, 32, 'softplus', 0.05],
     ]
-
-    chunks = [network_settings[i::8] for i in range(8)]
-    pool = Pool(processes=8)
-    pool.map(train_NN, chunks)
+    if len(network_settings) >= 8:
+        chunks = [network_settings[i::8] for i in range(8)]
+        pool = Pool(processes=8)
+        pool.map(train_NN, chunks)
+    elif len(network_settings) > 1:
+        no_settings = len(network_settings)
+        chunks = [network_settings[i::no_settings] for i in range(no_settings)]
+        pool = Pool(processes=no_settings)
+        pool.map(train_NN, chunks)
+    else:
+        train_NN(network_settings)
 
     get_loss_pictures()
 
@@ -64,7 +66,7 @@ def main():
 def train_NN(network_settings):
     random_state = 45
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190729-173735_trustworthy_mirrored_mpc')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190806-111533_trustworthy_mirrored_mpc_newsplit')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                      'turning angle [n.a]',
@@ -87,7 +89,7 @@ def train_NN(network_settings):
 
     i = 1
     for l, npl, af, reg in network_settings:
-        name = '{}x{}_{}_reg{}_directinput'.format(l, npl, af, str(reg).replace('.', 'p'))
+        name = '{}x{}_{}_reg{}_directinput_newsplit'.format(l, npl, af, str(reg).replace('.', 'p'))
         print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
         mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
                                    model_name=name)
