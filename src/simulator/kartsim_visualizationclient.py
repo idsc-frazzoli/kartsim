@@ -49,17 +49,17 @@ p11 = win.addPlot(title="xy")
 p11.showGrid(x = True, y = True)
 p11.setAspectLocked(lock=True, ratio=1)
 
-    
-p2 = win.addPlot(title="theta")
-
-win.nextRow()
-
-p3 = win.addPlot(title="vx")
-
-p4 = win.addPlot(title="vy")
-
-p5 = win.addPlot(title="vrot")
-
+#
+# p2 = win.addPlot(title="theta")
+#
+# win.nextRow()
+#
+# p3 = win.addPlot(title="vx")
+#
+# p4 = win.addPlot(title="vy")
+#
+# p5 = win.addPlot(title="vrot")
+#
 # win.nextRow()
 #
 # p6 = win.addPlot(title="slip angle")
@@ -161,17 +161,17 @@ def updatePlot(X1):
     p11.clear()
     p11.plot(x,y, pen=(255,255,255))
     
-    p2.clear()
-    p2.plot(simTime,theta, pen=(255,255,255))
-
-    p3.clear()
-    p3.plot(simTime,vx, pen=(255,255,255))
-
-    p4.clear()
-    p4.plot(simTime,vy, pen=(255,255,255))
-
-    p5.clear()
-    p5.plot(simTime,vrot, pen=(255,255,255))
+    # p2.clear()
+    # p2.plot(simTime,theta, pen=(255,255,255))
+    #
+    # p3.clear()
+    # p3.plot(simTime,vx, pen=(255,255,255))
+    #
+    # p4.clear()
+    # p4.plot(simTime,vy, pen=(255,255,255))
+    #
+    # p5.clear()
+    # p5.plot(simTime,vrot, pen=(255,255,255))
 
     # p6.clear()
     # p6.plot(simTime,np.arctan2(vy,vx), pen=(255,255,255))
