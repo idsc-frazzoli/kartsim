@@ -12,9 +12,9 @@ from simulator.model.dynamic_model_input_converter import MotorFunction, BrakeFu
 class KinematicVehicleMPC:
 
     def __init__(self, wheel_base=1.19):
-        self.name = "kinematic_vehicle_mpc"
+        self.name = "mpc_kinematic"
         self.wheel_base = wheel_base
-
+        self.direct_input = True
         self.motor_function = MotorFunction().get_vectorized_motor_function()
         self.brake_function = BrakeFunction().get_vectorized_brake_function()
         self.steering_function = SteeringFunction().get_vecortized_steering_function()
@@ -22,11 +22,13 @@ class KinematicVehicleMPC:
     def get_name(self):
         return self.name
 
+    def get_direct_input_mode(self):
+        return self.direct_input
+
     def get_state_changes(self, X, U):
         wheel_base = 1.19 # length of vehicle
-
-        P = [X[1][0], X[2][0], X[3][0]]
-        V = [X[4][0], X[5][0], X[6][0]]
+        P = [X[1], X[2], X[3]]
+        V = [X[4], 0, X[6]]
         # VELX, VELY, VELROTZ = V
         BETA, AB, TV = U
 
