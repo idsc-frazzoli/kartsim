@@ -8,7 +8,7 @@ Created 02.07.19 11:10
 from matplotlib.backends.backend_pdf import PdfPages
 
 import config
-from data_visualization.data_io import getPKL
+from data_visualization.data_io import getPKL, dataframe_from_csv
 from gokart_data_preprocessing.gokart_sim_data import GokartSimData
 import os
 import matplotlib.pyplot as plt
@@ -231,7 +231,40 @@ def training_data():
     #
     # # pdf.close()
 
+def unstable2():
+    path_data_set = '/home/mvb/0_ETH/01_MasterThesis/SimData/lookatlogs'
+    file_name = '20190610T132446_00_sampledlogdata.pkl'
+    sim_data = GokartSimData(file_path=os.path.join(path_data_set, file_name))
+    vx = sim_data.get_data('vehicle vx [m*s^-1]')
 
+def unstable1():
+    path = '/home/mvb/Desktop'
+    # file_list = ['mpc_dynamic_firstsecondofsim.csv', '2x32_softplus_firstsecondofsim.csv', '5x64_relu_firstsecondofsim.csv']
+    file_list = ['mpc_dynamic_firstsecondofsim_1.csv', '2x32_softplus_firstsecondofsim_1.csv', '5x64_relu_firstsecondofsim_1.csv']
+
+    for i, file in enumerate(file_list):
+        plt.figure(i, figsize=(8, 4))
+        path_mpc = os.path.join(path, file)
+        dataFrame = dataframe_from_csv(path_mpc)
+        print(dataFrame.head())
+        t = dataFrame.iloc[:, 1]
+        ax = dataFrame.iloc[:, 3]
+        ay = dataFrame.iloc[:, 4]
+        atheta = dataFrame.iloc[:, 5]
+        vx = dataFrame.iloc[:, 7]
+        vy = dataFrame.iloc[:, 8]
+        vtheta = dataFrame.iloc[:, 9]
+        # plt.plot(t,ax)
+        # plt.plot(t,ay)
+        # plt.plot(t,atheta)
+        plt.plot(t, vx)
+        plt.plot(t, vy)
+        # plt.plot(t, vtheta)
+        plt.xlim(0,0.1)
+        plt.ylim(-0.02,0.04)
+        plt.xlabel('time [s]')
+        plt.ylabel('velocity [m/s]')
+        plt.legend(['vx','vy',])
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
@@ -241,4 +274,5 @@ if __name__ == '__main__':
             QtGui.QApplication.instance().exec_()
     else:
         # main()
-        training_data()
+        # training_data()
+        unstable1()
