@@ -28,10 +28,8 @@ class DataDrivenVehicleModel:
         self.weights, self.biases = self.mlp.get_weights()
 
         if 'relu' in model_name:
-            print('relu')
             self.disturbance = self.solve_NN_relu
         elif 'softplus' in model_name:
-            print('softplus')
             self.disturbance = self.solve_NN_softplus
 
         # Load parameters for normalizing inputs
@@ -61,9 +59,7 @@ class DataDrivenVehicleModel:
 
             accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
             # print(f'disturbance {disturbance}   acceleration {accelerations}')
-            # print('accelerations',accelerations)
             result = np.array(accelerations).transpose() + disturbance
-
             return result[0]
         else:
             input = np.hstack((initial_velocities,system_inputs))
