@@ -25,7 +25,7 @@ import sys
 
 def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle_model_name='', ):
     signal.signal(signal.SIGINT, signal_handler)
-    visualization = False
+    visualization = True
     logging = True
     evaluation_name = vehicle_model_type + '_' + vehicle_model_name + '_mpcinputs'
     # evaluation_name = 'test'
@@ -135,17 +135,34 @@ def simulate_closed_loop(vehicle_model_type, vehicle_model_name, load_path, simu
     FNULL = open(os.devnull, 'w')
 
     save_path = os.path.join(save_path, 'closed_loop_simulation_files')
-    chunks = [simulation_files[i::8] for i in range(8)]
 
-    argument_packages = []
-    for i, chunk in enumerate(chunks):
-        port = 6000 + 100 * i
+    if len(simulation_files) >= 8:
+        chunks = [simulation_files[i::8] for i in range(8)]
+        argument_packages = []
+        for i, chunk in enumerate(chunks):
+            port = 6000 + 100 * i
+            port = str(port)
+            argument_packages.append([port, load_path, chunk, save_path, visualization, logging, vehicle_model_type,
+                                      vehicle_model_name])
+        pool = Pool(processes=8)
+        pool.map(run_simulation, argument_packages)
+    elif len(simulation_files) > 1:
+        no_settings = len(simulation_files)
+        chunks = [simulation_files[i::no_settings] for i in range(no_settings)]
+        argument_packages = []
+        for i, chunk in enumerate(chunks):
+            port = 6000 + 100 * i
+            port = str(port)
+            argument_packages.append([port, load_path, chunk, save_path, visualization, logging, vehicle_model_type,
+                                      vehicle_model_name])
+        pool = Pool(processes=no_settings)
+        pool.map(run_simulation, argument_packages)
+    else:
+        port = 6000
         port = str(port)
-        argument_packages.append([port, load_path, chunk, save_path, visualization, logging, vehicle_model_type,
-                                  vehicle_model_name])
-    pool = Pool(processes=8)
-    pool.map(run_simulation, argument_packages)
-
+        argument = [port, load_path, simulation_files, save_path, visualization, logging, vehicle_model_type,
+                                      vehicle_model_name]
+        run_simulation(argument)
 
 def run_simulation(arguments):
     port, load_path, simulation_files, save_path, visualization, logging, vehicle_model_type, vehicle_model_name = arguments
