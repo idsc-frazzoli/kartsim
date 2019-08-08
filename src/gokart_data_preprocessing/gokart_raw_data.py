@@ -161,7 +161,7 @@ class GokartRawData:
             elif 'rimo.get' in name:
                 groups.append(['motor rot rate left [rad*s^-1]', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['motor rot rate right [rad*s^-1]', 0, 9, name, True, 0, 0, 0, 1])
-            elif 'vmu931' in name:
+            elif 'vmu931.ag.vehicle' in name:
                 groups.append(['vmu ax atvmu (forward) [m*s^-2]', 0, 2, name, True, 70, 700, 0, 1])
                 groups.append(['vmu ay atvmu (left)[m*s^-2]', 0, 3, name, True, 70, 700, 0, 1])
                 groups.append(['vmu vtheta [rad*s^-1]', 0, 4, name, True, 5, 50, 0, 1])
