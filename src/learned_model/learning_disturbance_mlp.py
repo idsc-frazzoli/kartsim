@@ -44,14 +44,22 @@ def main():
     # print(i,network_settings)
 
     network_settings = [
-        [2, 32, 'relu', 0.0],
-        [2, 32, 'relu', 0.0005],
-        [2, 32, 'relu', 0.001],
-        [2, 32, 'relu', 0.005],
-        [2, 32, 'relu', 0.008],
-        [2, 32, 'relu', 0.01],
-        [2, 32, 'relu', 0.02],
-        [2, 32, 'relu', 0.05],
+        [1, 32, 'softplus', 0.001],
+        [1, 32, 'softplus', 0.01],
+        [1, 32, 'softplus', 0.05],
+        [1, 32, 'softplus', 0.1],
+        [2, 32, 'softplus', 0.001],
+        [2, 32, 'softplus', 0.01],
+        [2, 32, 'softplus', 0.05],
+        [2, 32, 'softplus', 0.1],
+        [1, 32, 'tanh', 0.001],
+        [1, 32, 'tanh', 0.01],
+        [1, 32, 'tanh', 0.05],
+        [1, 32, 'tanh', 0.1],
+        [2, 32, 'tanh', 0.001],
+        [2, 32, 'tanh', 0.01],
+        [2, 32, 'tanh', 0.05],
+        [2, 32, 'tanh', 0.1],
     ]
 
     chunks = [network_settings[i::8] for i in range(8)]
@@ -141,9 +149,9 @@ def get_loss_pictures():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # get_loss_pictures()
-    network_settings = [
-        [5, 64, 'relu', 0.01],
-    ]
-    train_NN(network_settings)
+    # network_settings = [
+    #     [5, 64, 'relu', 0.01],
+    # ]
+    # train_NN(network_settings)
