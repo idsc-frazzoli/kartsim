@@ -51,11 +51,12 @@ class DataDrivenVehicleModel:
 
     def get_accelerations(self, initial_velocities=[0, 0, 0], system_inputs=[0, 0, 0, 0]):
         if isinstance(initial_velocities, list):
-            input = np.array([initial_velocities+system_inputs])
+            features = np.array([initial_velocities+system_inputs])
 
-            normed_input = self.normalize_input(input)
+            symmetric_features = self.mlp.symmetry_dim_reduction(features)
+            normalized_features = self.normalize_input(symmetric_features)
 
-            disturbance = self.disturbance(normed_input[0])
+            disturbance = self.disturbance(normalized_features[0])
 
             accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
             # print(f'disturbance {disturbance}   acceleration {accelerations}')
@@ -64,9 +65,7 @@ class DataDrivenVehicleModel:
         else:
             input = np.hstack((initial_velocities,system_inputs))
 
-            normed_input = self.normalize_input(input)
-
-            disturbance = self.mlp.predict(normed_input)
+            disturbance = self.mlp.predict(input)
 
             accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
             # print('disturbance', disturbance)
