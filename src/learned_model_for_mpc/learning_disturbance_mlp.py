@@ -90,7 +90,7 @@ def train_NN(network_settings):
     i = 1
     for l, npl, af, reg in network_settings:
         name = '{}x{}_{}_reg{}_directinput_newsplit'.format(l, npl, af, str(reg).replace('.', 'p'))
-        print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
+        print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
         mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
                                    model_name=name)
 
