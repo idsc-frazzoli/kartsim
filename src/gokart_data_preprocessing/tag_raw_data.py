@@ -122,7 +122,10 @@ class TagRawData:
             # ___pose quality
             bad_pose_qual_count = sum(i < 0.5 for i in kartData['pose quality [n.a.]']['data'][1])
             bad_pose_qual_ratio = bad_pose_qual_count/len(kartData['pose quality [n.a.]']['data'][1])
-            if bad_pose_qual_count > 100 or bad_pose_qual_ratio > 0.25:
+            if np.count_nonzero(np.isnan(kartData['pose quality [n.a.]']['data'])) != 0:
+                statusInfo = statusInfo + 'pose quality data contains Nan values,  '
+                self.data_tags[testDay][logNr]['pose quality'] = 0
+            elif bad_pose_qual_count > 100 or bad_pose_qual_ratio > 0.25:
                 self.data_tags[testDay][logNr]['pose quality'] = 0
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 statusInfo = statusInfo + 'pose quality insufficient,  '
@@ -151,7 +154,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['reverse'] = 0
 
             # ___vehicle ax local
-            if np.max(kartData['vehicle ax local [m*s^-2]']['data'][1]) > 2.5 or np.min(
+            if np.count_nonzero(np.isnan(kartData['vehicle ax local [m*s^-2]']['data'])) != 0:
+                statusInfo = statusInfo + 'vehicle ax local data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 0
+            elif np.max(kartData['vehicle ax local [m*s^-2]']['data'][1]) > 2.5 or np.min(
                     kartData['vehicle ax local [m*s^-2]']['data'][1]) < -14.0:
                 self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 0
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
@@ -160,7 +166,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['vehicle ax local [m*s^-2]'] = 1
 
             # ___vehicle ay local
-            if np.max(kartData['vehicle ay local [m*s^-2]']['data'][1]) > 9.0 or np.min(
+            if np.count_nonzero(np.isnan(kartData['vehicle ay local [m*s^-2]']['data'])) != 0:
+                statusInfo = statusInfo + 'vehicle ay local data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 0
+            elif np.max(kartData['vehicle ay local [m*s^-2]']['data'][1]) > 9.0 or np.min(
                     kartData['vehicle ay local [m*s^-2]']['data'][1]) < -9.0:
                 self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 0
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
@@ -169,7 +178,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['vehicle ay local [m*s^-2]'] = 1
 
             # ___pose atheta
-            if np.max(kartData['pose atheta [rad*s^-2]']['data'][1]) > 12.0 or np.min(
+            if np.count_nonzero(np.isnan(kartData['pose atheta [rad*s^-2]']['data'])) != 0:
+                statusInfo = statusInfo + 'pose atheta data contains Nan values,  '
+                self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 0
+            elif np.max(kartData['pose atheta [rad*s^-2]']['data'][1]) > 12.0 or np.min(
                     kartData['pose atheta [rad*s^-2]']['data'][1]) < -12.0:
                 self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 0
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
@@ -178,7 +190,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['pose atheta [rad*s^-2]'] = 1
 
             #___x velocity
-            if np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12.0:
+            if np.count_nonzero(np.isnan(kartData['vehicle vx [m*s^-1]']['data'])) != 0:
+                statusInfo = statusInfo + 'vehicle vx data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 0
+            elif np.max(kartData['vehicle vx [m*s^-1]']['data'][1]) > 12.0:
                 statusInfo = statusInfo + 'unrealistic vehicle vx,  '
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
                 self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 0
@@ -186,7 +201,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['vehicle vx [m*s^-1]'] = 1
 
             # ___y velocity
-            if np.max(kartData['vehicle vy [m*s^-1]']['data'][1]) > 12 or np.min(
+            if np.count_nonzero(np.isnan(kartData['vehicle vy [m*s^-1]']['data'])) != 0:
+                statusInfo = statusInfo + 'vehicle vy data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 0
+            elif np.max(kartData['vehicle vy [m*s^-1]']['data'][1]) > 12 or np.min(
                     kartData['vehicle vy [m*s^-1]']['data'][1]) < -12:
                 statusInfo = statusInfo + 'unrealistic vehicle vy,  '
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
@@ -195,7 +213,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['vehicle vy [m*s^-1]'] = 1
 
             # ___theta velocity
-            if np.max(kartData['pose vtheta [rad*s^-1]']['data'][1]) > 4.0 or np.min(
+            if np.count_nonzero(np.isnan(kartData['pose vtheta [rad*s^-1]']['data'])) != 0:
+                statusInfo = statusInfo + 'pose vtheta data contains Nan values,  '
+                self.data_tags[testDay][logNr]['pose vtheta [rad*s^-1]'] = 0
+            elif np.max(kartData['pose vtheta [rad*s^-1]']['data'][1]) > 4.0 or np.min(
                     kartData['pose vtheta [rad*s^-1]']['data'][1]) < -4.0:
                 statusInfo = statusInfo + 'unrealistic pose vtheta,  '
                 self.data_tags[testDay][logNr]['trustworthy data'] = 0
@@ -205,7 +226,10 @@ class TagRawData:
 
             # ___steering
             lenSteerCmd = len(kartData['steer torque cmd [n.a.]']['data'][1])
-            if lenSteerCmd == 1:
+            if np.count_nonzero(np.isnan(kartData['steer torque cmd [n.a.]']['data'])) != 0:
+                statusInfo = statusInfo + 'steer torque cmd data contains Nan values,  '
+                self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
+            elif lenSteerCmd == 1:
                 statusInfo = statusInfo + 'steering cmd data missing,  '
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 0
             elif kartData['steer torque cmd [n.a.]']['data'][1][int(lenSteerCmd / 10):int(lenSteerCmd / 10 * 9)].count(
@@ -222,7 +246,10 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['steer torque cmd [n.a.]'] = 1
 
             lenSteerPos = len(kartData['steer position cal [n.a.]']['data'][1])
-            if lenSteerPos == 1:
+            if np.count_nonzero(np.isnan(kartData['steer position cal [n.a.]']['data'])) != 0:
+                statusInfo = statusInfo + 'steering pos cal data contains Nan values,  '
+                self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 0
+            elif lenSteerPos == 1:
                 statusInfo = statusInfo + 'steering pos cal data missing,  '
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 0
             elif kartData['steer position cal [n.a.]']['data'][1][
@@ -240,14 +267,20 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['steer position cal [n.a.]'] = 1
 
             # ___brake
-            if np.max(kartData['brake position cmd [m]']['data'][1]) < 0.025 and np.mean(
+            if np.count_nonzero(np.isnan(kartData['brake position cmd [m]']['data'])) != 0:
+                statusInfo = statusInfo + 'brake position cmd data contains Nan values,  '
+                self.data_tags[testDay][logNr]['brake position cmd [m]'] = 0
+            elif np.max(kartData['brake position cmd [m]']['data'][1]) < 0.025 and np.mean(
                     kartData['brake position cmd [m]']['data'][1]) < 0.004:
                 statusInfo = statusInfo + 'brake position cmd [m] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['brake position cmd [m]'] = 0
             else:
                 self.data_tags[testDay][logNr]['brake position cmd [m]'] = 1
 
-            if np.max(kartData['brake position effective [m]']['data'][1]) < 0.025 and np.mean(
+            if np.count_nonzero(np.isnan(kartData['brake position effective [m]']['data'])) != 0:
+                statusInfo = statusInfo + 'brake position effective data contains Nan values,  '
+                self.data_tags[testDay][logNr]['brake position effective [m]'] = 0
+            elif np.max(kartData['brake position effective [m]']['data'][1]) < 0.025 and np.mean(
                     kartData['brake position effective [m]']['data'][1]) < 0.004:
                 statusInfo = statusInfo + 'brake position effective [m] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['brake position effective [m]'] = 0
@@ -255,21 +288,30 @@ class TagRawData:
                 self.data_tags[testDay][logNr]['brake position effective [m]'] = 1
 
             # ___VMU
-            if np.abs(np.mean(kartData['vmu ax [m*s^-2]']['data'][1])) < 0.01 and np.std(
+            if np.count_nonzero(np.isnan(kartData['vmu ax [m*s^-2]']['data'])) != 0:
+                statusInfo = statusInfo + 'vmu ax data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vmu ax [m*s^-2]'] = 0
+            elif np.abs(np.mean(kartData['vmu ax [m*s^-2]']['data'][1])) < 0.01 and np.std(
                     kartData['vmu ax [m*s^-2]']['data'][1]) < 0.01:
                 statusInfo = statusInfo + 'vmu ax [m*s^-2] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['vmu ax [m*s^-2]'] = 0
             else:
                 self.data_tags[testDay][logNr]['vmu ax [m*s^-2]'] = 1
 
-            if np.abs(np.mean(kartData['vmu ay [m*s^-2]']['data'][1])) < 0.01 and np.std(
+            if np.count_nonzero(np.isnan(kartData['vmu ay [m*s^-2]']['data'])) != 0:
+                statusInfo = statusInfo + 'vmu ay data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vmu ay [m*s^-2]'] = 0
+            elif np.abs(np.mean(kartData['vmu ay [m*s^-2]']['data'][1])) < 0.01 and np.std(
                     kartData['vmu ay [m*s^-2]']['data'][1]) < 0.05:
                 statusInfo = statusInfo + 'vmu ay [m*s^-2] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['vmu ay [m*s^-2]'] = 0
             else:
                 self.data_tags[testDay][logNr]['vmu ay [m*s^-2]'] = 1
 
-            if np.abs(np.mean(kartData['vmu vtheta [rad*s^-1]']['data'][1])) < 0.01 and np.std(
+            if np.count_nonzero(np.isnan(kartData['vmu vtheta [rad*s^-1]']['data'])) != 0:
+                statusInfo = statusInfo + 'vmu vtheta data contains Nan values,  '
+                self.data_tags[testDay][logNr]['vmu vtheta [rad*s^-1]'] = 0
+            elif np.abs(np.mean(kartData['vmu vtheta [rad*s^-1]']['data'][1])) < 0.01 and np.std(
                     kartData['vmu vtheta [rad*s^-1]']['data'][1]) < 0.05:
                 statusInfo = statusInfo + 'vmu vtheta [rad*s^-1] data missing or insufficient,  '
                 self.data_tags[testDay][logNr]['vmu vtheta [rad*s^-1]'] = 0
