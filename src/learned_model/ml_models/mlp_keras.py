@@ -305,16 +305,24 @@ class MultiLayerPerceptron():
         return (features - self.train_stats['mean']) / self.train_stats['std']
 
     def symmetry_dim_reduction(self, df_features):
-        features = df_features.copy()
-        steer_less_zero = features['steer position cal [n.a.]'] < 0
-        mirror_vel_steer = steer_less_zero * -2 + 1
-        features[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']] = features[
-            ['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']].mul(mirror_vel_steer,
-                                                                                                axis=0)
-        features.loc[steer_less_zero, ['motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] = \
-        features.loc[
-            steer_less_zero, ['motor torque cmd right [A_rms]', 'motor torque cmd left [A_rms]']].values
-        return features
+        if isinstance(df_features, np.ndarray):
+            if df_features[0, 3] > 0:
+                features = df_features[0, 0:5] * np.array([[1, -1, -1, -1, 1]])
+                features = np.hstack((features, np.array([[df_features[0][-1], df_features[0][-2]]])))
+                return features
+            else:
+                return df_features
+        else:
+            features = df_features.copy()
+            steer_less_zero = features['steer position cal [n.a.]'] < 0
+            mirror_vel_steer = steer_less_zero * -2 + 1
+            features[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']] = features[
+                ['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']].mul(mirror_vel_steer,
+                                                                                                    axis=0)
+            features.loc[steer_less_zero, ['motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] = \
+                features.loc[
+                    steer_less_zero, ['motor torque cmd right [A_rms]', 'motor torque cmd left [A_rms]']].values
+            return features
 
     def mirror_states(self, features):
         pass
