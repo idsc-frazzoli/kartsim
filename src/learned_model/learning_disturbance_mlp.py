@@ -44,36 +44,44 @@ def main():
     # print(i,network_settings)
 
     network_settings = [
-        [1, 32, 'softplus', 0.001],
-        [1, 32, 'softplus', 0.01],
-        [1, 32, 'softplus', 0.05],
-        [1, 32, 'softplus', 0.1],
-        [2, 32, 'softplus', 0.001],
-        [2, 32, 'softplus', 0.01],
-        [2, 32, 'softplus', 0.05],
-        [2, 32, 'softplus', 0.1],
-        [1, 32, 'tanh', 0.001],
-        [1, 32, 'tanh', 0.01],
-        [1, 32, 'tanh', 0.05],
-        [1, 32, 'tanh', 0.1],
-        [2, 32, 'tanh', 0.001],
-        [2, 32, 'tanh', 0.01],
-        [2, 32, 'tanh', 0.05],
-        [2, 32, 'tanh', 0.1],
+        # [1, 32, 'softplus', 0.001],
+        # [1, 32, 'softplus', 0.01],
+        # [1, 32, 'softplus', 0.05],
+        # [1, 32, 'softplus', 0.1],
+        # [2, 32, 'softplus', 0.001],
+        # [2, 32, 'softplus', 0.01],
+        [2, 32, 'softplus', 0.0001],
+        # [2, 32, 'softplus', 0.1],
+        # [1, 32, 'tanh', 0.001],
+        # [1, 32, 'tanh', 0.01],
+        # [1, 32, 'tanh', 0.05],
+        # [1, 32, 'tanh', 0.1],
+        # [2, 32, 'tanh', 0.001],
+        # [2, 32, 'tanh', 0.01],
+        # [2, 32, 'tanh', 0.05],
+        # [2, 32, 'tanh', 0.1],
     ]
 
-    chunks = [network_settings[i::8] for i in range(8)]
-    pool = Pool(processes=8)
+    if len(network_settings) >= 5:
+        chunks = [network_settings[i::5] for i in range(5)]
+        pool = Pool(processes=5)
+        pool.map(train_NN, chunks)
+    elif len(network_settings) > 1:
+        no_settings = len(network_settings)
+        chunks = [network_settings[i::no_settings] for i in range(no_settings)]
+        pool = Pool(processes=no_settings)
+        pool.map(train_NN, chunks)
+    else:
+        train_NN(network_settings)
 
-    pool.map(train_NN, chunks)
-
-    get_loss_pictures()
+    # get_loss_pictures()
 
 
 def train_NN(network_settings):
     random_state = 45
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190729-162122_trustworthy_mirrored')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190813-141626_trustworthy_bigdata')
+    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                     'steer position cal [n.a.]', 'brake position effective [m]',
@@ -99,8 +107,8 @@ def train_NN(network_settings):
             name = '{}x{}_{}_reg{}_m'.format(l, npl, af, str(reg).replace('.', 'p'))
         else:
             name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
-        print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
-        mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
+        print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
+        mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
                                    model_name=name)
 
         # mlp.load_model()
