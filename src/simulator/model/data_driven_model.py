@@ -53,8 +53,9 @@ class DataDrivenVehicleModel:
         if isinstance(initial_velocities, list):
             features = np.array([initial_velocities+system_inputs])
 
-            symmetric_features = self.mlp.symmetry_dim_reduction(features)
-            normalized_features = self.normalize_input(symmetric_features)
+            if 'sym' in self.model_name:
+                features = self.mlp.symmetry_dim_reduction(features)
+            normalized_features = self.normalize_input(features)
 
             disturbance = self.disturbance(normalized_features[0])
 
