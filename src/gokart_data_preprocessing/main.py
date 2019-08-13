@@ -88,7 +88,7 @@ def main():
     # Load data tags
     data_tagging = TagRawData(root_path_raw_data)
 
-    if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and not redo_data_tagging:
+    if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and redo_data_tagging:
         data_tagging = TagRawData(root_path_raw_data)
         data_tagging.tag_log_files(overwrite=True)
         data_tagging.save_prepro_params()
