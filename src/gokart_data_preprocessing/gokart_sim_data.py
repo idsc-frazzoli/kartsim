@@ -25,7 +25,7 @@ class GokartSimData():
             try:
                 return self.kartData[name]['data']
             except:
-                raise ('Invalid key. No data found under this name.')
+                raise ('Invalid key. No data found under this model_type.')
 
     def load_sim_data(self):
         if self.file_name.endswith('.pkl'):
@@ -58,7 +58,7 @@ class GokartSimData():
                             self.kartData[topic]['data'] = [dataFrame[timeTopic].values, dataFrame[topic].values]
                             self.kartData[topic]['info'] = [1, 0, 0, 1]
                 else:
-                    print('No column name called \'time\' or \'Time\' found in dataset.')
+                    print('No column model_type called \'time\' or \'Time\' found in dataset.')
                     raise ValueError
             except:
                 print('EmptyDataError: could not read data from file ', self.file_name)

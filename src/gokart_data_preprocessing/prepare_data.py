@@ -45,7 +45,7 @@ def prepare_dataset(pathRootData, data_tags, required_data_list, start_from=None
                 try:
                     filtered_required_data[name] = filtered_data.get_data(name)
                 except:
-                    raise KeyError('No data with name', name, 'found in filtered_data.')
+                    raise KeyError('No data with model_type', name, 'found in filtered_data.')
 
             filtered_kart_data[logNr] = filtered_required_data
 

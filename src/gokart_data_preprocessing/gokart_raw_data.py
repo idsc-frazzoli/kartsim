@@ -35,7 +35,7 @@ class GokartRawData:
             try:
                 return self.kartData[name]['data']
             except:
-                raise ('Invalid key. No data found under this name.')
+                raise ('Invalid key. No data found under this model_type.')
 
     def set_data(self,name, x=[], y=[]):
         if len(list(x)) > 0 and len(list(y)) > 0:
@@ -60,7 +60,7 @@ class GokartRawData:
         elif attribute == 'width':
             index = 2
         else:
-            raise ValueError('Attribute name not found. Choose from ["sigma","width"]')
+            raise ValueError('Attribute model_type not found. Choose from ["sigma","width"]')
 
         return self.kartData[data_name]['info'][index]
 
