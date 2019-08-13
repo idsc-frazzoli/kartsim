@@ -114,16 +114,15 @@ def main():
                                                 dataset_name, merge_data=False)
     if mlp_data_set:
         if path_sampled_data is None:
-            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190717-211005_high_slip_angles/'
-
+            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181004_trustworthy_bigdata'
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
-        calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=mlp_test_portion,
-                              random_seed=random_seed, sequential=False, mirror_data=True, mpc_inputs=True)
+        calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_set_days=mlp_test_set_days,
+                              random_seed=random_seed, sequential=False, mirror_data=False, mpc_inputs=False)
 
     if lstm_data_set:
         print('Get sequential disturbance data...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=lstm_test_portion, random_seed=random_seed,
-                              sequential=True, sequence_length=sequence_length, mirror_data=True, mpc_inputs=False)
+                              sequential=True, sequence_length=sequence_length, mirror_data=False, mpc_inputs=False)
 
     print('Total computing time: ', int(time.time() - t), "s")
 
