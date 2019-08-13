@@ -77,7 +77,7 @@ def train_RNN(network_settings):
     i = 1
     for l, npl, af, reg in network_settings:
         name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
-        print('----> {}/{} Start training of model with name {}'.format(i, len(network_settings), name))
+        print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
         lstm = LongShortTermMemoryNetwork(epochs=1000,
                                           learning_rate=1e-3,
                                           decay=1e-6,
