@@ -14,6 +14,7 @@ import config
 from gokart_data_preprocessing.shuffle import shuffle_dataframe
 from data_visualization.data_io import create_folder_with_time, getDirectories
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 import time
 
@@ -140,8 +141,9 @@ class MultiLayerPerceptron():
         if self.shuffle:
             features, labels = shuffle_dataframe(features, labels, random_seed=self.random_seed)
 
-        self.get_train_stats(features)
-        normalized_features = self.normalize_data(features)
+        symmetric_features = self.symmetry_dim_reduction(features)
+        self.get_train_stats(symmetric_features)
+        normalized_features = self.normalize_data(symmetric_features)
         self.save_training_parameters()
 
         self.save_path_checkpoints = os.path.join(self.model_dir, 'model_checkpoints', 'mpl-{epoch:04d}.ckpt')
@@ -258,11 +260,13 @@ class MultiLayerPerceptron():
             print('No training history found.')
             return 0
 
-    def predict(self, input):
-        result = self.model.predict(x=input, verbose=0)
+    def predict(self, features):
+        symmetric_features = self.symmetry_dim_reduction(features)
+        features_normalized = self.normalize_data(symmetric_features)
+        result = self.model.predict(x=features_normalized, verbose=0)
         return result
 
-    def save_model_performance(self, features, labels):
+    def save_model_performance(self, test_features, test_labels):
         if self.model_name != 'test' and self.history is not None:
             hist = pd.DataFrame(self.history.history)
             hist['epoch'] = self.history.epoch
@@ -271,8 +275,9 @@ class MultiLayerPerceptron():
             best = pd.DataFrame(best).transpose()
 
             self.load_checkpoint()
-            features_normalized = self.normalize_data(features)
-            test_errors = self.model.evaluate(features_normalized, labels, verbose=0)
+            symmetric_features = self.symmetry_dim_reduction(test_features)
+            features_normalized = self.normalize_data(symmetric_features)
+            test_errors = self.model.evaluate(features_normalized, test_labels, verbose=0)
 
             best.insert(0, 'test_coeff_of_determination', test_errors[3])
             best.insert(0, 'test_mean_squared_error', test_errors[2])
@@ -284,9 +289,10 @@ class MultiLayerPerceptron():
             with open(os.path.join(self.root_folder, 'model_performances.csv'), 'a') as f:
                 best.to_csv(f, header=False, index=False)
 
-    def test_model(self, features, labels):
-        features_normalized = self.normalize_data(features)
-        return self.model.evaluate(features_normalized, labels)
+    def test_model(self, test_features, test_labels):
+        symmetric_features = self.symmetry_dim_reduction(test_features)
+        features_normalized = self.normalize_data(symmetric_features)
+        return self.model.evaluate(features_normalized, test_labels)
 
     def show_model_summary(self):
         return self.model.summary()
@@ -297,6 +303,21 @@ class MultiLayerPerceptron():
 
     def normalize_data(self, features):
         return (features - self.train_stats['mean']) / self.train_stats['std']
+
+    def symmetry_dim_reduction(self, df_features):
+        features = df_features.copy()
+        steer_less_zero = features['steer position cal [n.a.]'] < 0
+        mirror_vel_steer = steer_less_zero * -2 + 1
+        features[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']] = features[
+            ['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']].mul(mirror_vel_steer,
+                                                                                                axis=0)
+        features.loc[steer_less_zero, ['motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] = \
+        features.loc[
+            steer_less_zero, ['motor torque cmd right [A_rms]', 'motor torque cmd left [A_rms]']].values
+        return features
+
+    def mirror_states(self, features):
+        pass
 
     def coeff_of_determination(self, labels, predictions):
         total_error = tf.reduce_sum(tf.square(tf.subtract(labels, tf.reduce_mean(labels))))
