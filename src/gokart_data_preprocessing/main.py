@@ -69,7 +69,7 @@ def main():
     # Calculate disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
     mlp_data_set = True #needs filter_data and sample_data to be True
     # Choose portion of test data
-    mlp_test_portion = 0.2
+    mlp_test_set_days = ['20190701', '20190708', '20190709', '20190711', '20190719', '20190729']
 
     # Calculate sequential disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
     lstm_data_set = False #needs filter_data and sample_data to be True

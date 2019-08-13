@@ -19,8 +19,8 @@ from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 
 
-def calculate_disturbance(load_path_data=None, data_set_name='test', test_portion=0.2, random_seed=42,
-                          sequential=False, sequence_length=5, mirror_data=True, mpc_inputs=False):
+def calculate_disturbance(load_path_data=None, data_set_name='test', test_set_days=[], random_seed=42,
+                          sequential=False, sequence_length=5, mirror_data=False, mpc_inputs=False):
     if sequential:
         save_path_data_set = os.path.join(directories['root'], 'Data', 'RNNDatasets')
     else:
@@ -62,10 +62,10 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_portio
         for file in f:
             if '.pkl' in file:
                 # pkl_files.append([os.path.join(r, file), file])
-                if int(file[:8]) < 20190608:
-                    train_files.append([os.path.join(r, file), file])
-                else:
+                if file[:8] in test_set_days:
                     test_files.append([os.path.join(r, file), file])
+                else:
+                    train_files.append([os.path.join(r, file), file])
 
     # random.seed(random_seed)
     # random.shuffle(train_files)
@@ -129,7 +129,7 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
         # print('Loading file', file_path_data)
         dataframe = getPKL(file_path_data)
         dt = dataframe.values[1, 0] - dataframe.values[0, 0]
-        # data_set = features.values[:, 4:]
+        # data_set = test_features.values[:, 4:]
         velocities = dataframe[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]']].values
         if mpc_inputs:
             inputs = dataframe[
@@ -154,9 +154,9 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
         # nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
         output_disturbance = target_output - nominal_model_output
 
-        # features = features.drop('vehicle ax local [m*s^-2]', axis=1)
-        # features = features.drop('vehicle ay local [m*s^-2]', axis=1)
-        # features = features.drop('pose atheta [rad*s^-2]', axis=1)
+        # test_features = test_features.drop('vehicle ax local [m*s^-2]', axis=1)
+        # test_features = test_features.drop('vehicle ay local [m*s^-2]', axis=1)
+        # test_features = test_features.drop('pose atheta [rad*s^-2]', axis=1)
         if mpc_inputs:
             dataframe = dataframe[['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                    'turning angle [n.a]', 'acceleration rear axle [m*s^-2]',
