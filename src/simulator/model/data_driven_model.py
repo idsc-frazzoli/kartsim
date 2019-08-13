@@ -16,7 +16,8 @@ from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 class DataDrivenVehicleModel:
 
     def __init__(self, model_name='FirstTry', direct_input=False):
-        self.name = "hybrid_mlp"
+        self.model_type = "hybrid_mlp"
+        self.model_name = model_name
         self.direct_input = direct_input
         # Load the NN
         if self.direct_input:
@@ -41,7 +42,7 @@ class DataDrivenVehicleModel:
         self.mpc = DynamicVehicleMPC(direct_input=self.direct_input)
 
     def get_name(self):
-        return self.name
+        return self.model_type
 
     def get_direct_input_mode(self):
         return self.direct_input
