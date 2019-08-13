@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a name for the data set
-    dataset_name = 'trustworthy_mirrored_mpc'
+    dataset_name = 'trustworthy_bigdata'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -108,6 +108,8 @@ def main():
 
     if sample_data:
         print('Sampling Data...')
+        if path_preprocessed_dataset == None:
+            path_preprocessed_dataset = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Filtered/20190809-180948_trustworthy_bigdata'
         path_sampled_data = sample_from_logdata(sampling_time_period, path_preprocessed_dataset,
                                                 dataset_name, merge_data=False)
     if mlp_data_set:
