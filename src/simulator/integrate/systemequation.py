@@ -7,14 +7,13 @@ Created 09.05.19 09:31
 """
 import numpy as np
 import time
-from simulator.integrate.systeminputhelper import get_input, getInputAccel
-from simulator.integrate.systeminputhelper import get_input, get_input_direct
+from simulator.integrate.systeminputhelper import getInputAccel, get_input, get_input_direct
 
 
 class SystemEquation:
     def __init__(self, vehicle_model):
         self.vehicle_model = vehicle_model
-        print(vehicle_model.name)
+        print(vehicle_model.get_name())
         self.vehicle_model_name = vehicle_model.get_name()
         self.direct_input = vehicle_model.get_direct_input_mode()
 
