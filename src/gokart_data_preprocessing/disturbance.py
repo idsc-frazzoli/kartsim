@@ -217,7 +217,7 @@ def mirror_logfiles(load_path_data):
         temp_rimo_l = dataframe['motor torque cmd left [A_rms]'].copy()
         dataframe['motor torque cmd left [A_rms]'] = dataframe['motor torque cmd right [A_rms]']
         dataframe['motor torque cmd right [A_rms]'] = temp_rimo_l
-        file_path = os.path.join(load_path_data, file_name[:-4] + '_mirrored.pkl')
+        file_path = os.path.join(load_path_data, file_name[:-18] + 'mirrored_' + file_name[-18:])
         data_to_pkl(file_path, dataframe)
 
 
