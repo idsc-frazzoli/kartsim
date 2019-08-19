@@ -35,14 +35,14 @@ x_crop = [0, 200]
 # x_crop = [200, 450]
 
 view_plot = True
-view_plot = False
+# view_plot = False
 
 
 topics = [
     ['vehicle lateral acceleration', 'acceleration ' + r'[$\frac{m}{s^2}$]', 'vehicle ay local [m*s^-2]'],
-    ['vehicle lateral velocity', 'velocity ' + r'[$\frac{m}{s}$]', 'vehicle vy [m*s^-1]'],
-    ['vehicle longitudinal acceleration', 'acceleration ' + r'[$\frac{m}{s^2}$]', 'vehicle ax local [m*s^-2]'],
-    ['vehicle longitudinal velocity', 'velocity ' + r'[$\frac{m}{s}$]', 'vehicle vx [m*s^-1]'],
+    # ['vehicle lateral velocity', 'velocity ' + r'[$\frac{m}{s}$]', 'vehicle vy [m*s^-1]'],
+    # ['vehicle longitudinal acceleration', 'acceleration ' + r'[$\frac{m}{s^2}$]', 'vehicle ax local [m*s^-2]'],
+    # ['vehicle longitudinal velocity', 'velocity ' + r'[$\frac{m}{s}$]', 'vehicle vx [m*s^-1]'],
     # ['vehicle rotational acceleration', 'acceleration ' + r'[$\frac{rad}{s^2}$]', 'pose atheta [rad*s^-2]'],
     # ['vehicle rotational velocity', 'velocity ' + r'[$\frac{rad}{s}$]', 'pose vtheta [rad*s^-1]'],
     ]
@@ -62,10 +62,10 @@ for title, unit, topic in topics:
         ['20190530T160230_03_sampledlogdata.pkl', topic, 'reference'],
         # ['20190530T160230_03_mpc_dynamic_closedloop.csv', topic, 'dynamic MPC model'],
         # ['20190530T160230_03_5x64_relu_reg0p0_closedloop.csv', topic, 'learned model'],
-        # ['20190530T160230_03_mpc_dynamic_closedloopinterval.csv', topic, 'dynamic MPC model'],
-        # ['20190530T160230_03_5x64_relu_reg0p0_closedloopinterval.csv', topic, 'learned model'],
-        ['20190530T160230_03_mpc_dynamic_openloop.csv', topic, 'dynamic MPC model'],
-        ['20190530T160230_03_5x64_relu_reg0p0_openloop.csv', topic, 'learned model'],
+        ['20190530T160230_03_mpc_dynamic_closedloopinterval.csv', topic, 'dynamic MPC model'],
+        ['20190530T160230_03_5x64_relu_reg0p0_closedloopinterval.csv', topic, 'learned model'],
+        # ['20190530T160230_03_mpc_dynamic_openloop.csv', topic, 'dynamic MPC model'],
+        # ['20190530T160230_03_5x64_relu_reg0p0_openloop.csv', topic, 'learned model'],
     ]
 
     plot_topic = []
@@ -97,12 +97,12 @@ if view_plot:
         win.nextRow()
         plots[title + '1'] = win.addPlot(title="Region Selection")
 
+        plots[title + '1'].addLegend()
         for i, [x, y, name] in enumerate(plot_topic):
             plots[title + '1'].plot(x, y, pen=colors[i], name=name)
         plots[title + 'lr'] = pg.LinearRegionItem([0,10])
         plots[title + 'lr'].setZValue(-10)
         plots[title + '1'].addItem(plots[title + 'lr'])
-        plots[title + '1'].addLegend()
         plots[title + '1'].showGrid(x=True,y=True, alpha=0.3)
 
         plots[title + '2'] = win.addPlot(title=title)
@@ -140,14 +140,14 @@ def training_data():
     random_state = 42
 
     # path_data_set = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/DataSets/LearnedModel/20190625-200000_TF_filtered_vel/disturbance.pkl'
-    # features = getPKL(path_data_set)
-    # features.pop('time [s]')
+    # test_features = getPKL(path_data_set)
+    # test_features.pop('time [s]')
     #
     # # Split data_set into training and test set
-    # train_dataset = features.sample(frac=0.8, random_state=random_state)
+    # train_dataset = test_features.sample(frac=0.8, random_state=random_state)
     # train_dataset = train_dataset.reset_index(drop=True)
     #
-    # test_dataset = features.drop(train_dataset.index)
+    # test_dataset = test_features.drop(train_dataset.index)
     # test_dataset = test_dataset.reset_index(drop=True)
     #
     # train_labels_old = train_dataset[['disturbance vehicle ax local [m*s^-2]',
@@ -164,72 +164,82 @@ def training_data():
     #                               'steer position cal [n.a.]', 'brake position effective [m]',
     #                               'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
-    train_features_trustworthy = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
-    train_features_trustworthy = train_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                    'steer position cal [n.a.]', 'brake position effective [m]',
-                                    'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] # get rid of time values
-    train_labels_trustworthy = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
-    train_labels_trustworthy = train_labels_trustworthy[['disturbance vehicle ax local [m*s^-2]',
-                                  'disturbance vehicle ay local [m*s^-2]',
-                                  'disturbance pose atheta [rad*s^-2]']]
-    test_features_trustworthy = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
-    test_features_trustworthy = test_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                     'steer position cal [n.a.]', 'brake position effective [m]',
-                                     'motor torque cmd left [A_rms]',
-                                     'motor torque cmd right [A_rms]']]  # get rid of time values
-    test_labels_trustworthy = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
-    test_labels_trustworthy = test_labels_trustworthy[['disturbance vehicle ax local [m*s^-2]',
-                                 'disturbance vehicle ay local [m*s^-2]',
-                                 'disturbance pose atheta [rad*s^-2]']]
+    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-100934_trustworthy_data')
+    # train_features_trustworthy = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    # train_features_trustworthy = train_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                 'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] # get rid of time values
+    # train_labels_trustworthy = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    # train_labels_trustworthy = train_labels_trustworthy[['disturbance vehicle ax local [m*s^-2]',
+    #                               'disturbance vehicle ay local [m*s^-2]',
+    #                               'disturbance pose atheta [rad*s^-2]']]
+    # test_features_trustworthy = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    # test_features_trustworthy = test_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                  'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                  'motor torque cmd left [A_rms]',
+    #                                  'motor torque cmd right [A_rms]']]  # get rid of time values
+    # test_labels_trustworthy = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+    # test_labels_trustworthy = test_labels_trustworthy[['disturbance vehicle ax local [m*s^-2]',
+    #                              'disturbance vehicle ay local [m*s^-2]',
+    #                              'disturbance pose atheta [rad*s^-2]']]
+    #
+    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-211215_high_slip_angles')
+    # train_features_high_slip = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    # train_features_high_slip = train_features_high_slip[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                          'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                          'motor torque cmd left [A_rms]',
+    #                                          'motor torque cmd right [A_rms]']]  # get rid of time values
+    # train_labels_high_slip = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    # train_labels_high_slip = train_labels_high_slip[['disturbance vehicle ax local [m*s^-2]',
+    #                                      'disturbance vehicle ay local [m*s^-2]',
+    #                                      'disturbance pose atheta [rad*s^-2]']]
+    # test_features_high_slip = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    # test_features_high_slip = test_features_high_slip[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                        'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                        'motor torque cmd left [A_rms]',
+    #                                        'motor torque cmd right [A_rms]']]  # get rid of time values
+    # test_labels_high_slip = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+    # test_labels_high_slip = test_labels_high_slip[['disturbance vehicle ax local [m*s^-2]',
+    #                                    'disturbance vehicle ay local [m*s^-2]',
+    #                                    'disturbance pose atheta [rad*s^-2]']]
+    path_data_set = os.path.join(config.directories['root'], 'Data/Sampled/20190809-181131_trustworthy_bigdata_merged')
+    bigdata = getPKL(os.path.join(path_data_set, 'merged_sampledlogdata.pkl'))
+    # path_data_set = os.path.join(config.directories['root'], 'Data/Sampled/20190809-171720_trustworthy_smalldata_merged')
+    # smalldata = getPKL(os.path.join(path_data_set, 'merged_sampledlogdata.pkl'))
+    print(bigdata.shape)
+    # print(smalldata.shape)
+    # bigdata = train_features_bigdata[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+    #                                                                     'steer position cal [n.a.]', 'brake position effective [m]',
+    #                                                                     'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]',
+    #                                   'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+    # sns.pairplot(train_features_trustworthy[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]']])
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190717-211215_high_slip_angles')
-    train_features_high_slip = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
-    train_features_high_slip = train_features_high_slip[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                             'steer position cal [n.a.]', 'brake position effective [m]',
-                                             'motor torque cmd left [A_rms]',
-                                             'motor torque cmd right [A_rms]']]  # get rid of time values
-    train_labels_high_slip = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
-    train_labels_high_slip = train_labels_high_slip[['disturbance vehicle ax local [m*s^-2]',
-                                         'disturbance vehicle ay local [m*s^-2]',
-                                         'disturbance pose atheta [rad*s^-2]']]
-    test_features_high_slip = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
-    test_features_high_slip = test_features_high_slip[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                           'steer position cal [n.a.]', 'brake position effective [m]',
-                                           'motor torque cmd left [A_rms]',
-                                           'motor torque cmd right [A_rms]']]  # get rid of time values
-    test_labels_high_slip = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
-    test_labels_high_slip = test_labels_high_slip[['disturbance vehicle ax local [m*s^-2]',
-                                       'disturbance vehicle ay local [m*s^-2]',
-                                       'disturbance pose atheta [rad*s^-2]']]
-
-    sns.pairplot(train_features_trustworthy[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]']])
-
+    plot_this = [[bigdata, bigdata.sample(frac=0.1, random_state=42)]]
     # plot_this = [
-    #     [train_features_trustworthy, train_features_high_slip, ],
+    #     [train_features_trustworthy, train_features_bigdata, ],
     #     # [test_features_trustworthy, test_features_high_slip, ],
     # ]
     #
-    # i=1
-    # topics = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-    #                                  'steer position cal [n.a.]', 'brake position effective [m]',
-    #                                  'motor torque cmd left [A_rms]',
-    #                                  'motor torque cmd right [A_rms]']
-    # # pdffilepath = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Evaluation/' + '_data_density_of_observations.pdf'
-    # # pdf = PdfPages(pdffilepath)
-    # for topic in topics:
-    #     plt.figure(i)
-    #     for num, data_pair in enumerate(plot_this):
-    #         # plt.subplot(2, 1, num + 1)
-    #         for data in data_pair:
-    #             sns.distplot(data[topic])
-    #     plt.ylabel('density')
-    #     plt.legend(['fast and slow driving', 'only fast driving'])
-    #     i+=1
-    #     # pdf.savefig()
-    #     # plt.close()
-    #
-    # # pdf.close()
+    i=1
+    topics = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                     'steer position cal [n.a.]', 'brake position effective [m]',
+                                     'motor torque cmd left [A_rms]',
+                                     'motor torque cmd right [A_rms]']
+    # pdffilepath = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Evaluation/' + '_data_density_of_observations.pdf'
+    # pdf = PdfPages(pdffilepath)
+    for topic in topics:
+        plt.figure(i)
+        for num, data_pair in enumerate(plot_this):
+            # plt.subplot(2, 1, num + 1)
+            for data in data_pair:
+                sns.distplot(data[topic])
+        plt.ylabel('density')
+        plt.legend(['large dataset', 'small dataset'])
+        i+=1
+        # pdf.savefig()
+        # plt.close()
+
+    # pdf.close()
 
 def unstable2():
     path_data_set = '/home/mvb/0_ETH/01_MasterThesis/SimData/lookatlogs'
@@ -273,6 +283,6 @@ if __name__ == '__main__':
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()
     else:
-        # main()
+        main()
         # training_data()
-        unstable1()
+        # unstable1()
