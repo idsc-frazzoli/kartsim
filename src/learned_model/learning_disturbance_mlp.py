@@ -50,6 +50,7 @@ def main():
         # [1, 32, 'softplus', 0.1],
         # [2, 32, 'softplus', 0.001],
         # [2, 32, 'softplus', 0.01],
+        [2, 32, 'softplus', 0.05],
         [2, 32, 'softplus', 0.0001],
         # [2, 32, 'softplus', 0.1],
         # [1, 32, 'tanh', 0.001],
@@ -106,7 +107,7 @@ def train_NN(network_settings):
         if 'mirrored' in path_data_set:
             name = '{}x{}_{}_reg{}_m'.format(l, npl, af, str(reg).replace('.', 'p'))
         else:
-            name = '{}x{}_{}_reg{}'.format(l, npl, af, str(reg).replace('.', 'p'))
+            name = '{}x{}_{}_reg{}_sym'.format(l, npl, af, str(reg).replace('.', 'p'))
         print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
         mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
                                    model_name=name)

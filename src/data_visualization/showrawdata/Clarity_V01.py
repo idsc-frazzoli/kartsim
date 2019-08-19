@@ -370,6 +370,10 @@ class Clarity(QtGui.QMainWindow):
                     if int(self.pathLogNr[-14:-10]) > 509:
                         yRaw = -yRaw
 
+                # if name == 'vehicle vy atvmu':
+                #     offset = -0.045
+                #     yRaw += offset
+
                 if name == 'pose theta':
                     # for i in range(len(yRaw)):
                     #     if yRaw[i] < -np.pi:

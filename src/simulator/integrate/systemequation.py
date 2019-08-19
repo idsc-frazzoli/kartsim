@@ -13,7 +13,7 @@ from simulator.integrate.systeminputhelper import getInputAccel, get_input, get_
 class SystemEquation:
     def __init__(self, vehicle_model):
         self.vehicle_model = vehicle_model
-        print(vehicle_model.get_name())
+        # print(vehicle_model.get_name())
         self.vehicle_model_name = vehicle_model.get_name()
         self.direct_input = vehicle_model.get_direct_input_mode()
 
