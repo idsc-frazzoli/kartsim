@@ -141,7 +141,7 @@ class MultiLayerPerceptron():
         if self.shuffle:
             features, labels = shuffle_dataframe(features, labels, random_seed=self.random_seed)
 
-        symmetric_features = self.symmetry_dim_reduction(features)
+        symmetric_features, symmetric_labels = self.mirror_state_space(features, labels)
         self.get_train_stats(symmetric_features)
         normalized_features = self.normalize_data(symmetric_features)
         self.save_training_parameters()
@@ -162,7 +162,7 @@ class MultiLayerPerceptron():
         # Callback: Tensorboard
         tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
 
-        self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
+        self.history = self.model.fit(normalized_features, symmetric_labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
                                                  PrintState(self.model_name), tensor_board],
                                       validation_split=0.2, verbose=0)
@@ -261,9 +261,12 @@ class MultiLayerPerceptron():
             return 0
 
     def predict(self, features):
-        symmetric_features = self.symmetry_dim_reduction(features)
-        features_normalized = self.normalize_data(symmetric_features)
+        label_mirror = np.ones(len(features))
+        if 'sym' in self.model_name:
+            features, label_mirror = self.mirror_state_space(features)
+        features_normalized = self.normalize_data(features)
         result = self.model.predict(x=features_normalized, verbose=0)
+        result[:, 1:3] = result[:, 1:3] * np.column_stack((label_mirror, label_mirror))
         return result
 
     def save_model_performance(self, test_features, test_labels):
@@ -275,9 +278,9 @@ class MultiLayerPerceptron():
             best = pd.DataFrame(best).transpose()
 
             self.load_checkpoint()
-            symmetric_features = self.symmetry_dim_reduction(test_features)
+            symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
             features_normalized = self.normalize_data(symmetric_features)
-            test_errors = self.model.evaluate(features_normalized, test_labels, verbose=0)
+            test_errors = self.model.evaluate(features_normalized, symmetric_labels, verbose=0)
 
             best.insert(0, 'test_coeff_of_determination', test_errors[3])
             best.insert(0, 'test_mean_squared_error', test_errors[2])
@@ -290,9 +293,9 @@ class MultiLayerPerceptron():
                 best.to_csv(f, header=False, index=False)
 
     def test_model(self, test_features, test_labels):
-        symmetric_features = self.symmetry_dim_reduction(test_features)
+        symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
         features_normalized = self.normalize_data(symmetric_features)
-        return self.model.evaluate(features_normalized, test_labels)
+        return self.model.evaluate(features_normalized, symmetric_labels)
 
     def show_model_summary(self):
         return self.model.summary()
@@ -313,16 +316,26 @@ class MultiLayerPerceptron():
             else:
                 return df_features
         else:
-            features = df_features.copy()
-            steer_less_zero = features['steer position cal [n.a.]'] < 0
-            mirror_vel_steer = steer_less_zero * -2 + 1
-            features[['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']] = features[
-                ['vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]']].mul(mirror_vel_steer,
-                                                                                                    axis=0)
-            features.loc[steer_less_zero, ['motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] = \
-                features.loc[
-                    steer_less_zero, ['motor torque cmd right [A_rms]', 'motor torque cmd left [A_rms]']].values
-            return features
+            features = np.copy(raw_features)
+            if raw_labels is not None:
+                labels = np.copy(raw_labels)
+
+        steer_less_zero = features[:,3] < 0
+        mirror_vel_steer = steer_less_zero * -2 + 1
+        features[:,1:4] = features[:,1:4] * np.column_stack((mirror_vel_steer, mirror_vel_steer, mirror_vel_steer))
+        features[steer_less_zero, 5], features[steer_less_zero, 6] = features[steer_less_zero, 6], features[steer_less_zero, 5]
+        if raw_labels is not None:
+            labels[:,1:3] = labels[:,1:3] * np.column_stack((mirror_vel_steer, mirror_vel_steer))
+        if isinstance(raw_features, pd.DataFrame):
+            raw_features.loc[:, :] = features
+            if raw_labels is not None:
+                raw_labels.loc[:, :] = labels
+                return raw_features, raw_labels
+            return raw_features
+        else:
+            if raw_labels is not None:
+                return features, labels
+            return features, mirror_vel_steer
 
     def mirror_states(self, features):
         pass
