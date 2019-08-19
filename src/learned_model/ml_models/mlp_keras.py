@@ -305,16 +305,16 @@ class MultiLayerPerceptron():
         self.train_stats = self.train_stats.transpose()
 
     def normalize_data(self, features):
-        return (features - self.train_stats['mean']) / self.train_stats['std']
+        if isinstance(features, pd.DataFrame):
+            return (features - self.train_stats['mean']) / self.train_stats['std']
+        else:
+            return (features - self.train_stats['mean'].values) / self.train_stats['std'].values
 
-    def symmetry_dim_reduction(self, df_features):
-        if isinstance(df_features, np.ndarray):
-            if df_features[0, 3] > 0:
-                features = df_features[0, 0:5] * np.array([[1, -1, -1, -1, 1]])
-                features = np.hstack((features, np.array([[df_features[0][-1], df_features[0][-2]]])))
-                return features
-            else:
-                return df_features
+    def mirror_state_space(self, raw_features, raw_labels = None):
+        if isinstance(raw_features, pd.DataFrame):
+            features = np.copy(raw_features.values)
+            if raw_labels is not None:
+                labels = np.copy(raw_labels.values)
         else:
             features = np.copy(raw_features)
             if raw_labels is not None:
