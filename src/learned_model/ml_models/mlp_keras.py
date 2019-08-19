@@ -116,8 +116,8 @@ class MultiLayerPerceptron():
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
-        # self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
-        self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=self.learning_rate),
+        # self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
                            loss='mean_squared_error',
                            metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
 
