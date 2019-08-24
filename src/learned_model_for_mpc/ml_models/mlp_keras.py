@@ -115,8 +115,8 @@ class MultiLayerPerceptron():
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
         # self.model.compile(optimizer=tf.train.AdamOptimizer(self.learning_rate),
-        # self.model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate),
-        self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=self.learning_rate),
+        # self.model.compile(optimizer=tf.keras.optimizers.Adadelta(),
                            loss='mean_squared_error',
                            metrics=['mean_absolute_error', 'mean_squared_error', self.coeff_of_determination])
 
@@ -140,8 +140,9 @@ class MultiLayerPerceptron():
         if self.shuffle:
             features, labels = shuffle_dataframe(features, labels, random_seed=self.random_seed)
 
-        self.get_train_stats(features)
-        normalized_features = self.normalize_data(features)
+        symmetric_features, symmetric_labels = self.mirror_state_space(features, labels)
+        self.get_train_stats(symmetric_features)
+        normalized_features = self.normalize_data(symmetric_features)
         self.save_training_parameters()
 
         self.save_path_checkpoints = os.path.join(self.model_dir, 'model_checkpoints', 'mpl-{epoch:04d}.ckpt')
@@ -160,7 +161,7 @@ class MultiLayerPerceptron():
         # Callback: Tensorboard
         tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
 
-        self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
+        self.history = self.model.fit(normalized_features, symmetric_labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
                                                  PrintState(self.model_name), tensor_board],
                                       validation_split=0.2, verbose=0)
@@ -258,11 +259,16 @@ class MultiLayerPerceptron():
             print('No training history found.')
             return 0
 
-    def predict(self, input):
-        result = self.model.predict(x=input, verbose=0)
+    def predict(self, features):
+        label_mirror = np.ones(len(features))
+        if 'sym' in self.model_name:
+            features, label_mirror = self.mirror_state_space(features)
+        features_normalized = self.normalize_data(features)
+        result = self.model.predict(x=features_normalized, verbose=0)
+        result[:, 1:3] = result[:, 1:3] * np.column_stack((label_mirror, label_mirror))
         return result
 
-    def save_model_performance(self, features, labels):
+    def save_model_performance(self, test_features, test_labels):
         if self.model_name != 'test' and self.history is not None:
             hist = pd.DataFrame(self.history.history)
             hist['epoch'] = self.history.epoch
@@ -271,8 +277,9 @@ class MultiLayerPerceptron():
             best = pd.DataFrame(best).transpose()
 
             self.load_checkpoint()
-            features_normalized = self.normalize_data(features)
-            test_errors = self.model.evaluate(features_normalized, labels, verbose=0)
+            symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
+            features_normalized = self.normalize_data(symmetric_features)
+            test_errors = self.model.evaluate(features_normalized, symmetric_labels, verbose=0)
 
             best.insert(0, 'test_coeff_of_determination', test_errors[3])
             best.insert(0, 'test_mean_squared_error', test_errors[2])
@@ -284,9 +291,10 @@ class MultiLayerPerceptron():
             with open(os.path.join(self.root_folder, 'model_performances.csv'), 'a') as f:
                 best.to_csv(f, header=False, index=False)
 
-    def test_model(self, features, labels):
-        features_normalized = self.normalize_data(features)
-        return self.model.evaluate(features_normalized, labels)
+    def test_model(self, test_features, test_labels):
+        symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
+        features_normalized = self.normalize_data(symmetric_features)
+        return self.model.evaluate(features_normalized, symmetric_labels)
 
     def show_model_summary(self):
         return self.model.summary()
@@ -296,7 +304,41 @@ class MultiLayerPerceptron():
         self.train_stats = self.train_stats.transpose()
 
     def normalize_data(self, features):
-        return (features - self.train_stats['mean']) / self.train_stats['std']
+        if isinstance(features, pd.DataFrame):
+            return (features - self.train_stats['mean']) / self.train_stats['std']
+        else:
+            return (features - self.train_stats['mean'].values) / self.train_stats['std'].values
+
+    def mirror_state_space(self, raw_features, raw_labels = None):
+        if isinstance(raw_features, pd.DataFrame):
+            features = np.copy(raw_features.values)
+            if raw_labels is not None:
+                labels = np.copy(raw_labels.values)
+        else:
+            features = np.copy(raw_features)
+            if raw_labels is not None:
+                labels = np.copy(raw_labels)
+
+        steer_less_zero = features[:,3] < 0
+        mirror_vel_steer = steer_less_zero * -2 + 1
+        features[:,1:4] = features[:,1:4] * np.column_stack((mirror_vel_steer, mirror_vel_steer, mirror_vel_steer))
+        # features[steer_less_zero, 5], features[steer_less_zero, 6] = features[steer_less_zero, 6], features[steer_less_zero, 5]
+        features[:, -1] = features[:, -1] * mirror_vel_steer
+        if raw_labels is not None:
+            labels[:,1:3] = labels[:,1:3] * np.column_stack((mirror_vel_steer, mirror_vel_steer))
+        if isinstance(raw_features, pd.DataFrame):
+            raw_features.loc[:, :] = features
+            if raw_labels is not None:
+                raw_labels.loc[:, :] = labels
+                return raw_features, raw_labels
+            return raw_features
+        else:
+            if raw_labels is not None:
+                return features, labels
+            return features, mirror_vel_steer
+
+    def mirror_states(self, features):
+        pass
 
     def coeff_of_determination(self, labels, predictions):
         total_error = tf.reduce_sum(tf.square(tf.subtract(labels, tf.reduce_mean(labels))))
