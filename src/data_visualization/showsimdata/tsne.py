@@ -26,7 +26,8 @@ def main():
 
     ]
 
-    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
+    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
     simulation_file = 'test_features.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     test_features = getPKL(dataset_path)
@@ -36,11 +37,25 @@ def main():
     train_features = getPKL(dataset_path)
 
     all_features = train_features.append(test_features, ignore_index=True)
-    dataframe = all_features
+
+    simulation_file = 'test_labels.pkl'
+    dataset_path = os.path.join(simulation_folder, simulation_file)
+    test_labels = getPKL(dataset_path)
+
+    simulation_file = 'train_labels.pkl'
+    dataset_path = os.path.join(simulation_folder, simulation_file)
+    train_labels = getPKL(dataset_path)
+
+    all_labels = train_labels.append(test_labels, ignore_index=True)
+
+    dataframe = all_features.join(all_labels[['disturbance vehicle ax local [m*s^-2]',
+       'disturbance vehicle ay local [m*s^-2]',
+       'disturbance pose atheta [rad*s^-2]']])
+
 
     index_counter = 0
     for title, topics in topic_lists:
-        dataframe = dataframe.sample(n=10000, random_state=42)
+        dataframe = dataframe.sample(n=10000, random_state=16)
         dataframe_selection = dataframe[topics]
         dataframe_symm = symmetry_dim_reduction(dataframe_selection)
         train_stats = get_train_stats(dataframe_symm)
@@ -60,17 +75,19 @@ def main():
             plt.colorbar(sc)
             plt.title(title + ' ' + topic)
             index_counter += 1
-    #
-    #     file_path = os.path.join(simulation_folder, f'{title}_data_set_tsne_flattened_1.pkl')
-    #     data_to_pkl(file_path, tsne_df)
-    #
-    #     file_path = os.path.join(simulation_folder, f'{title}_data_set_1.pkl')
-    #     data_to_pkl(file_path, dataframe)
+
+        file_path = os.path.join(simulation_folder, f'{title}_data_set_tsne_flattened_1.pkl')
+        data_to_pkl(file_path, tsne_df)
+
+        file_path = os.path.join(simulation_folder, f'{title}_data_set_1.pkl')
+        data_to_pkl(file_path, dataframe)
 
 
 def look_at_results():
     # ____________Look at results
-    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181131_trustworthy_bigdata_merged'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181131_trustworthy_bigdata_merged'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
+    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
     simulation_file = 'state_space_data_set_1.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     dataframe1 = getPKL(dataset_path)
@@ -78,15 +95,70 @@ def look_at_results():
     dataset_path = os.path.join(simulation_folder, simulation_file)
     dataframe2 = getPKL(dataset_path)
 
-    topics = ['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]',
-              'brake position effective [m]', 'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']
+    topics = [
+        # 'vehicle vx [m*s^-1]',
+        # 'vehicle vy [m*s^-1]',
+        # 'pose vtheta [rad*s^-1]',
+        # 'steer position cal [n.a.]',
+        # 'brake position effective [m]',
+        # 'motor torque cmd left [A_rms]',
+        # 'motor torque cmd right [A_rms]',
+    ]
+    disturbance = [
+        'vehicle vx [m*s^-1]',
+        'vehicle vy [m*s^-1]',
+        'pose vtheta [rad*s^-1]',
+        'steer position cal [n.a.]',
+        'brake position effective [m]',
+        'motor torque cmd left [A_rms]',
+        'motor torque cmd right [A_rms]',
+        # 'disturbance vehicle ax local [m*s^-2]',
+        'disturbance vehicle ay local [m*s^-2]',
+        # 'disturbance pose atheta [rad*s^-2]',
+    ]
     u = 0
     for topic in topics:
         plt.figure(u)
-        sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic])
+        sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic], cmap='RdBu')
         plt.title('results: ' + topic)
         plt.colorbar(sc)
+        if topic == 'vehicle vy [m*s^-1]':
+            plt.clim(-0.2, 0.2)
+        # if topic == 'vehicle vx [m*s^-1]':
+        #     plt.clim(0, 0.1)
         u = u + 1
+    dataframe1 = dataframe1.reset_index(drop=True)
+    split = 3
+    dataframe2 = dataframe2[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
+    dataframe1 = dataframe1[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
+    for topic in disturbance:
+        plt.figure(u)
+        if topic in ['disturbance pose atheta [rad*s^-2]', 'disturbance vehicle ax local [m*s^-2]', 'disturbance vehicle ay local [m*s^-2]']:
+            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic].abs(), cmap='RdBu')
+        else:
+            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic], cmap='RdBu')
+        plt.title('results: ' + topic)
+        if topic == 'vehicle vy [m*s^-1]':
+            plt.clim(-0.6, 0.6)
+        if topic == 'brake position effective [m]':
+            plt.clim(0.025, 0.05)
+        plt.colorbar(sc)
+        # if topic == 'disturbance vehicle ay local [m*s^-2]':
+        #     plt.clim(-1, 1)
+        u = u + 1
+    plt.figure(20)
+    sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
+                     c=(dataframe1['motor torque cmd right [A_rms]']-dataframe1['motor torque cmd left [A_rms]']), cmap='RdBu')
+    plt.title('results: TV')
+    plt.colorbar(sc)
+
+    plt.figure(21)
+    sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
+                     c=((dataframe1['motor torque cmd right [A_rms]'] + dataframe1['motor torque cmd left [A_rms]'])/2.0),
+                     cmap='RdBu')
+    plt.title('results: AB')
+    plt.colorbar(sc)
+
     plt.show()
 
 
@@ -118,6 +190,6 @@ def look_at_data_set():
     print(dataframe['vehicle vx [m*s^-1]'].describe())
 
 if __name__ == '__main__':
-    main()
+    # main()
     # look_at_data_set()
-    # look_at_results()
+    look_at_results()
