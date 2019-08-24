@@ -20,17 +20,23 @@ from simulator.textcommunication import encode_request_msg_to_txt, decode_answer
 
 def main():
     # ___user inputs
-    port = int(sys.argv[1])
-    pathsavedata = sys.argv[2]
-    pathpreprodata = sys.argv[3]
-    preprofiles = sys.argv[4:]
+    try:
+        port = int(sys.argv[1])
+        pathsavedata = sys.argv[2]
+        pathpreprodata = sys.argv[3]
+        preprofiles = sys.argv[4:]
+    except:
+        port = 6000
+        pathsavedata = None
+        pathpreprodata = None
+        preprofiles = None
 
     # Choose whether to use simulation over intervals of the duration given by validationhorizon
     validation = True
-    validationhorizon = 10  # [s] time inteval after which initial conditions are reset to values from log data
+    validationhorizon = 3  # [s] time inteval after which initial conditions are reset to values from log data
 
     # Simulation time after which result is returned from server
-    server_return_interval = 10  # [s]
+    server_return_interval = 3  # [s]
     # DO NOT CHANGE! Parameter used for real time simulation (default:0)
     _wait_for_real_time = 0  # [s]
 
