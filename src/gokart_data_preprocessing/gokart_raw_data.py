@@ -142,8 +142,8 @@ class GokartRawData:
                 groups.append(['pose y atvmu [m]', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta [rad]', 0, 3, name, True, 5, 50, 0, 1])
                 groups.append(['pose quality [n.a.]', 0, 4, name, True, 0, 0, 0, 1])
-                groups.append(['vehicle vx [m*s^-1]', 0, 5, name, True, 0, 0, 0, 1])
-                groups.append(['vehicle vy atvmu [m*s^-1]', 0, 6, name, True, 0, 0, 0, 1])
+                groups.append(['vehicle vx [m*s^-1]', 0, 5, name, True, 5, 50, 0, 1])
+                groups.append(['vehicle vy atvmu [m*s^-1]', 0, 6, name, True, 5, 50, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd [n.a.]', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
