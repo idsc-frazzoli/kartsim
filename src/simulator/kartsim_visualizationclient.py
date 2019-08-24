@@ -18,7 +18,10 @@ import sys
 
 #initializing Client and connect to pyKartsimServer
 time.sleep(1)
-port = int(sys.argv[1])
+try:
+    port = int(sys.argv[1])
+except:
+    port = 6000
 address = ('localhost', port+1)
 connected = False
 while not connected:
