@@ -377,8 +377,10 @@ def signal_handler(sig, frame):
 
 if __name__ == '__main__':
     vehicle_models = [
-        ['mpc_dynamic', ''],
+        ['mpc_kinematic', ''],
+        # ['mpc_dynamic', ''],
         # ['hybrid_mlp', '2x32_softplus_reg0p05_sym'],
+        # ['hybrid_mlp', '2x32_softplus_reg0p05'],
         # ['hybrid_mlp', '2x32_softplus_reg0p0001_sym'],
         # ['hybrid_mlp', '5x64_relu_reg0p01_m'],
         # ['hybrid_mlp', '2x32_linear_reg0p02'],
@@ -388,7 +390,7 @@ if __name__ == '__main__':
 
     for model_type, model_name in vehicle_models:
         if 'mlp' in model_type or 'mpc' in model_type:
-            evaluation_data_set_name = '20190813-141626_trustworthy_bigdata'
+            # evaluation_data_set_name = '20190813-141626_trustworthy_bigdata'
             evaluation_data_set_name = '20190813-141626_trustworthy_bigdata (copy)'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
