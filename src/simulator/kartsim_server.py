@@ -18,6 +18,7 @@ import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
+from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.integrate.systemequation import SystemEquation
 from thread2 import Thread
 import tensorflow as tf
@@ -33,9 +34,11 @@ def main():
         vehicle_model_type = sys.argv[4]
         vehicle_model_name = sys.argv[5]
     except:
+        port = 6000
         visualization = 0
         logging = 0
-        vehicle_model_type = 'mpc_dynamic'
+        # vehicle_model_type = 'mpc_dynamic'
+        vehicle_model_type = 'mpc_kinematic'
         vehicle_model_name = ''
 
     clientAddress = ('localhost', port)  # family is deduced to be 'AF_INET'
@@ -60,6 +63,8 @@ def main():
         vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
     elif vehicle_model_type == 'hybrid_lstm':
         vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
+    elif vehicle_model_type == 'mpc_kinematic':
+        vehicle_model = KinematicVehicleMPC(direct_input=False)
 
     # vehicle_model = DynamicVehicleMPC(direct_input=True)
 
