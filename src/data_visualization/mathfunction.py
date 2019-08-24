@@ -49,14 +49,14 @@ def interpolation_w_mean(x, y, xBegin, xStop, timeStep):
         y_eval = interp(x_eval)
 
         yInterp = np.array([])
-        # yInterp = []
         for i, x in enumerate(xInterp):
             if i == 0:
-                yInterp = np.array([np.mean(y_eval[0:i * 10 + 6])])
-            elif i == len(xInterp):
-                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:len(xInterp)])))
+                yInterp = np.array([np.mean(y_eval[:i * 10 + 5])])
+            elif i == len(xInterp)-1:
+                # yInterp = np.hstack((yInterp, np.mean(y_eval[i * 100 - 50:i * 100 + 51])))
+                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:])))
             else:
-                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:i * 10 + 6])))
+                yInterp = np.hstack((yInterp, np.mean(y_eval[i * 10 - 5:i * 10 + 5])))
 
         return xInterp, yInterp
 
@@ -75,7 +75,6 @@ def interpolation(x, y, xBegin, xStop, timeStep):
             pass
 
         xInterp = np.linspace(xBegin, xStop, int((xStop - xBegin) / timeStep))
-
         yInterp = interp(xInterp)
 
         return xInterp, yInterp
