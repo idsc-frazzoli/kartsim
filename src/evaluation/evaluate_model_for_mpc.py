@@ -25,10 +25,10 @@ import sys
 
 def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle_model_name='', ):
     signal.signal(signal.SIGINT, signal_handler)
-    visualization = True
+    visualization = False
     logging = True
     evaluation_name = vehicle_model_type + '_' + vehicle_model_name + '_mpcinputs'
-    # evaluation_name = 'test'
+    # evaluation_name = 'testk'
 
     save_root_path = os.path.join(config.directories['root'], 'Evaluation')
 
@@ -49,7 +49,7 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
                          logging)
     simulate_open_loop(vehicle_model_type, vehicle_model_name, load_path, simulation_files, save_path)
 
-    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190730-113801_mpc_dynamic__mpcinputs')
+    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190822-153357_testk')
     generate_results(save_root_path, save_path, load_path)
 
 
@@ -136,15 +136,15 @@ def simulate_closed_loop(vehicle_model_type, vehicle_model_name, load_path, simu
 
     save_path = os.path.join(save_path, 'closed_loop_simulation_files')
 
-    if len(simulation_files) >= 8:
-        chunks = [simulation_files[i::8] for i in range(8)]
+    if len(simulation_files) >= 5:
+        chunks = [simulation_files[i::5] for i in range(5)]
         argument_packages = []
         for i, chunk in enumerate(chunks):
             port = 6000 + 100 * i
             port = str(port)
             argument_packages.append([port, load_path, chunk, save_path, visualization, logging, vehicle_model_type,
                                       vehicle_model_name])
-        pool = Pool(processes=8)
+        pool = Pool(processes=5)
         pool.map(run_simulation, argument_packages)
     elif len(simulation_files) > 1:
         no_settings = len(simulation_files)
@@ -223,7 +223,6 @@ def generate_results(save_root_path, save_path, sim_folder):
 
     for mode, load_folder_name in modes:
         load_path_simulation_logs = os.path.join(save_path, load_folder_name)
-
         simulation_files = []
         reference_files = []
         for r, d, f in os.walk(load_path_simulation_logs):
@@ -240,123 +239,80 @@ def generate_results(save_root_path, save_path, sim_folder):
             continue
 
         grouped_files = sort_out_files(simulation_files, reference_files)
-        mse_list = []
-        mae_list = []
-        cod_list = []
-        stability_list = []
-        for _, name in grouped_files[0][:-2]:
-            if 'mirrored' not in name:
-                model_name = name[19:-4]
-                if 'unstable' in model_name:
-                    model_name = model_name[:-9]
-                mse_list.append([model_name, pd.DataFrame()])
-                mae_list.append([model_name, pd.DataFrame()])
-                cod_list.append([model_name, pd.DataFrame()])
-                stability_list.append(pd.DataFrame(index=['stable_sim']))
+
+        model_name = grouped_files[0][0][1][19:-4]
+        if 'unstable' in model_name:
+            model_name = model_name[:-9]
+        if 'mirrored' in model_name:
+            model_name = model_name[9:]
+        mse = pd.DataFrame()
+        mae = pd.DataFrame()
+        cod = pd.DataFrame()
+        stability = pd.DataFrame(index=['stable_sim'])
         for files in grouped_files:
-            m_reference = files.pop()
-            m_log_name = m_reference[1][:18] + '_mirrored'
-            m_ref_dataframe = getPKL(m_reference[0])
-            m_reference_data = m_ref_dataframe[['vehicle vx [m*s^-1]',
-                                                'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                                'vehicle ax local [m*s^-2]',
-                                                'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
             reference = files.pop()
-            log_name = reference[1][:18]
+            if 'mirrored' in reference[1]:
+                log_name = reference[1][:27]
+            else:
+                log_name = reference[1][:18]
             ref_dataframe = getPKL(reference[0])
             reference_data = ref_dataframe[['vehicle vx [m*s^-1]',
                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                             'vehicle ax local [m*s^-2]',
                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
-            for index, file_pair in enumerate(zip(files[::2], files[1::2])):
-                for file in file_pair:
-                    if 'unstable' in file[1]:
-                        if 'mirrored' in file[1]:
-                            stability_list[index][m_log_name] = np.array([0])
-                            # ref = reference_data.drop(['time [s]'], axis=1)
-                            empty_results = np.mean(np.square(m_reference_data))
-                            for i in range(len(empty_results)):
-                                empty_results[i] = np.nan
-                            mse_list[index][1][m_log_name] = empty_results
-                            mae_list[index][1][m_log_name] = empty_results
-                            cod_list[index][1][m_log_name] = empty_results
-                            continue
-                        else:
-                            stability_list[index][log_name] = np.array([0])
-                            # ref = reference_data.drop(['time [s]'], axis=1)
-                            empty_results = np.mean(np.square(reference_data))
-                            for i in range(len(empty_results)):
-                                empty_results[i] = np.nan
-                            mse_list[index][1][log_name] = empty_results
-                            mae_list[index][1][log_name] = empty_results
-                            cod_list[index][1][log_name] = empty_results
-                            continue
-                    if 'mirrored' in file[1]:
-                        stability_list[index][m_log_name] = np.array([1])
-                        sim_dataframe = dataframe_from_csv(file[0])
-                        try:
-                            simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
-                                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                                             'vehicle ax local [m*s^-2]',
-                                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
-                        except KeyError:
-                            print('Empty Dataframe. Coninuing with next file')
-                            continue
+            if 'unstable' in files[0][1]:
+                stability[log_name] = np.array([0])
+                empty_results = np.mean(np.square(reference_data))
+                for i in range(len(empty_results)):
+                    empty_results[i] = np.nan
+                mse[log_name] = empty_results
+                mae[log_name] = empty_results
+                cod[log_name] = empty_results
+                continue
 
-                        # ref = reference_data.drop(['time [s]'], axis=1)
-                        # sim = simulation_data.drop(['time [s]'], axis=1)
-                        error = m_reference_data - simulation_data
-                        mean_squared_error = np.mean(np.square(error))
-                        mean_absolute_error = np.mean(np.abs(error))
-                        coeff_of_det = coeff_of_determination(m_reference_data, simulation_data)
-                        mse_list[index][1][m_log_name] = mean_squared_error
-                        mae_list[index][1][m_log_name] = mean_absolute_error
-                        cod_list[index][1][m_log_name] = coeff_of_det
-                    else:
-                        stability_list[index][log_name] = np.array([1])
-                        sim_dataframe = dataframe_from_csv(file[0])
-                        try:
-                            simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
-                                                             'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                                             'vehicle ax local [m*s^-2]',
-                                                             'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
-                        except KeyError:
-                            print('Empty Dataframe. Coninuing with next file')
-                            continue
+            else:
+                stability[log_name] = np.array([1])
+                sim_dataframe = dataframe_from_csv(files[0][0])
+                try:
+                    simulation_data = sim_dataframe[['vehicle vx [m*s^-1]',
+                                                     'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                                     'vehicle ax local [m*s^-2]',
+                                                     'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+                except KeyError:
+                    print('Empty Dataframe. Coninuing with next file')
+                    continue
 
-                        # ref = reference_data.drop(['time [s]'], axis=1)
-                        # sim = simulation_data.drop(['time [s]'], axis=1)
-                        error = reference_data - simulation_data
-                        mean_squared_error = np.mean(np.square(error))
-                        mean_absolute_error = np.mean(np.abs(error))
-                        coeff_of_det = coeff_of_determination(reference_data, simulation_data)
-                        mse_list[index][1][log_name] = mean_squared_error
-                        mae_list[index][1][log_name] = mean_absolute_error
-                        cod_list[index][1][log_name] = coeff_of_det
+                error = reference_data - simulation_data
+                mean_squared_error = np.mean(np.square(error))
+                mean_absolute_error = np.mean(np.abs(error))
+                coeff_of_det = coeff_of_determination(reference_data, simulation_data)
+                mse[log_name] = mean_squared_error
+                mae[log_name] = mean_absolute_error
+                cod[log_name] = coeff_of_det
         results = pd.DataFrame()
-        for (name, mse), (name, mae), (name, cod), stability in zip(mse_list, mae_list, cod_list, stability_list):
-            detailed_results = pd.DataFrame()
-            mse_names = ['mse_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
-            mae_names = ['mae_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
-            cod_names = ['cod_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
-            mse.index = mse_names
-            mae.index = mae_names
-            cod.index = cod_names
-            detailed_results = detailed_results.append(stability)
-            detailed_results = detailed_results.append(mse.round(5))
-            detailed_results = detailed_results.append(mae.round(5))
-            detailed_results = detailed_results.append(cod.round(5))
-            detailed_results = detailed_results.transpose()
-            if mode == 'open_loop':
-                for name_list in [mse_names, mae_names, cod_names]:
-                    for topic in name_list[:3]:
-                        detailed_results.pop(topic)
-            means = pd.DataFrame(np.mean(detailed_results), columns=['means']).round(5)
-            detailed_results = detailed_results.append(means.transpose())
-            detailed_results.to_csv(os.path.join(save_path, f'{name}_detailed_results.csv'))
+        # for mse, mae, cod, stability in zip(mse, mae, cod, stability):
+        detailed_results = pd.DataFrame()
+        mse_names = ['mse_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
+        mae_names = ['mae_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
+        cod_names = ['cod_' + ''.join([s.split(' ')[1], s.split(' ')[-1]]) for s in list(mse.index)]
+        mse.index = mse_names
+        mae.index = mae_names
+        cod.index = cod_names
+        detailed_results = detailed_results.append(stability)
+        detailed_results = detailed_results.append(mse.round(5))
+        detailed_results = detailed_results.append(mae.round(5))
+        detailed_results = detailed_results.append(cod.round(5))
+        detailed_results = detailed_results.transpose()
+        if mode == 'open_loop':
+            for name_list in [mse_names, mae_names, cod_names]:
+                for topic in name_list[:3]:
+                    detailed_results.pop(topic)
+        means = pd.DataFrame(np.mean(detailed_results), columns=['means']).round(5)
+        detailed_results = detailed_results.append(means.transpose())
+        detailed_results.to_csv(os.path.join(save_path, f'{model_name}_detailed_results.csv'))
 
-            means.columns = [os.path.basename(os.path.normpath(save_path))]
-            results = results.append(means.transpose())
+        means.columns = [os.path.basename(os.path.normpath(save_path))]
+        results = results.append(means.transpose())
         results.to_csv(os.path.join(save_path, 'overall_' + mode + '_results.csv'), index=True)
 
         with open(os.path.join(save_root_path, 'model_performances_' + mode + '.csv'), 'a') as f:
@@ -367,16 +323,24 @@ def sort_out_files(sim_files, log_files):
     log_names = []
     groups = []
     for ind, (path, name) in enumerate(sim_files):
-        if name[:18] not in log_names:
-            log_names.append(name[:18])
+        if 'mirrored' in name:
+            name = name[:27]
+        else:
+            name = name[:18]
+        if name not in log_names:
+            log_names.append(name)
             groups.append([sim_files[ind]])
             continue
         else:
-            i = log_names.index(name[:18])
+            i = log_names.index(name)
             groups[i].append(sim_files[ind])
 
     for ind, (path, name) in enumerate(log_files):
-        i = log_names.index(name[:18])
+        if 'mirrored' in name:
+            name = name[:27]
+        else:
+            name = name[:18]
+        i = log_names.index(name)
         groups[i].append(log_files[ind])
     return groups
 
@@ -412,7 +376,12 @@ def signal_handler(sig, frame):
 if __name__ == '__main__':
     vehicle_models = [
         # ['mpc_dynamic', ''],
-        ['mpc_kinematic', ''],
+        # ['mpc_kinematic', ''],
+        # ['hybrid_mlp', '2x16_softplus_reg0p5_directinput_sym'],
+        ['hybrid_mlp', '2x16_softplus_reg0p1_directinput_sym'],
+        # ['hybrid_mlp', '2x16_softplus_reg0p05_directinput_sym'],
+        # ['hybrid_mlp', '2x16_softplus_reg0p01_directinput_sym'],
+        # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput_sym'],
         # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput'],
         # ['hybrid_mlp', '5x64_relu_reg0p01_directinput'],
         # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput_newsplit'],
@@ -422,8 +391,9 @@ if __name__ == '__main__':
     for model_type, model_name in vehicle_models:
         if 'mlp' in model_type or 'mpc' in model_type:
             # evaluation_data_set_name = '20190729-173735_trustworthy_mirrored_mpc'
-            evaluation_data_set_name = '20190806-111533_trustworthy_mirrored_mpc_newsplit'
+            # evaluation_data_set_name = '20190806-111533_trustworthy_mirrored_mpc_newsplit'
             # evaluation_data_set_name = '20190806-111533_trustworthy_mirrored_mpc_newsplit (copy)'
+            evaluation_data_set_name = '20190813-202323_trustworthy_bigdata_mpc (copy)'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
         # elif 'lstm' in model_type:
