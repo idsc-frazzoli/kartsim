@@ -83,7 +83,7 @@ def calculate_disturbance(load_path_data=None, data_set_name='test', test_set_da
         os.popen('cp ' + path + ' ' + os.path.join(save_path_train_log_files, name))
     for path, name in test_files:
         os.popen('cp ' + path + ' ' + os.path.join(save_path_test_log_files, name))
-
+    time.sleep(1)
     if mirror_data:
         # Generate mirrored log files (w.r.t. x-axis)
         mirror_logfiles(save_path_train_log_files)
@@ -122,6 +122,7 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
     labels = []
     sequential_data = []
     starttime = time.time()
+    dataframe = pd.DataFrame()
     for index, (file_path_data, file_name) in enumerate(file_list):
         print(int(index / len(file_list) * 100),
               '% completed.   current file:', file_name[:-4] + '   elapsed time:',
@@ -183,18 +184,21 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
             features = np.vstack((features, dataframe.values[:, :-3]))
             labels = np.vstack((labels, dataframe.values[:, np.array([0, -3, -2, -1])]))
 
-    if sequential:
-        random.shuffle(sequential_data)
+    if len(dataframe) != 0:
+        if sequential:
+            random.shuffle(sequential_data)
 
-        for sequence, disturbance in sequential_data:
-            features.append(sequence)
-            labels.append(disturbance)
-        features = np.array(features)
-        labels = np.array(labels)
+            for sequence, disturbance in sequential_data:
+                features.append(sequence)
+                labels.append(disturbance)
+            features = np.array(features)
+            labels = np.array(labels)
+        else:
+            features = pd.DataFrame(np.array(features), columns=dataframe.columns[:-3])
+            labels = pd.DataFrame(np.array(labels), columns=dataframe.columns[np.array([0, -3, -2, -1])])
+        return features, labels
     else:
-        features = pd.DataFrame(np.array(features), columns=dataframe.columns[:-3])
-        labels = pd.DataFrame(np.array(labels), columns=dataframe.columns[np.array([0, -3, -2, -1])])
-    return features, labels
+        return dataframe, dataframe
 
 
 def mirror_logfiles(load_path_data):
