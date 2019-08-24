@@ -332,8 +332,8 @@ class Clarity(QtGui.QMainWindow):
                 groups.append(['pose y atvmu', 0, 2, name, True, 0, 0, 0, 1])
                 groups.append(['pose theta', 0, 3, name, True, 5, 50, 0, 1])
                 groups.append(['pose quality', 0, 4, name, True, 0, 0, 0, 1])
-                groups.append(['vehicle vx', 0, 5, name, True, 0, 0, 0, 1])
-                groups.append(['vehicle vy atvmu', 0, 6, name, True, 0, 0, 0, 1])
+                groups.append(['vehicle vx', 0, 5, name, True, 5, 50, 0, 1])
+                groups.append(['vehicle vy atvmu', 0, 6, name, True, 5, 50, 0, 1])
             elif 'steer.put' in name:
                 groups.append(['steer torque cmd', 0, 2, name, True, 0, 0, 0, 1])
             elif 'steer.get' in name:
