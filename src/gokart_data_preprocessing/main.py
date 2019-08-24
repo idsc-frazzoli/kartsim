@@ -20,8 +20,8 @@ def main():
     t = time.time()
 
     # ____________User parameters____________
-    # Choose a name for the data set
-    dataset_name = 'trustworthy_bigdata'
+    # Choose a model_type for the data set
+    dataset_name = 'trustworthy_bigdata_test_mpcvsnn'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -56,7 +56,7 @@ def main():
 
     # ______________________
     # check all the raw logs for missing/incomplete data and tag them for other characteristics
-    redo_data_tagging = False # only needs to be done once
+    redo_data_tagging = True # only needs to be done once
 
     # Filter data and compute inferred data from raw logs
     filter_data = True
@@ -67,7 +67,7 @@ def main():
     sampling_time_period = 0.1  # [s]
 
     # Calculate disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    mlp_data_set = True #needs filter_data and sample_data to be True
+    mlp_data_set = False #needs filter_data and sample_data to be True
     # Choose portion of test data
     mlp_test_set_days = ['20190701', '20190708', '20190709', '20190711', '20190719', '20190729']
 
@@ -88,9 +88,10 @@ def main():
     # Load data tags
     data_tagging = TagRawData(root_path_raw_data)
 
-    if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and redo_data_tagging:
+    # if not os.path.exists(os.path.join(root_path_raw_data, filenames['rawdatatags'])) and redo_data_tagging:
+    if redo_data_tagging:
         data_tagging = TagRawData(root_path_raw_data)
-        data_tagging.tag_log_files(overwrite=True)
+        data_tagging.tag_log_files(overwrite=False)
         data_tagging.save_prepro_params()
 
     if filter_data:
