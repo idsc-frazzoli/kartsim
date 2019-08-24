@@ -27,6 +27,7 @@ def main():
     #___user inputs
 
     pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/simtompc_comparison' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/simtompc_comparison_19082019' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
     mpcsolfiles = []
     for r, d, f in os.walk(pathmpcsolutiondata):
@@ -57,7 +58,13 @@ def main():
     part = 80
     # for file_path, file_name in mpcsolfiles[part:part+1]:
     # for file_path, file_name in mpcsolfiles[245:246]:
-    for file_path, file_name in mpcsolfiles[100:101]:
+    # for file_path, file_name in mpcsolfiles[60:100]:
+
+    vy_mpc_0 = []
+    vy_mpc_t0 = []
+    vy_kartsim_0 = []
+    vy_kartsim_t0 = []
+    for file_path, file_name in mpcsolfiles[0:50]:
 
         try:
             mpc_sol_data = pd.read_csv(str(file_path), header=None,
@@ -67,7 +74,7 @@ def main():
         except:
             print('Could not open file at', file_path)
             raise
-        # print(mpc_sol_data)
+        # print(mpc_sol_data.head())
         # print(type(mpc_sol_data))
 
 
@@ -101,7 +108,8 @@ def main():
                       np.add(mpc_sol_data['X Y'], np.sin(mpc_sol_data['X Psi']) * 0.46),
                       mpc_sol_data['X Psi'],
                       mpc_sol_data['X Ux'],
-                      np.add(mpc_sol_data['X Uy'],mpc_sol_data['X dotPsi']*0.46),
+                      np.add(mpc_sol_data['X Uy'],mpc_sol_data['X dotPsi'][0]*0.46),
+                      # mpc_sol_data['X Uy']+0.88,
                       mpc_sol_data['X dotPsi'])).transpose()
         # ______^^^______
 
@@ -143,39 +151,45 @@ def main():
         # plt.title('Euler Integration')
         plt.hold
 
-        # # plt.figure(2)
-        # # # plt.plot(Y[:,0], Y[:,3], 'r')
-        # # # plt.plot(X1[:,0],X1[:,3], 'b')
-        # # # plt.plot( Y[:, -1], 'r')
-        # # # plt.plot( X1[:, -1], 'b')
-        # # plt.plot(Y[:, 0], Y[:, 6], 'r')
-        # # plt.plot(X1[:, 0], X1[:, 6], 'b')
-        # # plt.plot(Y[:, 0], Y[:, 3], 'r')
-        # # plt.plot(X1[:, 0], X1[:, 3], 'b')
+        # plt.figure(2)
+        # # plt.plot(Y[:,0], Y[:,3], 'r')
+        # # plt.plot(X1[:,0],X1[:,3], 'b')
+        # # plt.plot( Y[:, -1], 'r')
+        # # plt.plot( X1[:, -1], 'b')
+        # plt.plot(Y[:, 0], Y[:, 6], 'r')
+        # plt.plot(X1[:, 0], X1[:, 6], 'b')
+        # plt.plot(Y[:, 0], Y[:, 3], 'r')
+        # plt.plot(X1[:, 0], X1[:, 3], 'b')
         #
-        # x_dot = (Y[1:, 1] - Y[:-1, 1]) / data_time_step
-        # y_dot = (Y[1:, 2] - Y[:-1, 2]) / data_time_step
-        #
-        # xx_dot = (X1[1:, 1] - X1[:-1, 1]) / sim_time_increment
-        # yx_dot = (X1[1:, 2] - X1[:-1, 2]) / sim_time_increment
-        #
-        # plt.figure(3)
-        # # plt.plot(Y[:, 0], Y[:, 5], 'r')
-        # # plt.plot(Y[:, 0], Y[:, 4], 'b')
+        x_dot = (Y[1:, 1] - Y[:-1, 1]) / data_time_step
+        y_dot = (Y[1:, 2] - Y[:-1, 2]) / data_time_step
+        theta = (Y[1:, 3] + Y[:-1, 3]) / 2
+        xx_dot = (X1[1:, 1] - X1[:-1, 1]) / sim_time_increment
+        yx_dot = (X1[1:, 2] - X1[:-1, 2]) / sim_time_increment
+        theta1 = (X1[1:, 3] + X1[:-1, 3]) / 2
+
+        plt.figure(3)
+        plt.plot(Y[:, 0], Y[:, 5], 'r')
+        # plt.plot(Y[:, 0], Y[:, 4], 'b')
         # plt.plot(Y[1:, 0], x_dot, 'c')
         # plt.plot(Y[1:, 0], y_dot, 'c')
-        # # plt.plot(X1[:, 0], X1[:, 5], 'orange')
-        # # plt.plot(X1[:, 0], X1[:, 4], 'g')
+        plt.plot(X1[:, 0], X1[:, 5], 'orange')
+        # plt.plot(X1[:, 0], X1[:, 4], 'g')
         # plt.plot(X1[1:, 0], xx_dot, 'y')
         # plt.plot(X1[1:, 0], yx_dot, 'y')
-        # # plt.plot(Y[:, 0], np.sqrt(np.square(Y[:, 4]) + np.square(Y[:, 5])), 'r')
-        # # plt.plot(X1[:, 0], np.sqrt(np.square(X1[:, 4]) + np.square(X1[:, 5])), 'b')
-        #
-        # vx = x_dot * np.cos(Y[:-1, 3]) + y_dot * np.sin(Y[:-1, 3])
-        # vy = -x_dot * np.sin(Y[:-1, 3]) + y_dot * np.cos(Y[:-1, 3])
-        #
-        # vxx = xx_dot * np.cos(X1[:-1, 3]) + yx_dot * np.sin(X1[:-1, 3])
-        # vyx = -xx_dot * np.sin(X1[:-1, 3]) + yx_dot * np.cos(X1[:-1, 3])
+        # plt.plot(Y[:, 0], np.sqrt(np.square(Y[:, 4]) + np.square(Y[:, 5])), 'k')
+        # plt.plot(X1[:, 0], np.sqrt(np.square(X1[:, 4]) + np.square(X1[:, 5])), 'k')
+        # plt.legend(['vy mpc', 'vx mpc', 'vy kartsim', 'vx kartsim'])
+        vy_mpc_0.append(Y[0, 5])
+        vy_mpc_t0.append(Y[0, 0])
+        vy_kartsim_0.append(X1[0, 5])
+        vy_kartsim_t0.append(X1[0, 0])
+        # # #
+        vx = x_dot * np.cos(theta) + y_dot * np.sin(theta)
+        vy = -x_dot * np.sin(theta) + y_dot * np.cos(theta)
+
+        vxx = xx_dot * np.cos(theta1) + yx_dot * np.sin(theta1)
+        vyx = -xx_dot * np.sin(theta1) + yx_dot * np.cos(theta1)
         #
         # Y_slip_angle = np.arctan(np.divide(Y[:, 5], Y[:, 4]))
         # X1_slip_angle = np.arctan(np.divide(X1[:, 5], X1[:, 4]))
@@ -190,40 +204,42 @@ def main():
         # plt.title('slip angle [rad]')
         #
         # plt.figure(5)
-        # plt.plot(Y[1:, 0], vy, 'm')
-        # plt.scatter(Y[1:, 0], vy, c='m')
+        # plt.plot(Y[1:, 0]-0.05, vy, 'm')
+        # # plt.scatter(Y[1:, 0], vy, c='m')
         # plt.plot(Y[:, 0], Y[:, 5], 'r')
-        # plt.scatter(Y[0, 0], Y[0, 5], c='r')
-        # plt.scatter(Y[0, 0], Y[0, 4], c='orange')
+        # # plt.scatter(Y[0, 0], Y[0, 5], c='r')
+        # plt.plot(Y[:, 0], Y[:, 4], 'r')
+        # # plt.scatter(Y[0, 0], Y[0, 4], c='orange')
         # plt.plot(X1[:, 0], X1[:, 5], 'orange')
-        # plt.scatter(X1[0, 0], X1[0, 5], c='orange')
-        # plt.plot(X1[1:, 0], vyx, 'c')
-        # plt.scatter(X1[1:, 0], vyx, c='c')
-        # # plt.plot(Y[:-1, 0], vx, 'c')
+        # # plt.scatter(X1[0, 0], X1[0, 5], c='orange')
+        # plt.plot(X1[1:, 0]-0.05, vyx, 'c')
+        # # plt.scatter(X1[1:, 0], vyx, c='c')
+        # plt.plot(Y[:-1, 0], vx, 'c')
         # # plt.plot(Y[:, 0], Y[:, 4], 'b')
-        # # plt.plot(X1[:, 0], X1[:, 4], 'g')
-        # # plt.plot(X1[1:, 0], vxx, c='y')
+        # plt.plot(X1[:, 0], X1[:, 4], 'g')
+        # plt.plot(X1[:-1, 0], vxx, c='y')
         # plt.legend(['MPC from pose','MPC output','Kartsim output', 'Kartsim from pose'])
         # plt.xlabel('time [s]')
         # plt.ylabel('U y [m/s]')
 
-        plt.figure(6)
-        plt.plot(U[0,:], U[1,:],c='m')
-        plt.plot(U[0,:], U[2,:],c='b')
-        plt.plot(U[0,:], U[3,:],c='g')
-        # plt.scatter(U[0, 0], U[1, 0], c='orange')
-        # plt.scatter(U[0, 0], U[2, 0], c='r')
-        # plt.scatter(U[0, 0], U[3, 0], c='g')
-        # # plt.scatter(X0[0],X0[1],c='b')
-        # # plt.scatter(X0[0],X0[6],c='c')
-        plt.legend(['BETA','AB','TV'])
-        plt.grid('on')
+        # plt.figure(6)
+        # plt.plot(U[0,:]-255.5, U[1,:],c='m')
+        # plt.plot(U[0,:]-255.5, U[2,:],c='b')
+        # plt.plot(U[0,:]-255.5, U[3,:],c='g')
+        # plt.scatter(U[0, 0]-255.5, U[1, 0], c='orange')
+        # plt.scatter(U[0, 0]-255.5, U[2, 0], c='r')
+        # plt.scatter(U[0, 0]-255.5, U[3, 0], c='g')
+        # plt.legend(['BETA','AB','TV'])
+        # plt.grid('on')
 
 
 
         # plt.plot(U[0, :], AB, 'b')
         # plt.plot(U[0, :], TV, 'g')
-
+    plt.figure(3)
+    plt.plot(vy_kartsim_t0, vy_kartsim_0, 'r')
+    plt.plot(vy_mpc_t0, vy_mpc_0, 'b')
+    plt.legend(['vy mpc', 'vy kartsim', 'vy reference'])
     plt.show()
     print("Done.")
     #
