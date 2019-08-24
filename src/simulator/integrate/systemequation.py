@@ -16,11 +16,16 @@ class SystemEquation:
         # print(vehicle_model.get_name())
         self.vehicle_model_name = vehicle_model.get_name()
         self.direct_input = vehicle_model.get_direct_input_mode()
-
-        if self.direct_input:
-            self.get_input = get_input_direct
+        if self.vehicle_model_name == "mpc_kinematic":
+            if self.direct_input:
+                self.get_input = get_kinematic_input_direct
+            else:
+                self.get_input = get_kinematic_input
         else:
-            self.get_input = get_input
+            if self.direct_input:
+                self.get_input = get_input_direct
+            else:
+                self.get_input = get_input
 
     # def initialize_vehicle_model(model_object):
     #     global vehicle_model
@@ -104,12 +109,16 @@ class SystemEquation:
         return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
 
     def solveivp_kinematic_dx_dt(self, t, X):
-
+        V = [X[4], X[5], X[6]]
         U = self.get_input(X[0])
+        V_dt = self.vehicle_model.get_accelerations(V, U)
 
         X_dt = self.vehicle_model.get_state_changes(X, U)
 
-        return [1, X_dt[0], X_dt[1], X_dt[2], X_dt[3], X_dt[4], X_dt[5]]
+        c, s = np.cos(float(X[3])), np.sin(float(X[3]))
+        R = np.array(((c, -s), (s, c)))
+        Vabs = np.matmul(V[:2], R.transpose())
+        return [1, Vabs[0], Vabs[1], V[2], V_dt[0], V_dt[1], V_dt[2]]
 
     def euler_dx_dt(self, V, U):
         return self.vehicle_model.get_accelerations(V, U)

@@ -8,7 +8,7 @@ Created on Tue Apr  2 16:24:25 2019
 import numpy as np
 from scipy.integrate import odeint, solve_ivp
 
-from simulator.integrate.systeminputhelper import set_input, set_input_direct
+from simulator.integrate.systeminputhelper import set_input, set_input_direct, set_kinematic_input, set_kinematic_input_direct
 
 
 def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
@@ -19,13 +19,18 @@ def odeIntegrator (X0, U, simStep, simIncrement, system_equation=None):
 
 
 def odeIntegratorIVP(X0, U, simStep, simIncrement, system_equation=None):
-    if len(U) == 4:
-        set_input_direct(U)
+    if system_equation.get_vehicle_model_name() == "mpc_kinematic":
+        if len(U) == 4:
+            set_kinematic_input_direct(U)
+        else:
+            set_kinematic_input(U)
     else:
-        set_input(U)
+        if len(U) == 4:
+            set_input_direct(U)
+        else:
+            set_input(U)
     t_eval = np.linspace(0, simStep, round(simStep / simIncrement,4) + 1)
-    if system_equation.get_vehicle_model_name == "kinematic_vehicle_mpc":
-        X0[5] = X0[6] = 0
+
     X1 = solve_ivp(system_equation.get_system_equation(), [0, simStep], X0, t_eval=t_eval, method='RK45', rtol=1e-5)
     if X1.status == 0:
         return np.transpose(X1.y)
