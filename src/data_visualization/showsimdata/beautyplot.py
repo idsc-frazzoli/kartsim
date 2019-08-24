@@ -28,6 +28,7 @@ folder_path = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190702-104900_compariso
 folder_path = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190702-094700_comparison_different_models_1s/'
 folder_path = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190702-205704_test_eval_final'
 # folder_path = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190702-213054_test_eval_final'
+folder_path = '/home/mvb/0_ETH/01_MasterThesis/SimData/20190702-205704_test_eval_final'
 
 colors = ['b', 'g', 'r', 'c', 'm', 'k', 'y', 'w']
 
@@ -35,7 +36,7 @@ x_crop = [0, 200]
 # x_crop = [200, 450]
 
 view_plot = True
-# view_plot = False
+view_plot = False
 
 
 topics = [
