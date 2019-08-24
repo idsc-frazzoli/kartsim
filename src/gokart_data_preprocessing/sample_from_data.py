@@ -94,8 +94,8 @@ def get_sampled_data(file, samplingTimeStep):
     topicRef1 = t0[0][t0[2].index(np.min(t0[2]))]    #topic with the smallest t_end
     initDataFrame = True
     for topic in logData:
-        # sTime, sData = interpolation_w_mean(list(logData[topic][0]), list(logData[topic][1]), logData[topicRef0][0][0], logData[topicRef1][0][-1], samplingTimeStep)
-        sTime, sData = interpolation(list(logData[topic][0]), list(logData[topic][1]), logData[topicRef0][0][0], logData[topicRef1][0][-1], samplingTimeStep)
+        sTime, sData = interpolation_w_mean(list(logData[topic][0]), list(logData[topic][1]), logData[topicRef0][0][0], logData[topicRef1][0][-1], samplingTimeStep)
+        # sTime, sData = interpolation(list(logData[topic][0]), list(logData[topic][1]), logData[topicRef0][0][0], logData[topicRef1][0][-1], samplingTimeStep)
         if initDataFrame:
             dataTime = np.round(list(sTime-sTime[0]),2)
             dataSetLog = pd.DataFrame(dataTime,columns = ['time [s]'])
