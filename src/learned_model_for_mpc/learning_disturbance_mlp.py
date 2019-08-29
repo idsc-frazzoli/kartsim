@@ -7,7 +7,8 @@ Created 13.06.19 11:09
 """
 import config
 from data_visualization.data_io import getPKL
-from learned_model_for_mpc.ml_models.mlp_keras import MultiLayerPerceptron
+from learned_model_for_mpc.ml_models.mlp_keras_mpc import MultiLayerPerceptronMPC
+from learned_model_for_mpc.ml_models.mlp_keras_mpc_additfeatures import MultiLayerPerceptronMPCAdditFeatures
 from multiprocessing import Pool
 import pandas as pd
 import os
@@ -23,34 +24,43 @@ def main():
     #     [50, 16, 'sigmoid', 0.0],
     # ]
 
-    network_settings = []
-
+    # network_settings = []
     # i=1
+    # nodes_exp = 5
+    # layers = 2
+    # activ_func = 'softplus'
+    # reg = 0.0001
     # for layers in range(1,10):
-    #     for nodes_exp in range(2,11):
-    #         nodes = 2 ** nodes_exp
-    #         tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
-    #         if tot_params < 35000:
-    #             i += 1
-    #             network_settings.append([layers,nodes,'relu',0.0])
-    #
-    # for layers in range(10,101,5):
-    #     for nodes_exp in range(2,11):
-    #         nodes = 2 ** nodes_exp
-    #         tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
-    #         if tot_params < 35000:
-    #             i += 1
-    #             network_settings.append([layers,nodes,'relu',0.0])
-    # print(i,network_settings)
+    #     for nodes_exp in range(6,11):
+    #         for activ_func in ['elu', 'relu', 'tanh', 'sigmoid', 'softplus', 'exponential']:
+    #         # for reg in [0.0001]:
+    #             nodes = 2 ** nodes_exp
+    #             tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
+    #             if tot_params < 35000:
+    #                 i += 1
+    #                 network_settings.append([layers,nodes,activ_func,reg])
+    # print(i)
+    # print(network_settings)
 
     network_settings = [
-        # [2, 32, 'softplus', 0.0],
-        [5, 64, 'relu', 0.01],
-        [2, 32, 'softplus', 0.05],
+        # [2, 32, 'elu', 0.0001],
+        # [2, 32, 'relu', 0.0001],
+        # [2, 32, 'tanh', 0.0001],
+        # [2, 32, 'sigmoid', 0.0001],
+        # [0, 6, None, 0.0],
+        # [0, 6, None, 0.0001],
+        # [0, 6, None, 0.001],
+        # [0, 6, None, 0.01],
+        [0, 6, None, 1],
+        # [4, 64, 'elu', 0.0001],
+        # [4, 64, 'relu', 0.0001],
+        # [4, 64, 'tanh', 0.0001],
+        # [4, 64, 'sigmoid', 0.0001],
+        # [4, 64, 'softplus', 0.0001],
     ]
-    if len(network_settings) >= 8:
-        chunks = [network_settings[i::8] for i in range(8)]
-        pool = Pool(processes=8)
+    if len(network_settings) >= 5:
+        chunks = [network_settings[i::5] for i in range(5)]
+        pool = Pool(processes=5)
         pool.map(train_NN, chunks)
     elif len(network_settings) > 1:
         no_settings = len(network_settings)
@@ -60,7 +70,7 @@ def main():
     else:
         train_NN(network_settings)
 
-    get_loss_pictures()
+    # get_loss_pictures()
 
 
 def train_NN(network_settings):
@@ -80,11 +90,9 @@ def train_NN(network_settings):
                                      'turning angle [n.a]',
                                      'acceleration rear axle [m*s^-2]',
                                      'acceleration torque vectoring [rad*s^-2]']]
-    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
     train_labels = train_labels[['disturbance vehicle ax local [m*s^-2]',
                                  'disturbance vehicle ay local [m*s^-2]',
                                  'disturbance pose atheta [rad*s^-2]']]
-    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
     test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                    'turning angle [n.a]',
                                    'acceleration rear axle [m*s^-2]',
@@ -98,17 +106,12 @@ def train_NN(network_settings):
 
     i = 1
     for l, npl, af, reg in network_settings:
-        name = '{}x{}_{}_reg{}_directinput_newsplit'.format(l, npl, af, str(reg).replace('.', 'p'))
+        # name = '{}x{}_{}_reg{}_kin_directinput_sym'.format(l, npl, af, str(reg).replace('.', 'p'))
+        name = '{}x{}_{}_reg{}_directinput'.format(l, npl, str(af), str(reg).replace('.', 'p'))
         print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
-        mlp = MultiLayerPerceptron(epochs=1000, learning_rate=1e-4, batch_size=100, random_seed=random_state,
-                                   model_name=name)
-
-        # mlp.load_model()
+        mlp = MultiLayerPerceptronMPC(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
+                                      model_name=name)
         mlp.build_new_model(layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
-        # mlp.build_new_model(layers=2, nodes_per_layer=32, activation_function='relu', regularization=0.01)
-
-        # print(mlp.show_model_summary())
-
         mlp.train_model(train_features, train_labels)
         mlp.save_training_history()
         mlp.save_model_performance(test_features, test_labels)
