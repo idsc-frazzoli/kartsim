@@ -66,8 +66,16 @@ def main():
 def train_NN(network_settings):
     random_state = 45
 
-    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190806-111533_trustworthy_mirrored_mpc_newsplit')
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
+    # path_data_set = os.path.join(config.directories['root'],
+    #                              'Data/MLPDatasets/20190824-183314_trustworthy_bigdata_kinematic_mpc')
+    # path_data_set = os.path.join(config.directories['root'],
+    #                              'Data/MLPDatasets/20190827-223456_trustworthy_bigdata_nomodel')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                      'turning angle [n.a]',
                                      'acceleration rear axle [m*s^-2]',
@@ -78,14 +86,15 @@ def train_NN(network_settings):
                                  'disturbance pose atheta [rad*s^-2]']]
     test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
     test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                     'turning angle [n.a]',
-                                     'acceleration rear axle [m*s^-2]',
-                                     'acceleration torque vectoring [rad*s^-2]']]
-
-    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+                                   'turning angle [n.a]',
+                                   'acceleration rear axle [m*s^-2]',
+                                   'acceleration torque vectoring [rad*s^-2]']]
     test_labels = test_labels[['disturbance vehicle ax local [m*s^-2]',
                                'disturbance vehicle ay local [m*s^-2]',
                                'disturbance pose atheta [rad*s^-2]']]
+
+    # train_labels = train_labels[['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
+    # test_labels = test_labels[['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']]
 
     i = 1
     for l, npl, af, reg in network_settings:
@@ -103,6 +112,14 @@ def train_NN(network_settings):
         mlp.train_model(train_features, train_labels)
         mlp.save_training_history()
         mlp.save_model_performance(test_features, test_labels)
+
+        # mlp = MultiLayerPerceptronMPCAdditFeatures(epochs=1000, learning_rate=1e-3, batch_size=100,
+        #                                            random_seed=random_state,
+        #                                            model_name=name)
+        # mlp.build_train_test_model(train_features, train_labels, test_features=test_features, test_labels=test_labels,
+        #                            layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
+
+        print(f'{name} done with training! :)')
         i += 1
 
 def get_loss_pictures():
