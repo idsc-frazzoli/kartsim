@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a model_type for the data set
-    dataset_name = 'trustworthy_bigdata_test_mpcvsnn'
+    dataset_name = 'final_data_set_nomodel_directinput'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -56,27 +56,31 @@ def main():
 
     # ______________________
     # check all the raw logs for missing/incomplete data and tag them for other characteristics
-    redo_data_tagging = True # only needs to be done once
+    redo_data_tagging = False  # only needs to be done once
 
     # Filter data and compute inferred data from raw logs
-    filter_data = True
+    filter_data = False
 
     # Sample data
-    sample_data = True
+    sample_data = False
     # Sampling time period used for sampling the raw data
     sampling_time_period = 0.1  # [s]
 
     # Calculate disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    mlp_data_set = False #needs filter_data and sample_data to be True
+    # model_type = 'mpc_dynamic'
+    model_type = 'kinematic'
+    use_labels = 'disturbance'
+    # use_labels = 'accelerations'
+    mlp_data_set = True  # needs filter_data and sample_data to be True
     # Choose portion of test data
     mlp_test_set_days = ['20190701', '20190708', '20190709', '20190711', '20190719', '20190729']
 
     # Calculate sequential disturbance (difference between the nominal model's acceleration estimation and the measured acceleration from log data)
-    lstm_data_set = False #needs filter_data and sample_data to be True
+    lstm_data_set = False  # needs filter_data and sample_data to be True
     # Specify the number of past states considered by the LSTM
     sequence_length = 5
     # Choose portion of test data
-    lstm_test_portion = 0.2
+    lstm_test_set_days = ['20190701', '20190708', '20190709', '20190711', '20190719', '20190729']
 
     # ______________________
     # path where all the raw logfiles are
@@ -110,20 +114,23 @@ def main():
     if sample_data:
         print('Sampling Data...')
         if path_preprocessed_dataset == None:
-            path_preprocessed_dataset = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Filtered/20190809-180948_trustworthy_bigdata'
+            path_preprocessed_dataset = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Filtered/20190829-090113_final_data_set'
         path_sampled_data = sample_from_logdata(sampling_time_period, path_preprocessed_dataset,
                                                 dataset_name, merge_data=False)
     if mlp_data_set:
         if path_sampled_data is None:
-            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181004_trustworthy_bigdata'
+            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190829-090124_final_data_set'
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_set_days=mlp_test_set_days,
-                              random_seed=random_seed, sequential=False, mirror_data=False, mpc_inputs=False)
+                              random_seed=random_seed, sequential=False, mirror_data=False, mpc_inputs=True,
+                              model_type=model_type, use_labels=use_labels)
 
     if lstm_data_set:
         print('Get sequential disturbance data...')
-        calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_portion=lstm_test_portion, random_seed=random_seed,
-                              sequential=True, sequence_length=sequence_length, mirror_data=False, mpc_inputs=False)
+        calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_set_days=lstm_test_set_days,
+                              random_seed=random_seed,
+                              sequential=True, sequence_length=sequence_length, mirror_data=False, mpc_inputs=False,
+                              model_type=model_type, use_labels=use_labels)
 
     print('Total computing time: ', int(time.time() - t), "s")
 
