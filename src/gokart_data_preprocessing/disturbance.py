@@ -169,7 +169,16 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
         # test_features = test_features.drop('vehicle ax local [m*s^-2]', axis=1)
         # test_features = test_features.drop('vehicle ay local [m*s^-2]', axis=1)
         # test_features = test_features.drop('pose atheta [rad*s^-2]', axis=1)
-        if mpc_inputs:
+        if eval_mode:
+            dataframe = dataframe[
+                ['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
+                 'pose atheta [rad*s^-2]', 'steer position cal [n.a.]',
+                 'brake position effective [m]', 'motor torque cmd left [A_rms]',
+                 'motor torque cmd right [A_rms]', 'turning angle [n.a]',
+                 'acceleration rear axle [m*s^-2]',
+                 'acceleration torque vectoring [rad*s^-2]']]
+        elif mpc_inputs:
             dataframe = dataframe[['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                    'turning angle [n.a]', 'acceleration rear axle [m*s^-2]',
                                    'acceleration torque vectoring [rad*s^-2]']]
