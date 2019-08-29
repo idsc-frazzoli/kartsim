@@ -171,7 +171,7 @@ class MultiLayerPerceptronMPC():
         # Callback: Tensorboard
         tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
 
-        self.history = self.model.fit(normalized_features, symmetric_labels, batch_size=self.batch_size, epochs=self.epochs,
+        self.history = self.model.fit(normalized_features, labels, batch_size=self.batch_size, epochs=self.epochs,
                                       callbacks=[stop_early, save_checkpoints, save_best_checkpoint,
                                                  PrintState(self.model_name), tensor_board],
                                       validation_split=0.2, verbose=0)
