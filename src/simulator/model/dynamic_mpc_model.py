@@ -101,8 +101,12 @@ class DynamicVehicleMPC:
         # print('f1y :{:5.2f}  f1_velx :{:5.2f}  f1_vely :{:5.2f}  ACCX :{:5.2f}  ACCY :{:5.2f}  ACCROTZ :{:5.2f}'.format(f1y, f1_velx, f1_vely, ACCX[0], ACCY[0], ACCROTZ[0]))
         # print('F1y:{:5.2f} F2y1 + F2y2:{:5.2f} velrotz*velx:{:5.2f}'.format(F1y[0], F2y1 + F2y2, velrotz * velx))
         # print('F1x:{:5.2f} F2x:{:5.2f} velrotz*vely:{:5.2f}'.format(F1x[0], F2x, velrotz * vely))
-
-        return [ACCX, ACCY, ACCROTZ]
+        if isinstance(ACCX, float):
+            return [ACCX, ACCY, ACCROTZ]
+        elif len(ACCX) == 1:
+            return [float(ACCX), float(ACCY), float(ACCROTZ)]
+        else:
+            return np.array([ACCX, ACCY, ACCROTZ]).transpose()
 
     def transform_inputs(self, steering_angle, brake_position, motor_current_l, motor_current_r, velx):
         brake_acceleration_factor = 1
