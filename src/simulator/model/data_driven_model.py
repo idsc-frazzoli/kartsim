@@ -23,9 +23,12 @@ class DataDrivenVehicleModel:
         self.direct_input = direct_input
         # Load the NN
         if self.direct_input:
-            self.mlp = MultiLayerPerceptronMPCInput(model_name=model_name, predict_only=True)
+            if 'squared' in self.model_name:
+                self.mlp = MultiLayerPerceptronMPCAdditFeatures(model_name=model_name, predict_only=True)
+            else:
+                self.mlp = MultiLayerPerceptronMPC(model_name=model_name, predict_only=True)
         else:
-            self.mlp = MultiLayerPerceptronNormal(model_name=model_name, predict_only=True)
+            self.mlp = MultiLayerPerceptron(model_name=model_name, predict_only=True)
         self.mlp.load_model()
         self.mlp.load_checkpoint('best')
         self.weights, self.biases = self.mlp.get_weights()
@@ -63,10 +66,14 @@ class DataDrivenVehicleModel:
             features = np.array([initial_velocities+system_inputs])
             if 'sym' in self.model_name:
                 features, label_mirror = self.mlp.mirror_state_space(features)
+                if 'squared' in self.model_name:
+                    features = self.mlp.add_features(features)
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
                 disturbance[1:3] = disturbance[1:3] * label_mirror[0]
             else:
+                if 'squared' in self.model_name:
+                    features = self.mlp.add_features(features)
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
 
