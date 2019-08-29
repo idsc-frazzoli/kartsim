@@ -103,17 +103,22 @@ class MultiLayerPerceptronMPC():
 
     def build_new_model(self, layers=2, nodes_per_layer=32, activation_function=None, regularization=0.01):
         inputs = tf.keras.Input(shape=(6,))
-        h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
-                                  kernel_regularizer=tf.keras.regularizers.l2(regularization),
-                                  bias_regularizer=tf.keras.regularizers.l2(regularization))(inputs)
-        if layers > 1:
-            for layer in range(layers - 1):
-                h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
-                                          kernel_regularizer=tf.keras.regularizers.l2(regularization),
-                                          bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
-        predictions = tf.keras.layers.Dense(3, activation=None,
-                                            kernel_regularizer=tf.keras.regularizers.l2(regularization),
-                                            bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
+        if layers > 0:
+            h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
+                                      kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                      bias_regularizer=tf.keras.regularizers.l2(regularization))(inputs)
+            if layers > 1:
+                for layer in range(layers - 1):
+                    h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
+                                              kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                              bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
+            predictions = tf.keras.layers.Dense(3, activation=None,
+                                                kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                                bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
+        else:
+            predictions = tf.keras.layers.Dense(3, activation=None,
+                                                kernel_regularizer=tf.keras.regularizers.l2(regularization),
+                                                bias_regularizer=tf.keras.regularizers.l2(regularization))(inputs)
 
         self.model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
