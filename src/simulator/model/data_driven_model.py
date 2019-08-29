@@ -32,13 +32,14 @@ class DataDrivenVehicleModel:
         self.mlp.load_model()
         self.mlp.load_checkpoint('best')
         self.weights, self.biases = self.mlp.get_weights()
-
         if 'relu' in model_name:
             self.disturbance = self.solve_NN_relu
         elif 'softplus' in model_name:
             self.disturbance = self.solve_NN_softplus
         elif 'tanh' in model_name:
             self.disturbance = self.solve_NN_tanh
+        elif 'None' in model_name:
+            self.disturbance = self.solve_NN_None
 
         # Load parameters for normalizing inputs
         norm_params = self.mlp.load_normalizing_parameters()
@@ -122,4 +123,11 @@ class DataDrivenVehicleModel:
                 x = np.tanh(sol)
             else:
                 x = sol
+        return x
+
+    def solve_NN_None(self, inputs):
+        x = inputs
+        for i, (w, b) in enumerate(zip(self.weights, self.biases)):
+            sol = np.matmul(w.transpose(), x) + b
+            x = sol
         return x
