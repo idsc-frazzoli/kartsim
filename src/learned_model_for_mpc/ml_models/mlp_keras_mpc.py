@@ -291,9 +291,7 @@ class MultiLayerPerceptronMPC():
             best = pd.DataFrame(best).transpose()
 
             self.load_checkpoint()
-            symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
-            features_normalized = self.normalize_data(symmetric_features)
-            test_errors = self.model.evaluate(features_normalized, symmetric_labels, verbose=0)
+            test_errors = self.test_model(test_features, test_labels)
 
             best.insert(0, 'test_coeff_of_determination', test_errors[3])
             best.insert(0, 'test_mean_squared_error', test_errors[2])
