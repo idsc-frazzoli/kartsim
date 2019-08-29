@@ -148,9 +148,11 @@ class MultiLayerPerceptronMPC():
         if self.shuffle:
             features, labels = shuffle_dataframe(features, labels, random_seed=self.random_seed)
 
-        symmetric_features, symmetric_labels = self.mirror_state_space(features, labels)
-        self.get_train_stats(symmetric_features)
-        normalized_features = self.normalize_data(symmetric_features)
+        if 'sym' in self.model_name:
+            features, labels = self.mirror_state_space(features, labels)
+        self.get_train_stats(features)
+        # normalized_features, normalized_labels = self.normalize_data(features, labels)
+        normalized_features = self.normalize_data(features)
         self.save_training_parameters()
 
         self.save_path_checkpoints = os.path.join(self.model_dir, 'model_checkpoints', 'mpl-{epoch:04d}.ckpt')
@@ -221,7 +223,11 @@ class MultiLayerPerceptronMPC():
                                               index=['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
                                                      'pose vtheta [rad*s^-1]', 'turning angle [n.a]',
                                                      'acceleration rear axle [m*s^-2]',
-                                                     'acceleration torque vectoring [rad*s^-2]'])
+                                                     'acceleration torque vectoring [rad*s^-2]',
+                                                     # 'label1',
+                                                     # 'label2',
+                                                     # 'label3',
+                                                     ])
         norm_params_save_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         normalizing_parameters.to_csv(norm_params_save_path)
 
@@ -300,19 +306,24 @@ class MultiLayerPerceptronMPC():
                 best.to_csv(f, header=False, index=False)
 
     def test_model(self, test_features, test_labels):
-        symmetric_features, symmetric_labels = self.mirror_state_space(test_features, test_labels)
-        features_normalized = self.normalize_data(symmetric_features)
-        return self.model.evaluate(features_normalized, symmetric_labels)
+        if 'sym' in self.model_name:
+            test_features, test_labels = self.mirror_state_space(test_features, test_labels)
+        features_normalized = self.normalize_data(test_features)
+        # features_normalized, labels_normalized = self.normalize_data(test_features, test_labels)
+        return self.model.evaluate(features_normalized, test_labels, verbose=0)
 
     def show_model_summary(self):
         return self.model.summary()
 
     def get_train_stats(self, training_features):
+        # feature_labels = training_features.join(training_labels)
         self.train_stats = training_features.describe()
         self.train_stats = self.train_stats.transpose()
 
     def normalize_data(self, features):
         if isinstance(features, pd.DataFrame):
+            # features.iloc[:,np.array([0,4])] = features.iloc[:,np.array([0,4])] - self.train_stats['mean'][np.array([0,4])]
+            # return features / self.train_stats['std'][:6], (labels - self.train_stats['mean'][6:]) / self.train_stats['std'][6:]
             return (features - self.train_stats['mean']) / self.train_stats['std']
         else:
             return (features - self.train_stats['mean'].values) / self.train_stats['std'].values
