@@ -7,16 +7,18 @@ Created 14.06.19 15:50
 """
 import tensorflow as tf
 import numpy as np
-from learned_model.ml_models.mlp_keras import MultiLayerPerceptron as MultiLayerPerceptronNormal
-from learned_model_for_mpc.ml_models.mlp_keras import MultiLayerPerceptron as MultiLayerPerceptronMPCInput
+from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
+from learned_model_for_mpc.ml_models.mlp_keras_mpc import MultiLayerPerceptronMPC
+from learned_model_for_mpc.ml_models.mlp_keras_mpc_additfeatures import MultiLayerPerceptronMPCAdditFeatures
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 
 
 class DataDrivenVehicleModel:
 
-    def __init__(self, model_name='FirstTry', direct_input=False):
-        self.model_type = "hybrid_mlp"
+    def __init__(self, model_type='hybrid_mlp', model_name='FirstTry', direct_input=False):
+        self.model_type = model_type
         self.model_name = model_name
         self.direct_input = direct_input
         # Load the NN
@@ -39,7 +41,13 @@ class DataDrivenVehicleModel:
         self.stds = norm_params['standard deviation'].values
 
         # Load nominal vehicle model
-        self.mpc = DynamicVehicleMPC(direct_input=self.direct_input)
+        if self.model_type == 'hybrid_mlp':
+            self.nominal_model = DynamicVehicleMPC(direct_input=self.direct_input)
+        elif self.model_type == 'hybrid_kinematic_mlp':
+            self.nominal_model = KinematicVehicleMPC(direct_input=self.direct_input)
+        else:
+            raise ValueError('No or invalid vehicle model type. Please specify.')
+
 
     def get_name(self):
         return self.model_type
@@ -62,18 +70,18 @@ class DataDrivenVehicleModel:
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
 
-            accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
-            result = np.array(accelerations).transpose() + disturbance
-            return result[0]
+            accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
+            result = np.array(accelerations) + disturbance
+            return result
         else:
             input = np.hstack((initial_velocities,system_inputs))
 
             disturbance = self.mlp.predict(input)
 
-            accelerations = self.mpc.get_accelerations(initial_velocities, system_inputs)
+            accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
             # print('disturbance', disturbance)
             # print('accelerations', np.array(accelerations).transpose())
-            result = np.array(accelerations).transpose() + disturbance
+            result = accelerations + disturbance
 
             return result
 
