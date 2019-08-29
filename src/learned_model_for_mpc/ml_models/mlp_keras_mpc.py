@@ -79,6 +79,9 @@ class MultiLayerPerceptronMPC():
             print('Could not load normalization parameters from', load_path)
             raise
 
+    def get_normalizing_parameters(self):
+        return self.train_stats['mean'].values, self.train_stats['std'].values
+
     def load_checkpoint(self, checkpoint_name='best'):
         load_path = os.path.join(self.model_dir, 'model_checkpoints')
 
