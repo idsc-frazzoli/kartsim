@@ -16,8 +16,10 @@ from subprocess import Popen, STDOUT
 import pandas as pd
 
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
+from simulator.model.no_model_model import NoModelModel
 
 import signal
 import sys
@@ -55,8 +57,13 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
 
 def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder, simulation_files, save_path):
     save_path = os.path.join(save_path, 'open_loop_simulation_files')
-    if vehicle_model_type == 'mpc_dynamic':
-        vehicle_model = DynamicVehicleMPC(direct_input=True)
+    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp']:
+        if vehicle_model_type == 'mpc_dynamic':
+            vehicle_model = DynamicVehicleMPC(direct_input=True)
+        elif vehicle_model_type == 'mpc_kinematic':
+            vehicle_model = KinematicVehicleMPC(direct_input=True)
+        else:
+            vehicle_model = NoModelModel(direct_input=True, model_name=vehicle_model_name)
 
         for simulation_file in simulation_files:
             dataset_path = os.path.join(simulation_folder, simulation_file)
@@ -89,7 +96,7 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
                                            'pose atheta [rad*s^-2]'])
     elif 'mlp' in vehicle_model_type or 'lstm' in vehicle_model_type:
         if 'mlp' in vehicle_model_type:
-            vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name, direct_input=True)
+            vehicle_model = DataDrivenVehicleModel(model_type=vehicle_model_type, model_name=vehicle_model_name, direct_input=True)
         # elif 'lstm' in vehicle_model_type:
         #     vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
 
@@ -105,8 +112,7 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
             # 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
             V = dataset[:, 1:4]
             U = dataset[:, -3:]
-            if 'mlp' in vehicle_model_type:
-                accelerations = vehicle_model.get_accelerations(V, U)
+            accelerations = vehicle_model.get_accelerations(V, U)
             # elif 'lstm' in vehicle_model_type:
             #     accelerations = vehicle_model.get_accelerations(0, V, U)
             # accelerations = np.array(accelerations).transpose()
