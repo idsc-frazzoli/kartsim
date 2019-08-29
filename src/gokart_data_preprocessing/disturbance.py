@@ -178,9 +178,14 @@ def get_disturbance(load_path_data, vehicle_model, sequential, sequence_length, 
                                    'steer position cal [n.a.]', 'brake position effective [m]',
                                    'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]
 
-        dataframe['disturbance vehicle ax local [m*s^-2]'] = output_disturbance[:, 0]
-        dataframe['disturbance vehicle ay local [m*s^-2]'] = output_disturbance[:, 1]
-        dataframe['disturbance pose atheta [rad*s^-2]'] = output_disturbance[:, 2]
+        if use_labels == 'disturbance':
+            nominal_model_output = vehicle_model.get_accelerations(velocities, inputs)
+            output_disturbance = target_output.values - nominal_model_output
+            dataframe['disturbance vehicle ax local [m*s^-2]'] = output_disturbance[:, 0]
+            dataframe['disturbance vehicle ay local [m*s^-2]'] = output_disturbance[:, 1]
+            dataframe['disturbance pose atheta [rad*s^-2]'] = output_disturbance[:, 2]
+        elif use_labels == 'accelerations':
+            dataframe = dataframe.join(target_output)
         if sequential:
             sequence = deque(maxlen=sequence_length)
 
