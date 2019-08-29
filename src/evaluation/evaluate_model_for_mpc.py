@@ -31,6 +31,8 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
     logging = True
     evaluation_name = vehicle_model_type + '_' + vehicle_model_name + '_mpcinputs'
     # evaluation_name = 'testk'
+    if '(copy)' in evaluation_data_set_path:
+        evaluation_name += '_single'
 
     save_root_path = os.path.join(config.directories['root'], 'Evaluation')
 
@@ -77,7 +79,6 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
             V = dataset[:, 1:4]
             U = dataset[:, -3:]
             accelerations = vehicle_model.get_accelerations(V, U)
-            accelerations = np.array(accelerations).transpose()
             final_dataframe = pd.DataFrame(np.hstack((dataset, accelerations)))
 
             if 'mirrored' in simulation_file:
@@ -109,7 +110,6 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
                 ['time [s]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                  'turning angle [n.a]', 'acceleration rear axle [m*s^-2]',
                  'acceleration torque vectoring [rad*s^-2]']].values
-            # 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
             V = dataset[:, 1:4]
             U = dataset[:, -3:]
             accelerations = vehicle_model.get_accelerations(V, U)
@@ -383,23 +383,27 @@ if __name__ == '__main__':
     vehicle_models = [
         # ['mpc_dynamic', ''],
         # ['mpc_kinematic', ''],
-        # ['hybrid_mlp', '2x16_softplus_reg0p5_directinput_sym'],
-        ['hybrid_mlp', '2x16_softplus_reg0p1_directinput_sym'],
-        # ['hybrid_mlp', '2x16_softplus_reg0p05_directinput_sym'],
-        # ['hybrid_mlp', '2x16_softplus_reg0p01_directinput_sym'],
-        # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput_sym'],
-        # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput'],
+        # ['mlp', '3x64_softplus_reg0p0001_nomodel_directinput'],
         # ['hybrid_mlp', '5x64_relu_reg0p01_directinput'],
-        # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput_newsplit'],
-        # ['hybrid_mlp', '5x64_relu_reg0p01_directinput_newsplit'],
+        # ['hybrid_mlp', '0x6_None_reg0p0001_directinput'],
+        # ['hybrid_mlp', '0x6_None_reg0p001_directinput'],
+        ['hybrid_mlp', '0x6_None_reg0p1_directinput'],
+        # ['hybrid_kinematic_mlp', '2x32_relu_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '2x32_relu_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '3x64_softplus_reg0p0001_kin_directinput_sym'],
+
+        # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput'],
+        # ['hybrid_kinematic_mlp', '2x32_relu_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '2x32_softplus_reg0p0001_kin_directinput_sym'],
+        # ['hybrid_kinematic_mlp', '3x16_softplus_reg0p0001_kin_directinput_sym'],
+        # ['hybrid_kinematic_mlp', '2x16_softplus_reg0p0001_kin_directinput_sym'],
+
     ]
 
     for model_type, model_name in vehicle_models:
         if 'mlp' in model_type or 'mpc' in model_type:
-            # evaluation_data_set_name = '20190729-173735_trustworthy_mirrored_mpc'
-            # evaluation_data_set_name = '20190806-111533_trustworthy_mirrored_mpc_newsplit'
-            # evaluation_data_set_name = '20190806-111533_trustworthy_mirrored_mpc_newsplit (copy)'
-            evaluation_data_set_name = '20190813-202323_trustworthy_bigdata_mpc (copy)'
+            evaluation_data_set_name = '20190829-091021_final_data_set_dynamic_directinput'
+            # evaluation_data_set_name = '20190824-183314_trustworthy_bigdata_kinematic_mpc (copy)'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
         # elif 'lstm' in model_type:
