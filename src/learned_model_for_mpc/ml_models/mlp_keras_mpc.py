@@ -18,7 +18,7 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 import time
 
 
-class MultiLayerPerceptron():
+class MultiLayerPerceptronMPC():
     def __init__(self, epochs=20, learning_rate=1e-4, batch_size=100, shuffle=True, random_seed=None, model_name='test',
                  predict_only=False):
         self.root_folder = os.path.join(config.directories['root'], 'Models/trained_mlp_models_for_mpc')
