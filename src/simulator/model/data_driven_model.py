@@ -37,6 +37,8 @@ class DataDrivenVehicleModel:
             self.disturbance = self.solve_NN_relu
         elif 'softplus' in model_name:
             self.disturbance = self.solve_NN_softplus
+        elif 'tanh' in model_name:
+            self.disturbance = self.solve_NN_tanh
 
         # Load parameters for normalizing inputs
         norm_params = self.mlp.load_normalizing_parameters()
@@ -108,6 +110,16 @@ class DataDrivenVehicleModel:
             sol = np.matmul(w.transpose(), x) + b
             if i < len(self.biases) - 1:
                 x = np.log(np.exp(sol) + 1)
+            else:
+                x = sol
+        return x
+
+    def solve_NN_tanh(self, inputs):
+        x = inputs
+        for i, (w, b) in enumerate(zip(self.weights, self.biases)):
+            sol = np.matmul(w.transpose(), x) + b
+            if i < len(self.biases) - 1:
+                x = np.tanh(sol)
             else:
                 x = sol
         return x
