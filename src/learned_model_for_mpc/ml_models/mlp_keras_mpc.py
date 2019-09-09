@@ -166,7 +166,7 @@ class MultiLayerPerceptronMPC():
                                                                   save_best_only=True, monitor='val_loss', mode='min')
 
         # Callback: Stop training if validation loss does not improve anymore
-        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
         # Callback: Tensorboard
         tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
