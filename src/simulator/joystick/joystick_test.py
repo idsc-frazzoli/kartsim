@@ -26,6 +26,12 @@ p1 = win.addPlot(title="axes")#, setAspectLocked=True)
 p1.showGrid(x=True, y=True)
 # p1.setAspectLocked(lock=True, ratio=1)
 
+axes_list = np.array([[0,0,0,0],])
+axes = {}
+axes['wheel'] = p1.plot(axes_list[-150:,0]*2., pen=(255, 255, 255))
+axes['1'] = p1.plot(axes_list[-150:,1], pen=(0, 255, 0))
+axes['2'] = p1.plot(axes_list[-150:,2], pen=(255, 0, 0))
+axes['3'] = p1.plot(axes_list[-150:,3], pen=(0, 0, 255))
 
 
 
@@ -33,7 +39,7 @@ p1.showGrid(x=True, y=True)
 
 runSimulation = True
 #    first = True
-axes_list = np.array([[0,0,0,0],])
+
 
 def updateData():
     global axes_list
@@ -51,23 +57,22 @@ def updateData():
     for num in range(axes):
         axex_values.append(logitech_wheel.get_axis(num))
     axes_list = np.vstack((axes_list,np.array(axex_values)))
-        # print('axes',axes_list,end='\r')
+    print('axes',len(axes_list),end='\r')
     updatePlot(axes_list)
 
 
 timerdata = QtCore.QTimer()
 timerdata.timeout.connect(updateData)
-timerdata.start()
+timerdata.start(10)
 
 pygame.joystick.quit()
 pygame.quit()
 
 def updatePlot(axes_list):
-    p1.clear()
-    p1.plot(axes_list[-150:,0]*2., pen=(255, 255, 255))
-    p1.plot(axes_list[-150:,1], pen=(0, 255, 0))
-    p1.plot(axes_list[-150:,2], pen=(255, 0, 0))
-    p1.plot(axes_list[-150:,3], pen=(0, 0, 255))
+    axes['wheel'].setData(axes_list[-150:,0]*2., pen=(255, 255, 255))
+    axes['1'].setData(axes_list[-150:,1], pen=(0, 255, 0))
+    axes['2'].setData(axes_list[-150:,2], pen=(255, 0, 0))
+    axes['3'].setData(axes_list[-150:,3], pen=(0, 0, 255))
 
 
 if __name__ == '__main__':
