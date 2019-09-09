@@ -40,7 +40,7 @@ QtGui.QApplication.setGraphicsSystem('raster')
 app = QtGui.QApplication([])
 
 win = pg.GraphicsWindow(title="Basic plotting examples")
-win.resize(1600,800)
+win.resize(800,400)
 win.setWindowTitle('kartsim visualization')
 
 # Enable antialiasing for prettier plots
@@ -157,8 +157,7 @@ def updateData():
     if len(msg) == 2:
         X = msg[0]
         U = msg[1]
-        if U.shape[1] > 2:
-            U = U[:,-2:]
+
         XU = np.concatenate((X, np.transpose(U)), axis=1)
     else:
         XU = msg
