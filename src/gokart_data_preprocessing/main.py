@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a model_type for the data set
-    dataset_name = 'final_data_set_nomodel_directinput'
+    dataset_name = 'mpc_vs_kin_nn_and_no_model'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -59,10 +59,10 @@ def main():
     redo_data_tagging = False  # only needs to be done once
 
     # Filter data and compute inferred data from raw logs
-    filter_data = False
+    filter_data = True
 
     # Sample data
-    sample_data = False
+    sample_data = True
     # Sampling time period used for sampling the raw data
     sampling_time_period = 0.1  # [s]
 
@@ -71,7 +71,7 @@ def main():
     model_type = 'kinematic'
     use_labels = 'disturbance'
     # use_labels = 'accelerations'
-    mlp_data_set = True  # needs filter_data and sample_data to be True
+    mlp_data_set = False  # needs filter_data and sample_data to be True
     # Choose portion of test data
     mlp_test_set_days = ['20190701', '20190708', '20190709', '20190711', '20190719', '20190729']
 
@@ -102,7 +102,8 @@ def main():
         data_tagging.sort_out_data(required_data_list, required_tags_list, exclusion_tags_list)
         print('Data preprocessing started...')
         filtered_data_dict = prepare_dataset(root_path_raw_data, data_tagging, required_data_list,
-                                             start_from='20190514')
+                                             # start_from='20190514')
+                                             start_from = '20190909')
         print('Data preprocessing completed.')
 
         # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
@@ -120,6 +121,7 @@ def main():
     if mlp_data_set:
         if path_sampled_data is None:
             path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190829-090124_final_data_set'
+            path_sampled_data = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190827-212522_mpc_test_driving_logs'
         print('Calcluating disturbance on predicitons with nominal vehicle model...')
         calculate_disturbance(path_sampled_data, data_set_name=dataset_name, test_set_days=mlp_test_set_days,
                               random_seed=random_seed, sequential=False, mirror_data=False, mpc_inputs=True,
