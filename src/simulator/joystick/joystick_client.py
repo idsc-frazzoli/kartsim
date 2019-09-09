@@ -74,7 +74,12 @@ def main():
         # event = pygame.event.wait()
         # logitech_wheel = pygame.joystick.Joystick(0)
         # logitech_wheel.init()
-        wheel_axis.append(-logitech_wheel.get_axis(0))
+        wheel_angle = -logitech_wheel.get_axis(0) * 3
+        if wheel_angle < -0.44:
+            wheel_angle = -0.44
+        elif wheel_angle > 0.44:
+            wheel_angle = 0.44
+        wheel_axis.append(wheel_angle)
         time_steps.append(time.time())
         for i, num in enumerate([1, 3]):
             value = logitech_wheel.get_axis(num)
@@ -95,8 +100,8 @@ def main():
         # print('axes', axex_values)
         # print(list(wheel_axis)[-1])
         U = np.array([list(np.array(time_steps) - time_steps[0] + X0[0]),
-                      list(np.array(wheel_axis)*3),
-                      [pedals[0] - pedals[1]*4, pedals[0] - pedals[1]*4],
+                      list(np.array(wheel_axis)),
+                      [pedals[0] - pedals[1]*3, pedals[0] - pedals[1]*3],
                       list(wheel_axis), ])
 
         txt_msg = encode_request_msg_to_txt([X0, U, server_return_interval, sim_time_increment])
