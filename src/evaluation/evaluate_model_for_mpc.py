@@ -20,6 +20,7 @@ from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.model.no_model_model import NoModelModel
+from simulator.model.no_model_sparse_model import NoModelSparseModel
 
 import signal
 import sys
@@ -59,13 +60,15 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
 
 def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder, simulation_files, save_path):
     save_path = os.path.join(save_path, 'open_loop_simulation_files')
-    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp']:
+    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp', 'no_model']:
         if vehicle_model_type == 'mpc_dynamic':
             vehicle_model = DynamicVehicleMPC(direct_input=True)
         elif vehicle_model_type == 'mpc_kinematic':
             vehicle_model = KinematicVehicleMPC(direct_input=True)
-        else:
+        elif vehicle_model_type == 'mlp':
             vehicle_model = NoModelModel(direct_input=True, model_name=vehicle_model_name)
+        else:
+            vehicle_model = NoModelSparseModel(model_name=vehicle_model_name)
 
         for simulation_file in simulation_files:
             dataset_path = os.path.join(simulation_folder, simulation_file)
@@ -387,9 +390,23 @@ if __name__ == '__main__':
         # ['hybrid_mlp', '5x64_relu_reg0p01_directinput'],
         # ['hybrid_mlp', '0x6_None_reg0p0001_directinput'],
         # ['hybrid_mlp', '0x6_None_reg0p001_directinput'],
-        ['hybrid_mlp', '0x6_None_reg0p1_directinput'],
+        # ['hybrid_mlp', '0x6_None_reg1_directinput'],
+        # ['hybrid_mlp', '2x16_softplus_reg1_directinput'],
+        # ['hybrid_mlp', '2x16_tanh_reg1_directinput'],
+        # ['hybrid_mlp', '1x16_softplus_reg1_directinput'],
+        # ['hybrid_mlp', '1x16_tanh_reg1_directinput'],
         # ['hybrid_kinematic_mlp', '2x32_relu_reg0p0_kin_directinput'],
-        # ['hybrid_kinematic_mlp', '2x32_relu_reg0p0001_kin_directinput'],
+
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p1_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p01_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p1_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p01_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0001_kin_directinput'],
         # ['hybrid_kinematic_mlp', '3x64_softplus_reg0p0001_kin_directinput_sym'],
 
         # ['hybrid_mlp', '2x32_softplus_reg0p05_directinput'],
@@ -398,12 +415,25 @@ if __name__ == '__main__':
         # ['hybrid_kinematic_mlp', '3x16_softplus_reg0p0001_kin_directinput_sym'],
         # ['hybrid_kinematic_mlp', '2x16_softplus_reg0p0001_kin_directinput_sym'],
 
+        # ['no_model', 'poly3_order1'],
+        # ['no_model', 'poly3_order2'],
+        # ['no_model', 'poly3_order3'],
+        ['no_model', 'poly3_order4'],
+        # ['no_model', 'poly3_order5'],
+        # ['no_model', 'poly2_order2'],
+        # ['no_model', 'poly2_order3'],
+        ['no_model', 'poly2_order4'],
+        # ['no_model', 'poly2_order5'],
+        # ['no_model', 'poly2_order6'],
+
     ]
 
     for model_type, model_name in vehicle_models:
-        if 'mlp' in model_type or 'mpc' in model_type:
-            evaluation_data_set_name = '20190829-091021_final_data_set_dynamic_directinput'
-            # evaluation_data_set_name = '20190824-183314_trustworthy_bigdata_kinematic_mpc (copy)'
+        if 'mlp' in model_type or 'mpc' in model_type or 'no_model' in model_type:
+            # evaluation_data_set_name = '20190829-091021_final_data_set_dynamic_directinput'
+            # evaluation_data_set_name = '20190829-091514_final_data_set_kinematic_directinput'
+            # evaluation_data_set_name = '20190829-091514_final_data_set_kinematic_directinput (copy)'
+            evaluation_data_set_name = '20190829-092236_final_data_set_nomodel_directinput'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
         # elif 'lstm' in model_type:
