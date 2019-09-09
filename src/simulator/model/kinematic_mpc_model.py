@@ -47,13 +47,13 @@ class KinematicVehicleMPC:
                 steering_angle, brake_position, motor_current_l, motor_current_r, turning_rate = system_inputs
             else:
                 velx = velocities[:, 0]
-                vely = velocities[:, 1]
+                # vely = velocities[:, 1]
                 velrotz = velocities[:, 2]
                 steering_angle = system_inputs[:, 0]
                 brake_position = system_inputs[:, 1]
                 motor_current_l = system_inputs[:, 2]
                 motor_current_r = system_inputs[:, 3]
-                turning_rate = system_inputs[:, 4]
+                # turning_rate = system_inputs[:, 4]
 
             turning_angle, acceleration_rear_axle, torque_tv = self.transform_inputs(steering_angle,
                                                                                      brake_position,
@@ -64,58 +64,37 @@ class KinematicVehicleMPC:
             if isinstance(velocities, list):
                 velx, vely, velrotz = velocities
                 if isinstance(velx, np.float64) or isinstance(velx, float):
-                    turning_angle, acceleration_rear_axle, torque_tv, turning_rate = system_inputs
+                    turning_angle, acceleration_rear_axle, torque_tv = system_inputs
                     if abs(velx) < 0.25 and acceleration_rear_axle < 0:
                         acceleration_rear_axle *= velx * 4.0
             else:
                 velx = velocities[:, 0]
-                vely = velocities[:, 1]
+                # vely = velocities[:, 1]
                 velrotz = velocities[:, 2]
                 turning_angle = system_inputs[:, 0]
                 acceleration_rear_axle = system_inputs[:, 1]
                 torque_tv = system_inputs[:, 2]
-                turning_rate = system_inputs[:, 3]
+                # turning_rate = system_inputs[:, 3]
 
-        # velx = X[:, 0]
-        # vely = X[:, 1]
-        # velrotz = X[:, 2]
-        # steering_angle = U[:, 0]
-        # brake_position = U[:, 1]
-        # motor_current_l = U[:, 2]
-        # motor_current_r = U[:, 3]
-        # dBETA = U[:, 4]
-
-        # V = [X[1][0], X[2][0], X[3][0]]
-        # V = [X[4][0], X[5][0], X[6][0]]
-        # VELX, VELY, VELROTZ = V
-        # steering_angle, brake_position, motor_current_l, motor_current_r, dBETA = U
-
-        # BETA, AB, TV = self.transform_inputs(steering_angle,
-        #                                      brake_position,
-        #                                      motor_current_l,
-        #                                      motor_current_r,
-        #                                      velx)
-
-        # c, s = np.cos(float(P[2])), np.sin(float(P[2]))
-        # R = np.array(((c, -s), (s, c)))
-        # Vabs = np.matmul(V[:2], R.transpose())
-
-        # VELROTZ = V[0] / wheel_base * np.tan(BETA)
-        if turning_angle != 0:
-            turn_circle_midpoint_steer = self.wheel_base / np.tan(turning_angle)
+        if isinstance(velocities, list):
+            if turning_angle != 0:
+                turn_circle_midpoint_steer = self.wheel_base / np.tan(turning_angle)
+            else:
+                turn_circle_midpoint_steer = 1000000
         else:
-            turn_circle_midpoint_steer = 1000000
+            turning_angle[turning_angle == 0] = 0.000001
+            turn_circle_midpoint_steer = np.divide(self.wheel_base, np.tan(turning_angle))
+
         velrotz_target = velx/turn_circle_midpoint_steer
-        k = 10
-        print(velrotz_target, velrotz)
-        # print(turn_circle_midpoint_steer)
-        # dVELROTZ = acceleration_rear_axle / self.wheel_base * np.tan(turning_angle) + \
-        #            velx / self.wheel_base * 1 / np.square(np.cos(turning_angle)) * turning_rate + k * (velrotz_target - velrotz)
+        k = 2.2
+
         dVELROTZ = k * (velrotz_target - velrotz)
         if isinstance(acceleration_rear_axle, float):
             return [acceleration_rear_axle, 0, dVELROTZ]
+        elif len(acceleration_rear_axle) == 1:
+            return [float(acceleration_rear_axle), 0, float(dVELROTZ)]
         else:
-            return [acceleration_rear_axle, np.zeros((len(acceleration_rear_axle))), dVELROTZ]
+            return np.array([acceleration_rear_axle, np.zeros((len(acceleration_rear_axle))), dVELROTZ]).transpose()
 
     def transform_inputs(self, steering_angle, brake_position, motor_current_l, motor_current_r, velx):
         brake_acceleration_factor = 1
