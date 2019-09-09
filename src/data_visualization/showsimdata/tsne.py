@@ -27,7 +27,8 @@ def main():
     ]
 
     # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
-    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
+    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190824-183606_trustworthy_bigdata_kinematic'
     simulation_file = 'test_features.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     test_features = getPKL(dataset_path)
@@ -87,7 +88,8 @@ def look_at_results():
     # ____________Look at results
     # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181131_trustworthy_bigdata_merged'
     # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
-    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
+    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190824-183606_trustworthy_bigdata_kinematic'
     simulation_file = 'state_space_data_set_1.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     dataframe1 = getPKL(dataset_path)
@@ -190,6 +192,6 @@ def look_at_data_set():
     print(dataframe['vehicle vx [m*s^-1]'].describe())
 
 if __name__ == '__main__':
-    # main()
+    main()
     # look_at_data_set()
-    look_at_results()
+    # look_at_results()
