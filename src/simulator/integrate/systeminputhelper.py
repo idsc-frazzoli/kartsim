@@ -86,4 +86,4 @@ def get_kinematic_input_direct(time1):
     index = np.argmax(interpTV[0] > time1 - 0.1)
     # return [interpBETA(time1), interpAB(time1), interpTV(time1)]
     # return [interpBETA[1][index], interpAB[1][index], interpTV[1][index]]
-    return [float(interpBETA(time1)), float(interpAB(time1)), float(interpTV[1][index]), float(interpDBETA(time1))]
+    return [float(interpBETA(time1)), float(interpAB(time1)), float(interpTV[1][index])]
