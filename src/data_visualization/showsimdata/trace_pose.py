@@ -260,7 +260,11 @@ def play_pause():
 
 
 def moveline():
-    plots['lr'].setValue(plots['lr'].value() + dt)
+    if plots['lr'].value() < t_max:
+        plots['lr'].setValue(plots['lr'].value() + dt)
+    else:
+        button.setChecked(False)
+        timer.stop()
     # time.sleep(dt)
 
 
