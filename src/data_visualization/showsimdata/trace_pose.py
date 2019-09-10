@@ -206,55 +206,57 @@ plots['1'].addItem(arrow)
 def updatePlot():
     # plots['2'].clear()
     for i in range(len(x_pos_data)):
-        index = int(10 * plots['lr'].value())
-        if index < 1:
-            index = 1
-        x = x_pos_data[i][:index]
-        y = y_pos_data[i][:index]
-        theta = theta_data[i][:index]
-        beta = beta_data[i][index]
-        vx = x_vel_data[i][index]
-        vy = y_vel_data[i][index]
-        transf = QtGui.QTransform()
-        transf.translate(x[-1], y[-1])
-        transf.rotate((theta[-1]) / np.pi * 180)
-        transf.translate(0.135, 0)
-        karts[str(i)].setTransform(transf)
-        traces[str(i)].setData(x[-50:], y[-50:])
-        posFL = [x[-1] + (kart_l / 2. + 0.135) * np.cos(theta[-1]) - kart_w / 2. * np.sin(theta[-1]),
-                 y[-1] + kart_w / 2. * np.cos(theta[-1]) + (kart_l / 2. + 0.135) * np.sin(theta[-1])]
-        posFR = [x[-1] + (kart_l / 2. + 0.135) * np.cos(theta[-1]) + kart_w / 2. * np.sin(theta[-1]),
-                 y[-1] - kart_w / 2. * np.cos(theta[-1]) + (kart_l / 2. + 0.135) * np.sin(theta[-1])]
-        wheels_RL[str(i)].setData(
-            np.array([posFL[0] - (wheel_l + kart_l) * np.cos(theta[-1]),
-                      posFL[0] - (-wheel_l + kart_l) * np.cos(theta[-1])]),
-            np.array([posFL[1] - (wheel_l + kart_l) * np.sin(theta[-1]),
-                      posFL[1] - (-wheel_l + kart_l) * np.sin(theta[-1])]))
-        wheels_RR[str(i)].setData(
-            np.array([posFR[0] - (wheel_l + kart_l) * np.cos(theta[-1]),
-                      posFR[0] - (-wheel_l + kart_l) * np.cos(theta[-1])]),
-            np.array([posFR[1] - (wheel_l + kart_l) * np.sin(theta[-1]),
-                      posFR[1] - (-wheel_l + kart_l) * np.sin(theta[-1])]))
-        wheels_FL[str(i)].setData(
-            np.array([posFL[0] - wheel_l * np.cos(theta[-1] + beta), posFL[0] + wheel_l * np.cos(theta[-1] + beta)]),
-            np.array([posFL[1] - wheel_l * np.sin(theta[-1] + beta), posFL[1] + wheel_l * np.sin(theta[-1] + beta)]))
-        wheels_FR[str(i)].setData(
-            np.array([posFR[0] - wheel_l * np.cos(theta[-1] + beta), posFR[0] + wheel_l * np.cos(theta[-1] + beta)]),
-            np.array([posFR[1] - wheel_l * np.sin(theta[-1] + beta), posFR[1] + wheel_l * np.sin(theta[-1] + beta)]))
+        try:
+            index = int(10 * plots['lr'].value())
+            if index < 1:
+                index = 1
+            x = x_pos_data[i][:index]
+            y = y_pos_data[i][:index]
+            theta = theta_data[i][:index]
+            beta = beta_data[i][index]
+            vx = x_vel_data[i][index]
+            vy = y_vel_data[i][index]
+            transf = QtGui.QTransform()
+            transf.translate(x[-1], y[-1])
+            transf.rotate((theta[-1]) / np.pi * 180)
+            transf.translate(0.135, 0)
+            karts[str(i)].setTransform(transf)
+            traces[str(i)].setData(x[-50:], y[-50:])
+            posFL = [x[-1] + (kart_l / 2. + 0.135) * np.cos(theta[-1]) - kart_w / 2. * np.sin(theta[-1]),
+                     y[-1] + kart_w / 2. * np.cos(theta[-1]) + (kart_l / 2. + 0.135) * np.sin(theta[-1])]
+            posFR = [x[-1] + (kart_l / 2. + 0.135) * np.cos(theta[-1]) + kart_w / 2. * np.sin(theta[-1]),
+                     y[-1] - kart_w / 2. * np.cos(theta[-1]) + (kart_l / 2. + 0.135) * np.sin(theta[-1])]
+            wheels_RL[str(i)].setData(
+                np.array([posFL[0] - (wheel_l + kart_l) * np.cos(theta[-1]),
+                          posFL[0] - (-wheel_l + kart_l) * np.cos(theta[-1])]),
+                np.array([posFL[1] - (wheel_l + kart_l) * np.sin(theta[-1]),
+                          posFL[1] - (-wheel_l + kart_l) * np.sin(theta[-1])]))
+            wheels_RR[str(i)].setData(
+                np.array([posFR[0] - (wheel_l + kart_l) * np.cos(theta[-1]),
+                          posFR[0] - (-wheel_l + kart_l) * np.cos(theta[-1])]),
+                np.array([posFR[1] - (wheel_l + kart_l) * np.sin(theta[-1]),
+                          posFR[1] - (-wheel_l + kart_l) * np.sin(theta[-1])]))
+            wheels_FL[str(i)].setData(
+                np.array([posFL[0] - wheel_l * np.cos(theta[-1] + beta), posFL[0] + wheel_l * np.cos(theta[-1] + beta)]),
+                np.array([posFL[1] - wheel_l * np.sin(theta[-1] + beta), posFL[1] + wheel_l * np.sin(theta[-1] + beta)]))
+            wheels_FR[str(i)].setData(
+                np.array([posFR[0] - wheel_l * np.cos(theta[-1] + beta), posFR[0] + wheel_l * np.cos(theta[-1] + beta)]),
+                np.array([posFR[1] - wheel_l * np.sin(theta[-1] + beta), posFR[1] + wheel_l * np.sin(theta[-1] + beta)]))
 
-        # turn_circle_midpoint_vel = vx / vy * 0.46
-        # turn_circle_midpoint_steer = 1.19 / np.tan(beta)
-        # turn_circle_steer[str(i)].setData(
-        #     np.array([x[-1] - 0.46 * np.cos(theta[-1]),
-        #               x[-1] + turn_circle_midpoint_steer * np.cos(theta[-1] + np.pi / 2.0) - 0.46 * np.cos(theta[-1])]),
-        #     np.array([y[-1] - 0.46 * np.sin(theta[-1]),
-        #               y[-1] + turn_circle_midpoint_steer * np.sin(theta[-1] + np.pi / 2.0) - 0.46 * np.sin(theta[-1])]))
-        # turn_circle_vel[str(i)].setData(
-        #     np.array([x[-1] - 0.45 * np.cos(theta[-1]),
-        #               x[-1] + turn_circle_midpoint_vel * np.cos(theta[-1] + np.pi / 2.0) - 0.45 * np.cos(theta[-1])]),
-        #     np.array([y[-1] - 0.45 * np.sin(theta[-1]),
-        #               y[-1] + turn_circle_midpoint_vel * np.sin(theta[-1] + np.pi / 2.0) - 0.45 * np.sin(theta[-1])]))
-
+            # turn_circle_midpoint_vel = vx / vy * 0.46
+            # turn_circle_midpoint_steer = 1.19 / np.tan(beta)
+            # turn_circle_steer[str(i)].setData(
+            #     np.array([x[-1] - 0.46 * np.cos(theta[-1]),
+            #               x[-1] + turn_circle_midpoint_steer * np.cos(theta[-1] + np.pi / 2.0) - 0.46 * np.cos(theta[-1])]),
+            #     np.array([y[-1] - 0.46 * np.sin(theta[-1]),
+            #               y[-1] + turn_circle_midpoint_steer * np.sin(theta[-1] + np.pi / 2.0) - 0.46 * np.sin(theta[-1])]))
+            # turn_circle_vel[str(i)].setData(
+            #     np.array([x[-1] - 0.45 * np.cos(theta[-1]),
+            #               x[-1] + turn_circle_midpoint_vel * np.cos(theta[-1] + np.pi / 2.0) - 0.45 * np.cos(theta[-1])]),
+            #     np.array([y[-1] - 0.45 * np.sin(theta[-1]),
+            #               y[-1] + turn_circle_midpoint_vel * np.sin(theta[-1] + np.pi / 2.0) - 0.45 * np.sin(theta[-1])]))
+        except IndexError:
+            pass
 
 def play_pause():
     if button.isChecked():
