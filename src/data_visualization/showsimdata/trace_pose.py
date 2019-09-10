@@ -160,9 +160,12 @@ wheels_FR = {}
 turn_circle_vel = {}
 turn_circle_steer = {}
 color_count = 0
+t_max = 0
 # for index, ([name, data], namename) in enumerate(
 #         zip(pose_data, ['kinematic model + NN', 'dynamic model + NN', 'reference'])):
 for index, (name, data) in enumerate(pose_data):
+    if data['time [s]'].values[-1] > t_max:
+        t_max = data['time [s]'].values[-1]
     x_pos_data.append(data['pose x [m]'].values)
     y_pos_data.append(data['pose y [m]'].values)
     theta_data.append(data['pose theta [rad]'].values)
