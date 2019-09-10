@@ -80,9 +80,10 @@ for index, [file_path, file_name] in enumerate(simfiles):
         data_frame = dataframe_from_csv(file_path)
     else:
         data_frame = getPKL(file_path)
-    if index == delay[0]:
-        data_frame = data_frame.iloc[int(delay[1]*10):,:]
+    if index in delay[:,0]:
+        data_frame = data_frame.iloc[int(delay[index,1]*10):,:]
         data_frame = data_frame.reset_index()
+        data_frame['time [s]'] = data_frame['time [s]'].values - delay[index,1]
     print(data_frame.head())
     if 'steer position cal [n.a.]' in data_frame.columns:
         data_frame['turning angle [n.a]'], data_frame['acceleration rear axle [m*s^-2]'], data_frame[
