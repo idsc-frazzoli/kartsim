@@ -99,6 +99,8 @@ def main():
             print("s is pressed")
         # print('axes', axex_values)
         # print(list(wheel_axis)[-1])
+        if X0[4]>=8.0:
+            pedals[0] = 0
         U = np.array([list(np.array(time_steps) - time_steps[0] + X0[0]),
                       list(np.array(wheel_axis)),
                       [pedals[0] - pedals[1]*3, pedals[0] - pedals[1]*3],
