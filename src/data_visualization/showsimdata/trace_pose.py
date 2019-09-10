@@ -72,7 +72,9 @@ kart_w = 1.0
 wheel_l = 0.2
 
 pose_data = []
-delay = [0,0.0]
+# delay = np.array([[0,5.7], [1,6.7], [2,7.5], [3,5.0], [4,7.2], [5,7.2]]) #test_mpc_dyn
+delay = np.array([[0,8.4], [1,20.6], [2,7.4], [3,7.3],])
+# delay = np.array([[0,0], [1,0], [2,0], [3,0], [4,0], [5,0]])
 for index, [file_path, file_name] in enumerate(simfiles):
     if '.csv' in file_path:
         data_frame = dataframe_from_csv(file_path)
