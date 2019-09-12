@@ -13,7 +13,7 @@ from learned_model_for_mpc.ml_models.mlp_keras_mpc_additfeatures import MultiLay
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
-
+from numpy import sin, cos, tan, pi
 
 class DataDrivenVehicleModel:
 
@@ -76,9 +76,12 @@ class DataDrivenVehicleModel:
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
                 disturbance[1:3] = disturbance[1:3] * label_mirror[0]
+
             else:
                 if 'squared' in self.model_name:
                     features = self.mlp.add_features(features)
+                elif 'morefeatures' in self.model_name:
+                    features = self.get_more_features(features)
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
 
@@ -102,6 +105,16 @@ class DataDrivenVehicleModel:
             result = accelerations + disturbance
 
             return result
+
+    def get_more_features(self, features):
+        VX, VY, VTHETA, BETA, AB, TV = features[0]
+        input = [VY, VTHETA, AB, np.power(1 / 2.0, AB), cos(BETA / 0.44 * pi / 2.0), tan(AB / 6.7 * pi / 3.0), (VX) * (VY),
+                 (VX) * (VTHETA), (VX) * (BETA), (VX) * (AB), (VX) * (TV), (VY) * (VTHETA), (VTHETA) * (VTHETA),
+                 (VTHETA) * (TV), (BETA) * (BETA), (VX) * (VX) * (VY), (VX) * (VX) * (VTHETA), (VX) * (VX) * (BETA),
+                 (VX) * (VX) * (AB), (VX) * (VX) * (TV), (VX) * (VTHETA) * (AB), (VX) * (BETA) * (BETA),
+                 (VX) * (BETA) * (AB), (VY) * (VY) * (VTHETA), (VY) * (VTHETA) * (VTHETA), (VY) * (BETA) * (BETA),
+                 (VTHETA) * (VTHETA) * (VTHETA)]
+        return [input]
 
     def solve_NN_relu(self, inputs):
         x = inputs
