@@ -43,7 +43,7 @@ def main():
     feature_names += new_feature_names
     print(features.shape)
     # print(features)
-    print(new_feature_names)
+    # print(new_feature_names)
 
     # res, new_feature_names = add_custom_features(arr, arr_feature_names)
     # features = np.vstack((features, res))
@@ -52,7 +52,10 @@ def main():
     # # for i in range(len(features)):
     # #     print(features[i], feature_names[i])
 
-    features, feature_names = get_polynomials(features, feature_names, degree=3)
+    # features, feature_names = get_polynomials(features, feature_names, degree=3)
+    res, new_feature_names = get_polynomials(arr, arr_feature_names, degree=3)
+    features = np.vstack((features, res))
+    feature_names += new_feature_names
     print(features.shape)
     for i in range(len(features)):
         print(features[i], feature_names[i])
@@ -107,7 +110,9 @@ def get_new_features(orig_features):
     # feature_names += new_feature_names
     # print(features.shape)
 
-    features, feature_names = get_polynomials(features, feature_names, degree=2)
+    res, new_feature_names = get_polynomials(orig_features_copy, orig_feature_names, degree=3)
+    features = np.vstack((features, res))
+    feature_names += new_feature_names
     print(features.shape)
 
     if isinstance(orig_features, DataFrame):
@@ -123,7 +128,8 @@ def combinations(features, degree=2):
 
 
 def get_polynomials(features, feature_names, degree=2):
-    new_features = features
+    new_features = None
+    new_feature_names_list = []
     for repeat in range(degree - 1):
         combis = combinations(range(features.shape[0]), degree=2 + repeat)
 
@@ -171,7 +177,11 @@ def get_polynomials(features, feature_names, degree=2):
         res = features[combis[:, 0]]
         for n in range(2 + repeat - 1):
             res = np.multiply(res, features[combis[:, n + 1]])
-        new_features = np.vstack((new_features, res))
+        # new_features = np.vstack((new_features, res))
+        if new_features is None:
+            new_features = res
+        else:
+            new_features = np.vstack((new_features, res))
         new_feature_names = []
         if 2 + repeat == 2:
             for combi in combis:
@@ -180,8 +190,8 @@ def get_polynomials(features, feature_names, degree=2):
             for combi in combis:
                 new_feature_names.append(
                     f'({feature_names[combi[0]]}) * ({feature_names[combi[1]]}) * ({feature_names[combi[2]]})')
-        feature_names += new_feature_names
-    return new_features, feature_names
+        new_feature_names_list += new_feature_names
+    return new_features, new_feature_names_list
 
 
 def apply_powers(features, feature_names):
