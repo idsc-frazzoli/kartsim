@@ -101,8 +101,8 @@ class MultiLayerPerceptronMPC():
         load_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         return pd.DataFrame().from_csv(load_path)
 
-    def build_new_model(self, layers=2, nodes_per_layer=32, activation_function=None, regularization=0.01):
-        inputs = tf.keras.Input(shape=(6,))
+    def build_new_model(self, input_dim, output_dim=3, layers=2, nodes_per_layer=32, activation_function=None, regularization=0.01):
+        inputs = tf.keras.Input(shape=(input_dim,))
         if layers > 0:
             h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
                                       kernel_regularizer=tf.keras.regularizers.l2(regularization),
@@ -112,11 +112,11 @@ class MultiLayerPerceptronMPC():
                     h = tf.keras.layers.Dense(nodes_per_layer, activation=activation_function,
                                               kernel_regularizer=tf.keras.regularizers.l2(regularization),
                                               bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
-            predictions = tf.keras.layers.Dense(3, activation=None,
+            predictions = tf.keras.layers.Dense(output_dim, activation=None,
                                                 kernel_regularizer=tf.keras.regularizers.l2(regularization),
                                                 bias_regularizer=tf.keras.regularizers.l2(regularization))(h)
         else:
-            predictions = tf.keras.layers.Dense(3, activation=None,
+            predictions = tf.keras.layers.Dense(output_dim, activation=None,
                                                 kernel_regularizer=tf.keras.regularizers.l2(regularization),
                                                 bias_regularizer=tf.keras.regularizers.l2(regularization))(inputs)
 
@@ -218,16 +218,13 @@ class MultiLayerPerceptronMPC():
         training_parameters.to_csv(train_params_save_path)
 
         data = np.array([self.train_stats['mean'].values, self.train_stats['std'].values]).transpose()
+        index_list = []
+        for index in self.train_stats.index:
+            index_list.append(index)
         normalizing_parameters = pd.DataFrame(data=data,
                                               columns=['mean', 'standard deviation'],
-                                              index=['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-                                                     'pose vtheta [rad*s^-1]', 'turning angle [n.a]',
-                                                     'acceleration rear axle [m*s^-2]',
-                                                     'acceleration torque vectoring [rad*s^-2]',
-                                                     # 'label1',
-                                                     # 'label2',
-                                                     # 'label3',
-                                                     ])
+                                              index=index_list)
+
         norm_params_save_path = os.path.join(self.model_dir, 'normalizing_parameters.csv')
         normalizing_parameters.to_csv(norm_params_save_path)
 
