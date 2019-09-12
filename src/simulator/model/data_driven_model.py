@@ -51,6 +51,8 @@ class DataDrivenVehicleModel:
             self.nominal_model = DynamicVehicleMPC(direct_input=self.direct_input)
         elif self.model_type == 'hybrid_kinematic_mlp':
             self.nominal_model = KinematicVehicleMPC(direct_input=self.direct_input)
+        elif self.model_type == 'no_model':
+            self.nominal_model = None
         else:
             raise ValueError('No or invalid vehicle model type. Please specify.')
 
@@ -80,7 +82,10 @@ class DataDrivenVehicleModel:
                 normalized_features = self.normalize_input(features)
                 disturbance = self.disturbance(normalized_features[0])
 
-            accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
+            if self.nominal_model is not None:
+                accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
+            else:
+                accelerations = [0,0,0]
             result = np.array(accelerations) + disturbance
             return result
         else:
@@ -88,7 +93,10 @@ class DataDrivenVehicleModel:
 
             disturbance = self.mlp.predict(input)
 
-            accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
+            if self.nominal_model is not None:
+                accelerations = self.nominal_model.get_accelerations(initial_velocities, system_inputs)
+            else:
+                accelerations = np.array([0,0,0])
             # print('disturbance', disturbance)
             # print('accelerations', np.array(accelerations).transpose())
             result = accelerations + disturbance
