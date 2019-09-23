@@ -116,31 +116,91 @@ def train_NN(network_settings):
     for i, name in enumerate(train_features.columns.values):
         print(name)
 
-    # i = 1
-    # for l, npl, af, reg in network_settings:
-    #     # name = '{}x{}_{}_reg{}_kin_directinput'.format(l, npl, str(af), str(reg).replace('.', 'p'))
-    #     name = '{}x{}_{}_reg{}_nomodel_morefeatures_from_poly3reduced_directinput'.format(l, npl, af, str(reg).replace('.', 'p'))
-    #     print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
-    #     mlp = MultiLayerPerceptronMPC(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
-    #                                   model_name=name)
-    #     mlp.build_new_model(input_dim=train_features.shape[1], output_dim=train_labels.shape[1], layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
-    #     mlp.train_model(train_features, train_labels)
-    #     mlp.save_training_history()
-    #     mlp.save_model_performance(test_features, test_labels)
+    i = 1
+    for l, npl, af, reg in network_settings:
+        # if countdown == 1:
+        #     name = '{}x{}_{}_reg{}_kin_directinput_mlpsymmetric_detailed'.format(l, npl, str(af), str(reg).replace('.', 'p'))
+        # elif countdown == 2:
+        #     name = '{}x{}_{}_reg{}_nomodel_directinput_mlpsymmetric_detailed'.format(l, npl, af, str(reg).replace('.', 'p'))
+        #     # name = '{}x{}_{}_reg{}_kin_directinput_mlpsymmetric'.format(l, npl, str(af), str(reg).replace('.', 'p'))
+        name = '{}x{}_{}_reg{}_dyn_directinput_fulldata_mlpsymmetric'.format(l, npl, af, str(reg).replace('.', 'p'))
+        # name = '{}x{}_{}_reg{}_nomodel_directinput_customfeat'.format(l, npl, af, str(reg).replace('.', 'p'))
+        print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
+        # if countdown == 1:
+        # print('...with MLPMPC')
+        # mlp = MultiLayerPerceptronMPC(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
+        #                                   model_name=name)
+        # elif countdown == 2:
+        print('...with MLPMPCSymmetric')
+        mlp = MultiLayerPerceptronMPCSymmetric(epochs=1000, learning_rate=1e-3, batch_size=100, random_seed=random_state,
+                                      model_name=name)
+        mlp.build_new_model(input_dim=train_features.shape[1], output_dim=train_labels.shape[1], layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
+        mlp.show_model_summary()
+        # # mlp.load_normalizing_parameters()
+        # # mlp.load_checkpoint('best')
+        # # mlp.model_dir = os.path.join(mlp.model_dir, 'more_training')
+        # # mlp.new_model = True
+        mlp.train_model(train_features, train_labels)
+        mlp.save_training_history()
+        mlp.save_model_performance(test_features, test_labels)
+
+        # # name = '{}x{}_{}_reg{}_50ksample_expotrigopoly3reduced_l1sparse_ayonly_directinput'.format(l, npl, af, str(reg).replace('.', 'p'))
+        # print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
+        # # mlp = MultiLayerPerceptronMPCAdditFeatures(epochs=100000, learning_rate=1e-4, batch_size=100,
+        # #                                            random_seed=random_state,
+        # #                                            model_name=name)
+        # mlp = MultiLayerPerceptronMPCSparse(epochs=500, learning_rate=1e-4, batch_size=100,
+        #                                            random_seed=random_state,
+        #                                            model_name=name)
+        # mlp.build_train_test_model(train_features, train_labels, test_features=test_features, test_labels=test_labels,
+        #                            layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
+        # #
+        print(f'{name} done with training! :)')
+        i += 1
+
+def get_data_set_for_nomodel_purestatesandinputs():
+    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
+    # path_data_set = os.path.join(config.directories['root'],
+    #                              'Data/MLPDatasets/20190829-091514_final_data_set_kinematic_directinput')
+    path_data_set = os.path.join(config.directories['root'],
+                                 'Data/MLPDatasets/20190829-092236_final_data_set_nomodel_directinput')
+    train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+
+    # merged_train = train_features.join(train_labels.iloc[:, 1:])
+    # merged_train = merged_train.sample(n=50000, random_state=16)
+    # train_features = merged_train.iloc[:, :-3].reset_index(drop=True)
+    # train_labels = merged_train.iloc[:, -3:].reset_index(drop=True)
+    # # train_features = train_features.iloc[:50000, :]
+    # # train_labels = train_labels.iloc[:50000, :]
     #
-    #     # # name = '{}x{}_{}_reg{}_50ksample_expotrigopoly3reduced_l1sparse_ayonly_directinput'.format(l, npl, af, str(reg).replace('.', 'p'))
-    #     # print('----> {}/{} Start training of model with model_type {}'.format(i, len(network_settings), name))
-    #     # # mlp = MultiLayerPerceptronMPCAdditFeatures(epochs=100000, learning_rate=1e-4, batch_size=100,
-    #     # #                                            random_seed=random_state,
-    #     # #                                            model_name=name)
-    #     # mlp = MultiLayerPerceptronMPCSparse(epochs=500, learning_rate=1e-4, batch_size=100,
-    #     #                                            random_seed=random_state,
-    #     #                                            model_name=name)
-    #     # mlp.build_train_test_model(train_features, train_labels, test_features=test_features, test_labels=test_labels,
-    #     #                            layers=l, nodes_per_layer=npl, activation_function=af, regularization=reg)
-    #     # #
-    #     # print(f'{name} done with training! :)')
-    #     # i += 1
+    # #
+    # merged_test = test_features.join(test_labels.iloc[:, 1:])
+    # merged_test = merged_test.sample(n=30000, random_state=42)
+    # test_features = merged_test.iloc[:, :-3].reset_index(drop=True)
+    # test_labels = merged_test.iloc[:, -3:].reset_index(drop=True)
+
+    train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                     'turning angle [n.a]',
+                                     'acceleration rear axle [m*s^-2]',
+                                     'acceleration torque vectoring [rad*s^-2]']]
+
+    test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                   'turning angle [n.a]',
+                                   'acceleration rear axle [m*s^-2]',
+                                   'acceleration torque vectoring [rad*s^-2]']]
+
+    train_labels = train_labels[
+        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
+    test_labels = test_labels[
+        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
+
+    # train_labels = train_labels[['vehicle ay local [m*s^-2]']].reset_index(drop=True)
+    # test_labels = test_labels[['vehicle ay local [m*s^-2]']].reset_index(drop=True)
+
+    return train_features, train_labels, test_features, test_labels
 
 def get_data_set_for_nomodel_morefeatures():
     # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
