@@ -7,8 +7,9 @@ Created 13.06.19 11:09
 """
 import config
 from data_visualization.data_io import getPKL
-from learned_model_for_mpc.function_library import get_new_features
+from learned_model_for_mpc.function_library import get_new_features, get_custom_features
 from learned_model_for_mpc.ml_models.mlp_keras_mpc import MultiLayerPerceptronMPC
+from learned_model_for_mpc.ml_models.mlp_keras_mpc_symmetric import MultiLayerPerceptronMPCSymmetric
 # from learned_model_for_mpc.ml_models.mlp_keras_mpc_additfeatures import MultiLayerPerceptronMPCAdditFeatures
 from learned_model_for_mpc.ml_models.mlp_keras_sparse_mpc import MultiLayerPerceptronMPCSparse
 from multiprocessing import Pool
@@ -21,86 +22,145 @@ import seaborn as sns
 
 
 def main():
-    # network_settings = [
-    #     [10, 64, 'tanh', 0.0],
-    #     [20, 32, 'relu', 0.0],
-    #     [50, 16, 'sigmoid', 0.0],
-    # ]
+    global countdown
+    countdown = 2
+    for countup in range(1):
+        # network_settings = [
+        #     [10, 64, 'tanh', 0.0],
+        #     [20, 32, 'relu', 0.0],
+        #     [50, 16, 'sigmoid', 0.0],
+        # ]
 
-    # network_settings = []
-    # i=1
-    # nodes_exp = 5
-    # layers = 2
-    # activ_func = 'softplus'
-    # reg = 0.0001
-    # for layers in range(1,10):
-    #     for nodes_exp in range(6,11):
-    #         for activ_func in ['elu', 'relu', 'tanh', 'sigmoid', 'softplus', 'exponential']:
-    #         # for reg in [0.0001]:
-    #             nodes = 2 ** nodes_exp
-    #             tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
-    #             if tot_params < 35000:
-    #                 i += 1
-    #                 network_settings.append([layers,nodes,activ_func,reg])
-    # print(i)
-    # print(network_settings)
+        # network_settings = []
+        # i=1
+        # nodes_exp = 5
+        # layers = 2
+        # activ_func = 'softplus'
+        # reg = 0.0001
+        # for layers in range(1,10):
+        #     for nodes_exp in range(6,11):
+        #         for activ_func in ['elu', 'relu', 'tanh', 'sigmoid', 'softplus', 'exponential']:
+        #         # for reg in [0.0001]:
+        #             nodes = 2 ** nodes_exp
+        #             tot_params = layers * nodes + (layers - 1) * nodes ** 2 + 7 * nodes + 3 * nodes + 3
+        #             if tot_params < 35000:
+        #                 i += 1
+        #                 network_settings.append([layers,nodes,activ_func,reg])
+        # print(i)
+        # print(network_settings)
 
-    network_settings = [
-        # # [2, 32, 'elu', 0.0001],
-        # # [2, 32, 'relu', 0.0001],
-        # # [2, 32, 'tanh', 0.0001],
-        # # [2, 32, 'sigmoid', 0.0001],
-        # # [2, 16, 'softplus', 0.1],
-        # [1, 16, 'tanh', 0.1],
-        # [1, 16, 'tanh', 0.01],
-        # [1, 16, 'tanh', 0.001],
-        # [1, 16, 'tanh', 0.0001],
-        # [1, 16, 'tanh', 0.0],
-        # [1, 16, 'softplus', 0.1],
-        # [1, 16, 'softplus', 0.01],
-        # [1, 16, 'softplus', 0.001],
-        # [1, 16, 'softplus', 0.0001],
-        # [1, 16, 'softplus', 0.0],
-        # [0, 1296, None, 0.0],
-        # [0, 966, None, 0.1],
-        # [0, 966, None, 0.01],
-        # [0, 99, None, 0.0001],
-        # [1, 32, None, 0.0],
-        # [1, 16, 'softplus', 0.0],
-        [1, 16, 'tanh', 0.0],
-        # [1, 16, None, 0.0],
-        # [2, 32, None, 0.0],
-    ]
-    train_features = train_labels = test_features = test_labels = None
-    # train_features, train_labels, test_features, test_labels = get_data_set_for_sparsityNN()
-    train_features, train_labels, test_features, test_labels = get_data_set_for_nomodel_morefeatures()
+        network_settings = [
+            # # [2, 32, 'elu', 0.0001],
+            # # [2, 32, 'relu', 0.0001],
+            # # [2, 32, 'tanh', 0.0001],
+            # # [2, 32, 'sigmoid', 0.0001],
+            # # [2, 16, 'softplus', 0.1],
 
-    if len(network_settings) >= 5:
-        chunks = [network_settings[i::5] for i in range(5)]
-        if train_features is not None:
-            for i,chunk in enumerate(chunks):
-                chunks[i] = chunk + [train_features, train_labels, test_features, test_labels]
-        pool = Pool(processes=5)
-        pool.map(train_NN, chunks)
-    elif len(network_settings) > 1:
-        no_settings = len(network_settings)
-        chunks = [network_settings[i::no_settings] for i in range(no_settings)]
-        if train_features is not None:
-            for i,chunk in enumerate(chunks):
-                chunks[i] = chunk + [train_features, train_labels, test_features, test_labels]
-        pool = Pool(processes=no_settings)
-        pool.map(train_NN, chunks)
-    else:
-        if train_features is not None:
-            network_settings = network_settings + [train_features, train_labels, test_features, test_labels]
-        train_NN(network_settings)
+            # [1, 24, 'tanh', 0.0],
+            # [1, 24, 'softplus', 0.0],
+            # [1, 16, 'tanh', 0.0],
+            # [1, 16, 'softplus', 0.0],
+
+            [0, 6, None, 0.001],
+            [0, 6, None, 0.005],
+            [0, 6, None, 0.01],
+            [0, 6, None, 0.05],
+            [0, 6, None, 0.1],
+            [1, 16, 'tanh', 0.001],
+            [1, 16, 'tanh', 0.005],
+            [1, 16, 'tanh', 0.01],
+            [1, 16, 'tanh', 0.05],
+            [1, 16, 'tanh', 0.1],
+
+            # [1, 24, 'softplus', 0.0],
+            # [1, 16, 'tanh', 0.0],
+            # [1, 16, 'softplus', 0.0],
+
+            # [1, 16, 'elu', 0.0],
+            # [1, 16, 'elu', 0.0001],
+            # [2, 16, 'sigmoid', 0.0],
+            # [2, 16, 'sigmoid', 0.0001],
+            # [1, 32, 'elu', 0.0],
+            # [1, 32, 'elu', 0.0001],
+            # [1, 32, 'tanh', 0.0],
+            # [1, 32, 'tanh', 0.0001],
+            # [1, 32, 'softplus', 0.0],
+            # [1, 32, 'softplus', 0.0001],
+            # [1, 32, 'sigmoid', 0.0],
+            # [1, 32, 'sigmoid', 0.0001],
+            # [2, 32, 'elu', 0.0],
+            # [2, 32, 'elu', 0.0001],
+            # [2, 32, 'tanh', 0.0],
+            # [2, 32, 'tanh', 0.0001],
+            # [2, 32, 'softplus', 0.0],
+            # [2, 32, 'softplus', 0.0001],
+            # [2, 32, 'sigmoid', 0.0],
+            # [2, 32, 'sigmoid', 0.0001],
+            # [1, 24, 'elu', 0.0],
+            # [1, 24, 'elu', 0.0001],
+            # [1, 24, 'tanh', 0.0],
+            # [1, 24, 'tanh', 0.0001],
+            # [1, 24, 'softplus', 0.0],
+            # [1, 24, 'softplus', 0.0001],
+            # [1, 24, 'sigmoid', 0.0],
+            # [1, 24, 'sigmoid', 0.0001],
+            # [2, 24, 'elu', 0.0],
+            # [2, 24, 'elu', 0.0001],
+            # [2, 24, 'tanh', 0.0],
+            # [2, 24, 'tanh', 0.0001],
+            # [2, 24, 'softplus', 0.0],
+            # [2, 24, 'softplus', 0.0001],
+            # [2, 24, 'sigmoid', 0.0],
+            # [2, 24, 'sigmoid', 0.0001],
+
+            # [0, 1296, None, 0.0],
+            # [0, 966, None, 0.1],
+            # [0, 966, None, 0.01],
+            # [0, 99, None, 0.0001],
+            # [1, 32, None, 0.0],
+            # [1, 16, 'softplus', 0.0],
+            # [1, 16, 'tanh', 0.0],
+            # [1, 16, None, 0.0],
+            # [2, 32, None, 0.0],
+        ]
+        train_features = train_labels = test_features = test_labels = None
+        # train_features, train_labels, test_features, test_labels = get_data_set_for_sparsityNN()
+        # if countdown == 1:
+        #     print('kinematic data')
+        #     train_features, train_labels, test_features, test_labels = get_data_set_for_kinematic_model()
+        # # train_features, train_labels, test_features, test_labels = get_data_set_for_nomodel_purestatesandinputs()
+        # elif countdown == 2:
+        #     print('nomodel data')
+        #     train_features, train_labels, test_features, test_labels = get_data_set_for_nomodel_purestatesandinputs()
+        # train_features, train_labels, test_features, test_labels = get_data_set_for_nomodel_customfeatures()
+        train_features, train_labels, test_features, test_labels = get_data_set_for_kinematic_or_dynamic_model()
+
+        if len(network_settings) >= 5:
+            chunks = [network_settings[i::5] for i in range(5)]
+            if train_features is not None:
+                for i,chunk in enumerate(chunks):
+                    chunks[i] = chunk + [train_features, train_labels, test_features, test_labels]
+            pool = Pool(processes=5)
+            pool.map(train_NN, chunks)
+        elif len(network_settings) > 1:
+            no_settings = len(network_settings)
+            chunks = [network_settings[i::no_settings] for i in range(no_settings)]
+            if train_features is not None:
+                for i,chunk in enumerate(chunks):
+                    chunks[i] = chunk + [train_features, train_labels, test_features, test_labels]
+            pool = Pool(processes=no_settings)
+            pool.map(train_NN, chunks)
+        else:
+            if train_features is not None:
+                network_settings = network_settings + [train_features, train_labels, test_features, test_labels]
+            train_NN(network_settings)
+        countdown += 1
 
 
 
 def train_NN(network_settings):
     random_state = 45
-
-    if len(network_settings) == 5:
+    if len(network_settings) >= 5 and len(network_settings[-1]) > 4:
         test_labels = network_settings.pop()
         test_features = network_settings.pop()
         train_labels = network_settings.pop()
@@ -108,13 +168,16 @@ def train_NN(network_settings):
     else:
         # train_features, train_labels, test_features, test_labels = get_data_set()
         raise ValueError
-    print(train_features.shape)
-    print(train_labels.shape)
-    print(test_features.shape)
-    print(test_labels.shape)
-    print(len(train_features.columns.values))
-    for i, name in enumerate(train_features.columns.values):
-        print(name)
+    # print(train_features.head())
+    # print(train_labels.head())
+    # print(train_features.shape)
+    # print(train_labels.shape)
+    # print(test_features.shape)
+    # print(test_labels.shape)
+    # print(len(train_features.columns.values))
+    # for i, name in enumerate(train_features.columns.values):
+    #     print(name)
+    # print(train_features.isnull().sum())
 
     i = 1
     for l, npl, af, reg in network_settings:
@@ -245,6 +308,7 @@ def get_data_set_for_nomodel_morefeatures():
     test_labels = test_labels[
         ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
 
+    #from_poly3reduced
     train_features = train_features.iloc[:, [1, 2, 4, 9, 15, 20, 23, 24, 25, 26, 27, 29, 33, 36, 37, 44, 45, 46, 47, 48, 56, 58, 59, 65, 69, 73, 79]]
     test_features = test_features.iloc[:, [1, 2, 4, 9, 15, 20, 23, 24, 25, 26, 27, 29, 33, 36, 37, 44, 45, 46, 47, 48, 56, 58, 59, 65, 69, 73, 79]]
 
@@ -377,16 +441,28 @@ def get_data_set_for_sparsityNN():
 
     return train_features, train_labels, test_features, test_labels
 
-def get_data_set_for_kinematic_model():
-    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
-    path_data_set = os.path.join(config.directories['root'],
-                                 'Data/MLPDatasets/20190829-091514_final_data_set_kinematic_directinput')
+def get_data_set_for_kinematic_or_dynamic_model():
+    path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
+    # path_data_set = os.path.join(config.directories['root'],
+    #                              'Data/MLPDatasets/20190829-091514_final_data_set_kinematic_directinput')
     # path_data_set = os.path.join(config.directories['root'],
     #                              'Data/MLPDatasets/20190829-092236_final_data_set_nomodel_directinput')
     train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
     train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
     test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
     test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+
+    # merged_train = train_features.join(train_labels.iloc[:, 1:])
+    # merged_train = merged_train.sample(n=50000, random_state=16)
+    # train_features = merged_train.iloc[:, :-3].reset_index(drop=True)
+    # train_labels = merged_train.iloc[:, -3:].reset_index(drop=True)
+    # # train_features = train_features.iloc[:50000, :]
+    # # train_labels = train_labels.iloc[:50000, :]
+    #
+    # merged_test = test_features.join(test_labels.iloc[:, 1:])
+    # merged_test = merged_test.sample(n=30000, random_state=42)
+    # test_features = merged_test.iloc[:, :-3].reset_index(drop=True)
+    # test_labels = merged_test.iloc[:, -3:].reset_index(drop=True)
 
     train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
                                      'turning angle [n.a]',
@@ -404,35 +480,6 @@ def get_data_set_for_kinematic_model():
     test_labels = test_labels[['disturbance vehicle ax local [m*s^-2]',
                                'disturbance vehicle ay local [m*s^-2]',
                                'disturbance pose atheta [rad*s^-2]']]
-
-    return train_features, train_labels, test_features, test_labels
-
-def get_data_set_for_nomodel_purestatesandinputs():
-    # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
-    # path_data_set = os.path.join(config.directories['root'],
-    #                              'Data/MLPDatasets/20190829-091514_final_data_set_kinematic_directinput')
-    path_data_set = os.path.join(config.directories['root'],
-                                 'Data/MLPDatasets/20190829-092236_final_data_set_nomodel_directinput')
-    train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
-    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
-    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
-    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
-
-    train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                     'turning angle [n.a]',
-                                     'acceleration rear axle [m*s^-2]',
-                                     'acceleration torque vectoring [rad*s^-2]']]
-
-    test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
-                                   'turning angle [n.a]',
-                                   'acceleration rear axle [m*s^-2]',
-                                   'acceleration torque vectoring [rad*s^-2]']]
-
-    train_labels = train_labels[
-        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
-    test_labels = test_labels[
-        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
-
 
     return train_features, train_labels, test_features, test_labels
 
