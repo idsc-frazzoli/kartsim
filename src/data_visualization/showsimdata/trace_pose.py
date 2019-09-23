@@ -38,11 +38,19 @@ pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData/lookatlogs'
 # defaultSim = 'mpc_with_dymmodel_vd_nn_logdata'
 # defaultSim = 'kin_test'
 # defaultSim = '20190827_mpc_test_driving_logs'
+# defaultSim = '20190829_mpc_vs_nn_forreal'
 # defaultSim = '20190830_mpc_vs_nn_forreal'
+# defaultSim = '20190902_mpc_vs_dynamic_lessreg'
 # defaultSim = '20190907_kin_nn_vs_mpc'
+# defaultSim = '20190907_kin_nn_vs_mpc'
+# defaultSim = 'test_mpc_dyn'
+# defaultSim = '20190912_mpc_almost_final_tests'
 # defaultSim = 'test'
 # defaultSim = 'test1'
-defaultSim = '20190909_mpc_vs_kin_nn_and_no_model'
+# defaultSim = '20190909_mpc_vs_kin_nn_and_no_model'
+# defaultSim = '20190902_mpc_vs_dynamic_lessreg'
+# defaultSim = '20190916_mpc_final_evaluation'
+defaultSim = '20190921_final_battle'
 pathsimdata = pathRootSimData + '/' + defaultSim
 
 simfiles = []
@@ -52,7 +60,7 @@ for r, d, f in os.walk(pathsimdata):
         if '.csv' in file or '.pkl' in file:
             simfiles.append([os.path.join(r, file), file])
 simfiles.sort()
-colors = ['b', 'r', 'g', 'c', 'm', (200, 200, 0), 'b', 'g', 'r', 'c', 'm', (200, 200, 0)]
+colors = ['b', 'r', 'g', 'c', 'm', (255, 255, 0), (100, 0, 255), (255, 100, 0), (100, 100, 0),  'b', 'g', 'r', 'c', 'm', (200, 200, 0)]
 plot_this = [
     # 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
     # 'pose atheta [rad*s^-2]'
@@ -60,10 +68,11 @@ plot_this = [
     # 'vehicle vy [m*s^-1]',
     # 'pose vtheta [rad*s^-1]',
     # 'steer position cal [n.a.]',
+    # 'brake position effective [m]',
     # 'pose theta [rad]',
     # 'turning angle [n.a]',
-    # 'acceleration rear axle [m*s^-2]',
-    'acceleration torque vectoring [rad*s^-2]',
+    'acceleration rear axle [m*s^-2]',
+    # 'acceleration torque vectoring [rad*s^-2]',
     # 'motor torque cmd left [A_rms]',
     # 'motor torque cmd right [A_rms]',
 ]
@@ -73,8 +82,10 @@ wheel_l = 0.2
 
 pose_data = []
 # delay = np.array([[0,5.7], [1,6.7], [2,7.5], [3,5.0], [4,7.2], [5,7.2]]) #test_mpc_dyn
-delay = np.array([[0,8.4], [1,20.6], [2,7.4], [3,7.3],])
-# delay = np.array([[0,0], [1,0], [2,0], [3,0], [4,0], [5,0]])
+# delay = np.array([[0,8.4], [1,20.6], [2,7.4], [3,7.3],])
+# delay = np.array([[0,27.8], [1,52.2]])
+# delay = np.array([[0,11.8], [1,12.9], [2,10.7]])
+delay = np.array([[0,0], [1,0], [2,0], [3,0], [4,0], [5,0]])
 for index, [file_path, file_name] in enumerate(simfiles):
     if '.csv' in file_path:
         data_frame = dataframe_from_csv(file_path)
@@ -114,7 +125,7 @@ app = QtGui.QApplication([])
 # mw.resize(800,800)
 
 win = pg.GraphicsWindow(title="Basic plotting examples")
-win.resize(800, 400)
+win.resize(1000, 500)
 win.setWindowTitle('Sim Visualization')
 
 # Enable antialiasing for prettier plots
@@ -133,16 +144,16 @@ win.nextRow()
 plots['1'] = win.addPlot(title="Time Line")
 plots['1'].addLegend()
 
-plots['lr'] = pg.InfiniteLine(movable=True, pen='g')
+plots['lr'] = pg.InfiniteLine(movable=True, pen='m')
 plots['1'].addItem(plots['lr'])
 plots['1'].showGrid(x=True, y=True, alpha=0.3)
 
 plots['2'] = win.addPlot(title='Pose')
-plots['2'].addLegend()
+plots['2'].addLegend(size=(250,-1))
 plots['2'].setAspectLocked(lock=True, ratio=1)
 plots['2'].disableAutoRange()
-plots['2'].setXRange(23, 53, padding=0, update=True)
-plots['2'].setYRange(25, 58, padding=0, update=True)
+plots['2'].setXRange(23, 50, padding=0, update=True)
+plots['2'].setYRange(25, 55, padding=0, update=True)
 
 x_pos_data = []
 y_pos_data = []
@@ -178,7 +189,7 @@ for index, (name, data) in enumerate(pose_data):
     karts[str(index)].setPen(pg.mkPen(None))
     karts[str(index)].setBrush(pg.mkBrush(colors[index]))
     plots['2'].addItem(karts[str(index)])
-    plots['2'].plot([0, 0], [0, 0], symbol='s', symbolBrush=colors[index], name=f'[{name[19:]}]')
+    plots['2'].plot([0, 0], [0, 0], symbol='s', symbolBrush=colors[index], name=name[19+15:-4])
 
     traces[str(index)] = plots['2'].plot(pen=colors[index])
     wheels_RL[str(index)] = plots['2'].plot(pen='k')
@@ -191,17 +202,17 @@ for index, (name, data) in enumerate(pose_data):
         plots['1'].plot(data['time [s]'], data[topic], pen=colors[index], name=topic + f'[{name}]')
     color_count += 1
 
-text = pg.TextItem(html='<div style="text-align: center"><span style="color: #FFF;">This is</span><br><span style="color: #FF0; font-size: 16pt;">vx</span></div>', anchor=(1.4,0.5), angle=-45, border='w', fill=(0, 0, 255, 100))
-plots['1'].addItem(text)
-text.setPos(4, 7)
-arrow = pg.ArrowItem(pos=(4, 7), angle=-135)
-plots['1'].addItem(arrow)
-
-text = pg.TextItem(html='<div style="text-align: center"><span style="color: #FFF;">This is</span><br><span style="color: #FF0; font-size: 16pt;">vy</span></div>', anchor=(1.4,0.5), angle=45, border='w', fill=(0, 0, 255, 100))
-plots['1'].addItem(text)
-text.setPos(6.5, -0.2)
-arrow = pg.ArrowItem(pos=(6.5, -0.2), angle=135)
-plots['1'].addItem(arrow)
+# text = pg.TextItem(html='<div style="text-align: center"><span style="color: #FFF;">This is</span><br><span style="color: #FF0; font-size: 16pt;">vx</span></div>', anchor=(1.4,0.5), angle=-45, border='w', fill=(0, 0, 255, 100))
+# plots['1'].addItem(text)
+# text.setPos(0, 7)
+# arrow = pg.ArrowItem(pos=(0, 7), angle=-135)
+# plots['1'].addItem(arrow)
+#
+# text = pg.TextItem(html='<div style="text-align: center"><span style="color: #FFF;">This is</span><br><span style="color: #FF0; font-size: 16pt;">vy</span></div>', anchor=(1.4,0.5), angle=45, border='w', fill=(0, 0, 255, 100))
+# plots['1'].addItem(text)
+# text.setPos(0, -0.2)
+# arrow = pg.ArrowItem(pos=(0, -0.2), angle=135)
+# plots['1'].addItem(arrow)
 
 def updatePlot():
     # plots['2'].clear()
