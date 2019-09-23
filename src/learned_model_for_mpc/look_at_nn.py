@@ -23,6 +23,7 @@ Created 21.06.19 15:06
 
 from data_visualization.data_io import getPKL
 from learned_model_for_mpc.ml_models.mlp_keras_mpc import MultiLayerPerceptronMPC
+from learned_model_for_mpc.ml_models.mlp_keras_mpc_symmetric import MultiLayerPerceptronMPCSymmetric
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 import numpy as np
@@ -41,75 +42,101 @@ import config
 # model_name = '0x6_None_reg0p1_directinput'
 # model_name = '2x16_softplus_reg0p1_directinput'
 # model_name = '2x16_softplus_reg0p01_directinput'
-model_name = '1x16_tanh_reg0p1_directinput'
+# model_name = '1x16_tanh_reg0p0_directinput'
+# model_name = '1x16_softplus_reg0p01_directinput'
 # model_name = '2x16_tanh_reg0p0001_kin_directinput'
 # model_name = '2x16_softplus_reg0p0001_kin_directinput'
+# model_name = '1x16_tanh_reg0p0_kin_directinput'
+# model_name = '1x16_tanh_reg0p0_nomodel_ayonly_directinput_test_mlpsymmetric_wrong2'
+# model_name = '1x16_tanh_reg0p0_nomodel_ayonly_directinput_test_mlpsymmetric'
+# model_name = '1x16_tanh_reg0p0_nomodel_directinput_test_mlpsymmetric'
+# model_name = '1x16_tanh_reg0p0_nomodel_directinput'
+model_names = [
+    # '1x16_tanh_reg0p0_nomodel_directinput',
+    # '1x16_tanh_reg0p0_nomodel_directinput_test_mlpsymmetric',
+    # '2x16_elu_reg0p0001_nomodel_directinput',
+    # '2x16_elu_reg0p0001_nomodel_directinput_mlpsymmetric',
+    # '2x24_elu_reg0p0001_nomodel_directinput',
+    # '2x24_elu_reg0p0001_nomodel_directinput_mlpsymmetric',
+    # '1x16_sigmoid_reg0p0001_nomodel_directinput',
+    # '1x16_tanh_reg0p0_kin_directinput',
+    '1x16_tanh_reg0p0_nomodel_directinput',
+    '1x16_tanh_reg0p0_nomodel_directinput_fulldata_mlpsymmetric',
+]
 
-mlp = MultiLayerPerceptronMPC(model_name=model_name, predict_only=True)
-mlp.load_model()
-mlp.load_checkpoint('best')
+for num, model_name in enumerate(model_names):
+    mlp = MultiLayerPerceptronMPC(model_name=model_name, predict_only=True)
+    # mlp = MultiLayerPerceptronMPCSymmetric(model_name=model_name, predict_only=True)
+    mlp.load_model()
+    mlp.load_checkpoint('best')
 
-# plot this, ranges, constants
-ra_vx = ['vx',0,[0,10],5]
-ra_vy = ['vy',1,[-4,4],-0.5]
-ra_vtheta = ['vtheta',0,[-2,2],0.5]
-ra_beta = ['BETA',1,[-0.4,0.4],0]
-ra_ab = ['AB',0,[-8,2],-8]
-ra_tv = ['TV',0,[-1.5,1.5],1]
-# disturbance_no = [0, 'disturbance ax']
-disturbance_no = [1, 'disturbance ay']
-# disturbance_no = [2, 'disturbance atheta']
-params = [ra_vx, ra_vy, ra_vtheta, ra_beta, ra_ab, ra_tv]
+    # plot this, ranges, constants  np.array([[5.,-0.1,0.5,0.25,-1.,2.]])
+    ra_vx = ['vx',0,[0,10],5]
+    ra_vy = ['vy',0,[-4,4],-0.0]
+    ra_vtheta = ['vtheta',1,[-2,2],0.0]
+    ra_beta = ['BETA',1,[-0.44,0.44],0.0]
+    ra_ab = ['AB',0,[-8,2],-1.0]
+    ra_tv = ['TV',0,[-1.5,1.5],0.0]
+    disturbance_no = [0, 'disturbance ax']
+    # disturbance_no = [1, 'disturbance ay']
+    # disturbance_no = [2, 'disturbance atheta']
+    params = [ra_vx, ra_vy, ra_vtheta, ra_beta, ra_ab, ra_tv]
 
-resolution = 100
+    resolution = 100
 
-xy = []
-x = True
-input = np.array(())
-for (name, plot_this, range, constant) in params:
-    if plot_this:
-        data = np.linspace(range[0],range[1],resolution)
-        if x:
-            data = np.repeat(data, resolution)
+    xy = []
+    x = True
+    input = np.array(())
+    for (name, plot_this, range, constant) in params:
+        if plot_this:
+            data = np.linspace(range[0],range[1],resolution)
+            if x:
+                data = np.repeat(data, resolution)
+                if len(input) > 0:
+                    input = np.vstack((input, data))
+                else:
+                    input = data
+                data = data.reshape((resolution, -1))
+                xy.append([name, data])
+                x = False
+            else:
+                data = np.tile(data, resolution)
+                if len(input) > 0:
+                    input = np.vstack((input, data))
+                else:
+                    input = data
+                data = data.reshape((resolution, -1))
+                xy.append([name, data])
+        else:
+
+            data = np.ones((1,resolution*resolution)) * constant
+
             if len(input) > 0:
-                input = np.vstack((input, data))
+                input = np.vstack((input,data))
             else:
                 input = data
-            data = data.reshape((resolution, -1))
-            xy.append([name, data])
-            x = False
-        else:
-            data = np.tile(data, resolution)
-            if len(input) > 0:
-                input = np.vstack((input, data))
-            else:
-                input = data
-            data = data.reshape((resolution, -1))
-            xy.append([name, data])
-    else:
+            # vxx = vxx.reshape((len(vx), -1))
+            # betaa = betaa.reshape((len(beta), -1))
+    input = input.T
+    print(input)
+    print(input.shape)
+    input2 = np.array([[5.0,-0.1,0.5,0.25,-1.0,0.5]])
+    # input2 = np.array([[5.,0.1,-0.5,-0.25,-1.,-2.]])
+    print(mlp.predict(input2))
+    disturbance = mlp.predict(input)
+    print(disturbance)
+    dist_plot = disturbance[:,disturbance_no[0]]
+    dist_plot = dist_plot.reshape((resolution,-1))
 
-        data = np.ones((1,resolution*resolution)) * constant
-
-        if len(input) > 0:
-            input = np.vstack((input,data))
-        else:
-            input = data
-        # vxx = vxx.reshape((len(vx), -1))
-        # betaa = betaa.reshape((len(beta), -1))
-input = input.T
-disturbance = mlp.predict(input)
-
-dist_plot = disturbance[:,disturbance_no[0]]
-dist_plot = dist_plot.reshape((resolution,-1))
-
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-surf = ax.plot_surface(xy[0][1], xy[1][1], dist_plot, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
-fig.colorbar(surf, shrink=0.5, aspect=5)
-ax.set_xlabel(xy[0][0])
-ax.set_ylabel(xy[1][0])
-ax.set_zlabel(disturbance_no[1])
+    fig = plt.figure(num)
+    ax = fig.gca(projection='3d')
+    surf = ax.plot_surface(xy[0][1], xy[1][1], dist_plot, cmap=cm.coolwarm,
+                           linewidth=0, antialiased=False)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.set_xlabel(xy[0][0])
+    ax.set_ylabel(xy[1][0])
+    ax.set_zlabel(disturbance_no[1])
+    ax.set_title(model_name)
 
 plt.show()
 
