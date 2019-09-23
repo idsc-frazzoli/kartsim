@@ -54,20 +54,20 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
                          logging)
     simulate_open_loop(vehicle_model_type, vehicle_model_name, load_path, simulation_files, save_path)
 
-    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190822-153357_testk')
+    # save_path = os.path.join(config.directories['root'], 'Evaluation', '20190919-084329_hybrid_mlp_0x6_None_reg0p001_dyn_directinput_fulldata_mlpsymmetric_mpcinputs')
     generate_results(save_root_path, save_path, load_path)
 
 
 def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder, simulation_files, save_path):
     save_path = os.path.join(save_path, 'open_loop_simulation_files')
-    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp', 'no_model']:
+    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp', 'no_model', 'no_model_sparse']:
         if vehicle_model_type == 'mpc_dynamic':
             vehicle_model = DynamicVehicleMPC(direct_input=True)
         elif vehicle_model_type == 'mpc_kinematic':
             vehicle_model = KinematicVehicleMPC(direct_input=True)
-        elif vehicle_model_type == 'mlp':
+        elif vehicle_model_type == 'mlp' or vehicle_model_type == 'no_model':
             vehicle_model = NoModelModel(direct_input=True, model_name=vehicle_model_name)
-        else:
+        elif vehicle_model_type == 'no_model_sparse':
             vehicle_model = NoModelSparseModel(model_name=vehicle_model_name)
 
         for simulation_file in simulation_files:
@@ -415,16 +415,98 @@ if __name__ == '__main__':
         # ['hybrid_kinematic_mlp', '3x16_softplus_reg0p0001_kin_directinput_sym'],
         # ['hybrid_kinematic_mlp', '2x16_softplus_reg0p0001_kin_directinput_sym'],
 
-        # ['no_model', 'poly3_order1'],
-        # ['no_model', 'poly3_order2'],
-        # ['no_model', 'poly3_order3'],
-        ['no_model', 'poly3_order4'],
-        # ['no_model', 'poly3_order5'],
-        # ['no_model', 'poly2_order2'],
-        # ['no_model', 'poly2_order3'],
-        ['no_model', 'poly2_order4'],
-        # ['no_model', 'poly2_order5'],
-        # ['no_model', 'poly2_order6'],
+        # ['no_model_sparse', 'poly3_order1'],
+        # ['no_model_sparse', 'poly3_order2'],
+        # ['no_model_sparse', 'poly3_order3'],
+        # ['no_model_sparse', 'poly3_order4'],
+        # ['no_model_sparse', 'poly3_order5'],
+        # ['no_model_sparse', 'poly2_order2'],
+        # ['no_model_sparse', 'poly2_order3'],
+        # ['no_model_sparse', 'poly2_order4'],
+        # ['no_model_sparse', 'poly2_order5'],
+        # ['no_model_sparse', 'poly2_order6'],
+        # ['no_model_sparse', 'poly2_order14'],
+        # ['no_model_sparse', 'poly2_sparse'],
+        # ['no_model_sparse', 'poly3_sparse'],
+        # ['no_model_sparse', 'poly3reduced_sparse'],
+
+        # ['no_model', '1x16_tanh_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x16_softplus_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x16_sigmoid_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x16_tanh_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x16_softplus_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x16_sigmoid_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x24_tanh_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x24_softplus_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x24_sigmoid_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x24_tanh_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x24_softplus_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x24_sigmoid_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x32_tanh_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x32_softplus_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x32_sigmoid_reg0p0_nomodel_directinput'],
+        # ['no_model', '1x32_tanh_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x32_softplus_reg0p0001_nomodel_directinput'],
+        # ['no_model', '1x32_sigmoid_reg0p0001_nomodel_directinput'],
+        #
+        # # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x16_sigmoid_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0001_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x16_sigmoid_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x24_tanh_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x24_softplus_reg0p0_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x24_sigmoid_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x24_tanh_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x24_softplus_reg0p0001_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x24_sigmoid_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x32_tanh_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x32_softplus_reg0p0_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x32_sigmoid_reg0p0_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x32_tanh_reg0p0001_kin_directinput'],
+        # ['hybrid_kinematic_mlp', '1x32_softplus_reg0p0001_kin_directinput'],
+        # # ['hybrid_kinematic_mlp', '1x32_sigmoid_reg0p0001_kin_directinput'],
+
+        # ['no_model', '1x16_tanh_reg0p0_nomodel_directinput_customfeat'],
+        # ['no_model', '1x16_softplus_reg0p0_nomodel_directinput_customfeat'],
+        # ['no_model', '1x16_sigmoid_reg0p0_nomodel_directinput_customfeat'],
+        # ['no_model', '1x16_tanh_reg0p0001_nomodel_directinput_customfeat'],
+        # ['no_model', '1x16_softplus_reg0p0001_nomodel_directinput_customfeat'],
+        # ['no_model', '1x16_sigmoid_reg0p0001_nomodel_directinput_customfeat'],
+
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0001_kin_directinput_fulldata_mlpsymmetric'],
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0_kin_directinput_fulldata_mlpsymmetric'],
+        # ['hybrid_kinematic_mlp', '1x16_sigmoid_reg0p0_kin_directinput_fulldata_mlpsymmetric'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0_kin_directinput_fulldata_mlpsymmetric'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0001_kin_directinput_fulldata_mlpsymmetric'],
+        # ['hybrid_kinematic_mlp', '1x16_sigmoid_reg0p0001_kin_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_softplus_reg0p0001_nomodel_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_tanh_reg0p0001_nomodel_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_tanh_reg0p0_nomodel_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_sigmoid_reg0p0_nomodel_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_softplus_reg0p0_nomodel_directinput_fulldata_mlpsymmetric'],
+        # ['no_model', '1x16_sigmoid_reg0p0001_nomodel_directinput_fulldata_mlpsymmetric'],
+
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0_kin_directinput_mlpsymmetric_detailed'],
+        # ['hybrid_kinematic_mlp', '1x24_tanh_reg0p0_kin_directinput_mlpsymmetric_detailed'],
+        # ['hybrid_kinematic_mlp', '1x24_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed'],
+        # ['hybrid_kinematic_mlp', '1x16_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed'],
+        # ['no_model', '1x24_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed'],
+        # ['no_model', '1x16_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed'],
+        # ['no_model', '1x16_softplus_reg0p0_nomodel_directinput_mlpsymmetric_detailed'],
+        # ['no_model', '1x24_softplus_reg0p0_nomodel_directinput_mlpsymmetric_detailed'],
+
+        # ['hybrid_mlp', '0x6_None_reg0p001_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '0x6_None_reg0p005_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '0x6_None_reg0p01_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '0x6_None_reg0p05_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '0x6_None_reg0p1_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p005_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p01_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p1_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p001_dyn_directinput_fulldata_mlpsymmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p05_dyn_directinput_fulldata_mlpsymmetric'],
 
     ]
 
