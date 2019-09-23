@@ -13,7 +13,6 @@ from pandas import DataFrame
 
 
 def main():
-    # arr = np.arange(1,2040001).reshape(6,-1)
     arr = np.arange(1, 19).reshape(-1, 6)
     arr = DataFrame(arr, columns=['VX', 'VY', 'VTHETA', 'BETA', 'AB', 'TV'])
     arr_feature_names = []
@@ -25,41 +24,101 @@ def main():
     print(features.shape)
     print(features)
     print(feature_names)
-
-    # res, new_feature_names = apply_powers(arr, arr_feature_names)
-    # features = np.vstack((features, res))
-    # feature_names += new_feature_names
-    # print(features.shape)
-    # for i in range(len(features)):
-    #     print(features[i], feature_names[i])
-
-    res, new_feature_names = apply_exponentials(arr, arr_feature_names)
-    features = np.vstack((features, res))
-    feature_names += new_feature_names
-    print(features.shape)
-
-    res, new_feature_names = apply_trigo(arr, arr_feature_names)
-    features = np.vstack((features, res))
-    feature_names += new_feature_names
-    print(features.shape)
-    # print(features)
-    # print(new_feature_names)
-
-    # res, new_feature_names = add_custom_features(arr, arr_feature_names)
-    # features = np.vstack((features, res))
-    # feature_names += new_feature_names
-    # print(features.shape)
-    # # for i in range(len(features)):
-    # #     print(features[i], feature_names[i])
-
-    # features, feature_names = get_polynomials(features, feature_names, degree=3)
-    res, new_feature_names = get_polynomials(arr, arr_feature_names, degree=3)
+    res, new_feature_names = apply_custom_features(arr, arr_feature_names)
     features = np.vstack((features, res))
     feature_names += new_feature_names
     print(features.shape)
     for i in range(len(features)):
         print(features[i], feature_names[i])
 
+    #__________________________________________________________________________________
+    # # arr = np.arange(1,2040001).reshape(6,-1)
+    # arr = np.arange(1, 19).reshape(-1, 6)
+    # arr = DataFrame(arr, columns=['VX', 'VY', 'VTHETA', 'BETA', 'AB', 'TV'])
+    # arr_feature_names = []
+    # for name in arr.columns:
+    #     arr_feature_names.append(name)
+    # arr = arr.values.T
+    # features = arr
+    # feature_names = arr_feature_names.copy()
+    # print(features.shape)
+    # print(features)
+    # print(feature_names)
+    #
+    # # res, new_feature_names = apply_powers(arr, arr_feature_names)
+    # # features = np.vstack((features, res))
+    # # feature_names += new_feature_names
+    # # print(features.shape)
+    # # for i in range(len(features)):
+    # #     print(features[i], feature_names[i])
+    #
+    # res, new_feature_names = apply_exponentials(arr, arr_feature_names)
+    # features = np.vstack((features, res))
+    # feature_names += new_feature_names
+    # print(features.shape)
+    #
+    # res, new_feature_names = apply_trigo(arr, arr_feature_names)
+    # features = np.vstack((features, res))
+    # feature_names += new_feature_names
+    # print(features.shape)
+    # # print(features)
+    # # print(new_feature_names)
+    #
+    # # res, new_feature_names = add_custom_features(arr, arr_feature_names)
+    # # features = np.vstack((features, res))
+    # # feature_names += new_feature_names
+    # # print(features.shape)
+    # # # for i in range(len(features)):
+    # # #     print(features[i], feature_names[i])
+    #
+    # # features, feature_names = get_polynomials(features, feature_names, degree=3)
+    # res, new_feature_names = get_polynomials(arr, arr_feature_names, degree=3)
+    # features = np.vstack((features, res))
+    # feature_names += new_feature_names
+    # print(features.shape)
+    # for i in range(len(features)):
+    #     print(features[i], feature_names[i])
+
+def get_custom_features(orig_features):
+    if isinstance(orig_features, DataFrame):
+        orig_feature_names = []
+        for name in orig_features.columns:
+            if name == 'vehicle vx [m*s^-1]':
+                name = 'VX'
+            elif name == 'vehicle vy [m*s^-1]':
+                name = 'VY'
+            elif name == 'pose vtheta [rad*s^-1]':
+                name = 'VTHETA'
+            elif name == 'turning angle [n.a]':
+                name = 'BETA'
+            elif name == 'acceleration rear axle [m*s^-2]':
+                name = 'AB'
+            elif name == 'acceleration torque vectoring [rad*s^-2]':
+                name = 'TV'
+            orig_feature_names.append(name)
+        orig_features_copy = orig_features.copy()
+        orig_features_copy = orig_features_copy.values.T
+    elif isinstance(orig_features, np.ndarray):
+        orig_features_copy = np.copy(orig_features)
+        orig_features_copy = orig_features_copy.T
+    else:
+        raise ValueError('Unsuported data format.')
+
+    orig_features_copy[orig_features_copy == 0] = 0.0000001
+    features = orig_features_copy.copy()
+    feature_names = orig_feature_names.copy()
+    # print(features.shape)
+
+    res, new_feature_names = apply_custom_features(orig_features_copy, orig_feature_names)
+    features = np.vstack((features, res))
+    feature_names += new_feature_names
+    # print(features.shape)
+
+    if isinstance(orig_features, DataFrame):
+        features = DataFrame(features.T, columns=feature_names)
+    elif isinstance(orig_features, np.ndarray):
+        features = features.T
+    return features
 
 def get_new_features(orig_features):
     if isinstance(orig_features, DataFrame):
@@ -121,6 +180,60 @@ def get_new_features(orig_features):
         features = features.T
     return features
 
+
+def apply_custom_features(features, feature_names):
+    new_feature_names = []
+
+    #VY * VTHETA
+    new_features = features[1,:] * features[2,:]
+    new_feature_names.append(f'({feature_names[1]} * {feature_names[2]})')
+
+    # VTHETA * TV
+    new_features = np.vstack((new_features, features[2, :] * features[5, :]))
+    new_feature_names.append(f'({feature_names[2]} * {feature_names[5]})')
+
+    # VX * BETA * BETA
+    new_features = np.vstack((new_features, features[0, :] * features[3, :] * features[3, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[3]} * {feature_names[3]})')
+
+    # VX * VTHETA
+    new_features = np.vstack((new_features, features[0, :] * features[2, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[2]})')
+
+    # cos(VX) * VY
+    new_features = np.vstack((new_features, np.cos(features[0, :] / 10.0 * np.pi/2.0) * features[1, :]))
+    new_feature_names.append(f'(cos({feature_names[0]}) * {feature_names[1]})')
+
+    # VX * BETA
+    new_features = np.vstack((new_features, features[0, :] * features[3, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[3]})')
+
+    # VX * TV
+    new_features = np.vstack((new_features, features[0, :] * features[5, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[5]})')
+
+    # VX * VTHETA * AB
+    new_features = np.vstack((new_features, features[0, :] * features[2, :] * features[4, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[2]} * {feature_names[4]})')
+
+    # VX * BETA * AB * AB
+    new_features = np.vstack((new_features, features[0, :] * features[3, :] * features[4, :] * features[4, :]))
+    new_feature_names.append(f'({feature_names[0]} * {feature_names[3]} * {feature_names[4]} * {feature_names[4]})')
+
+    # cos(VX) * VTHETA
+    new_features = np.vstack((new_features, np.cos(features[0, :] / 10.0 * np.pi/2.0) * features[2, :]))
+    new_feature_names.append(f'(cos({feature_names[0]}) * {feature_names[2]})')
+
+    # cos(BETA) * VTHETA
+    new_features = np.vstack((new_features, np.cos(features[3, :] / 0.44 * np.pi/2.0) * features[2, :]))
+    new_feature_names.append(f'(cos({feature_names[3]}) * {feature_names[2]})')
+
+    #
+    # new_features = np.vstack((new_features, np.power(features, -1.0)))
+    #
+    # new_feature_names.append(f'np.power({name},{calculation})')
+
+    return new_features, new_feature_names
 
 def combinations(features, degree=2):
     res = np.array(list(combinations_with_replacement(features, degree)))
