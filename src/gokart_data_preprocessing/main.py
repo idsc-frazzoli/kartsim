@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a model_type for the data set
-    dataset_name = 'mpc_vs_kin_nn_and_no_model'
+    dataset_name = 'test'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -103,7 +103,7 @@ def main():
         print('Data preprocessing started...')
         filtered_data_dict = prepare_dataset(root_path_raw_data, data_tagging, required_data_list,
                                              # start_from='20190514')
-                                             start_from = '20190909')
+                                             start_from = '20190919')
         print('Data preprocessing completed.')
 
         # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
