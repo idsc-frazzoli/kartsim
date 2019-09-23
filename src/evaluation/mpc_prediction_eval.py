@@ -27,8 +27,11 @@ from simulator.textcommunication import encode_request_msg_to_txt, decode_answer
 def main():
     #___user inputs
 
-    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190905/20190905T191253_01/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190909/20190909T174744_01/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190902/20190902T174135_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190905/20190905T191253_06/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190909/20190909T174744_07/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190912/20190912T162356_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190916/20190916T175046_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
 
     mpcsolfiles = []
     for r, d, f in os.walk(pathmpcsolutiondata):
@@ -50,17 +53,25 @@ def main():
     BETA_ref = []
     AB_ref = []
     TV_ref = []
-    t_offset = -3.9
+    t_offset = 0.0
+    t_abs0 = None
     # for file_path, file_name in mpcsolfiles[130:150]:
     # for file_path, file_name in mpcsolfiles[100:150]:
     # for file_path, file_name in mpcsolfiles[220:280:5]:
-    for file_path, file_name in mpcsolfiles:
+    for file_path, file_name in mpcsolfiles[-100::]:
+        if t_abs0 is None:
+            mpc_sol_data = pd.read_csv(str(mpcsolfiles[0][0]), header=None,
+                                       names=["U wheel left", "U wheel right", "U dotS", "U brake", "X U AB", "time",
+                                              "X Ux", "X Uy", "X dotPsi", "X X", "X Y", "X Psi", "X w2L", "X w2R",
+                                              "X s", "X bTemp"])
+            t_abs0 = mpc_sol_data['time'][0]
         print(f'Loading file {file_name}')
         try:
             mpc_sol_data = pd.read_csv(str(file_path), header=None,
                                        names=["U wheel left", "U wheel right", "U dotS", "U brake", "X U AB", "time",
                                               "X Ux", "X Uy", "X dotPsi", "X X", "X Y", "X Psi", "X w2L", "X w2R",
                                               "X s", "X bTemp"])
+
         except:
             print('Could not open file at', file_path)
             raise
@@ -85,12 +96,12 @@ def main():
         # steerCal = mpc_sol_data['X s']
         # BETA = -0.63 * np.power(steerCal, 3) + 0.94 * steerCal
         #
-        # U = np.array((mpc_sol_data['time'].values+t_offset,
+        # U = np.array((mpc_sol_data['time'].values-t_abs0+t_offset,
         #               BETA.values,
         #               AB.values,
         #               TV.values))
         #
-        # Y = np.array((mpc_sol_data['time']+t_offset,
+        # Y = np.array((mpc_sol_data['time']-t_abs0+t_offset,
         #               np.add(mpc_sol_data['X X'], np.cos(mpc_sol_data['X Psi']) * 0.46),
         #               np.add(mpc_sol_data['X Y'], np.sin(mpc_sol_data['X Psi']) * 0.46),
         #               mpc_sol_data['X Psi'],
