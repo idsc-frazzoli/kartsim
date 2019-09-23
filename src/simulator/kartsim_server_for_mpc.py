@@ -50,13 +50,26 @@ def main():
         # vehicle_model_name = '6x32_softplus_reg0p001_kin_directinput_sym'
         # vehicle_model_name = '5x16_softplus_reg0p001_kin_directinput_sym'
         # vehicle_model_name = '3x16_softplus_reg0p0001_kin_directinput'
-        vehicle_model_type = 'no_model'
+
+        # vehicle_model_type = 'no_model_sparse'
         # vehicle_model_name = '0x1503_None_reg0p0001_100ksample_powerexpotrigopoly2_l1sparse_directinput'
         # vehicle_model_name = '0x966_None_reg0p0001_50ksample_expotrigocustompoly2_l1sparse_directinput'
         # vehicle_model_name = '0x426_None_reg0p0001_50ksample_expotrigopoly2_l1sparse_directinput'
         # vehicle_model_name = '0x369_None_reg0p0001_50ksample_expotrigopoly2_l1sparse_directinput'
         # vehicle_model_name = '0x2161_None_reg0p0001_50ksample_expotrigopoly3_l1sparse_directinput'
-        vehicle_model_name = 'poly2_order6'
+        # vehicle_model_name = 'poly2_order14'
+        # vehicle_model_name = 'poly2_sparse'
+
+        vehicle_model_type = 'no_model'
+        # vehicle_model_name = '1x16_tanh_reg0p0_nomodel_directinput_test_mlpsymmetric'
+        vehicle_model_name = '1x16_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed' #stable; use for demo!
+        # vehicle_model_name = '1x24_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed' #stable; nice to drive
+
+        # vehicle_model_type = 'hybrid_kinematic_mlp'
+        # vehicle_model_name = '1x24_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed' #ustable
+        # vehicle_model_name = '1x24_tanh_reg0p0_kin_directinput_mlpsymmetric_detailed' #stable
+        # vehicle_model_name = '1x16_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed' #stable not much drift
+
 
         port = 6000
 
@@ -86,8 +99,10 @@ def main():
         vehicle_model = KinematicVehicleMPC()
     elif vehicle_model_type == 'mlp':
         vehicle_model = NoModelModel(direct_input=True, model_name=vehicle_model_name)
-    elif vehicle_model_type == 'no_model':
+    elif vehicle_model_type == 'no_model_sparse':
         vehicle_model = NoModelSparseModel(model_name=vehicle_model_name)
+    elif vehicle_model_type == 'no_model':
+        vehicle_model = NoModelModel(model_name=vehicle_model_name, direct_input=True)
     # elif vehicle_model_type == 'hybrid_lstm':
     #     vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
 
