@@ -166,7 +166,7 @@ class MultiLayerPerceptronMPC():
                                                                   save_best_only=True, monitor='val_loss', mode='min')
 
         # Callback: Stop training if validation loss does not improve anymore
-        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=250)
 
         # Callback: Tensorboard
         tensor_board = tf.keras.callbacks.TensorBoard(log_dir=self.root_folder + f'/logs/{self.model_name}')
@@ -272,9 +272,15 @@ class MultiLayerPerceptronMPC():
 
     def predict(self, features):
         label_mirror = np.ones(len(features))
-        if 'sym' in self.model_name:
+
+        if 'symmetric' in self.model_name:
+            pass
+        elif 'sym' in self.model_name:
             features, label_mirror = self.mirror_state_space(features)
-        features_normalized = self.normalize_data(features)
+        if 'symmetric' in self.model_name:
+            features_normalized = self.normalize_data_symmetric(features)
+        else:
+            features_normalized = self.normalize_data(features)
         result = self.model.predict(x=features_normalized, verbose=0)
         result[:, 1:3] = result[:, 1:3] * np.column_stack((label_mirror, label_mirror))
         return result
@@ -322,6 +328,18 @@ class MultiLayerPerceptronMPC():
             return (features - self.train_stats['mean']) / self.train_stats['std']
         else:
             return (features - self.train_stats['mean'].values) / self.train_stats['std'].values
+
+    def normalize_data_symmetric(self, features):
+        if isinstance(features, pd.DataFrame):
+            features.iloc[:,np.array([0,4])] = features.iloc[:,np.array([0,4])] - self.train_stats['mean'][np.array([0,4])]
+            return features / self.train_stats['std'].values
+            # return features / self.train_stats['std'][:6], (labels - self.train_stats['mean'][6:]) / self.train_stats['std'][6:]
+            # return (features - self.train_stats['mean']) / self.train_stats['std']
+        else:
+            features[:, 0] = features[:, 0] - self.train_stats['mean'][0]
+            features[:, 4] = features[:, 4] - self.train_stats['mean'][4]
+            return features / self.train_stats['std'].values
+            # return (features - self.train_stats['mean'].values) / self.train_stats['std'].values
 
     def mirror_state_space(self, raw_features, raw_labels = None):
         if isinstance(raw_features, pd.DataFrame):
