@@ -185,16 +185,16 @@ class MultiLayerPerceptronMPC():
         B = []
         if layer == 'all':
             for i, l in enumerate(self.model.layers):
-                if i == len(self.model.layers) - 1:
-                    # print('Output Layer\n Weights {weights}\n Biases {biases}'.format(weights=l.get_weights()[0],
-                    #                                                                   biases=l.get_weights()[1]))
-                    W.append(l.get_weights()[0])
-                    B.append(l.get_weights()[1])
-                elif i > 0:
-                    # print('Layer {:5.0f}\n Weights {weights}\n Biases {biases}'.format(i, weights=l.get_weights()[0],
-                    #                                                                    biases=l.get_weights()[1]))
-                    W.append(l.get_weights()[0])
-                    B.append(l.get_weights()[1])
+                weights = l.get_weights()
+                if len(weights) > 0:
+                    if len(weights) > 1:
+                        W.append(l.get_weights()[0])
+                        B.append(l.get_weights()[1])
+                    else:
+                        W.append(l.get_weights()[0])
+                        B.append(np.array([]))
+
+
         elif isinstance(layer, int):
             l = self.model.layers[layer]
             # print('Layer {:5.0f}\n Weights {weights}\n Biases {biases}'.format(layer, weights=l.get_weights()[0],
