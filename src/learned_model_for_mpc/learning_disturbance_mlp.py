@@ -190,6 +190,42 @@ def get_data_set_for_nomodel_morefeatures():
 
     return train_features, train_labels, test_features, test_labels
 
+def get_data_set_for_nomodel_customfeatures():
+    path_data_set = os.path.join(config.directories['root'],
+                                 'Data/MLPDatasets/20190829-092236_final_data_set_nomodel_directinput')
+    train_features = getPKL(os.path.join(path_data_set, 'train_features.pkl'))
+    train_labels = getPKL(os.path.join(path_data_set, 'train_labels.pkl'))
+    test_features = getPKL(os.path.join(path_data_set, 'test_features.pkl'))
+    test_labels = getPKL(os.path.join(path_data_set, 'test_labels.pkl'))
+
+    merged_train = train_features.join(train_labels.iloc[:, 1:])
+    merged_train = merged_train.sample(n=50000, random_state=16)
+    train_features = merged_train.iloc[:, :-3]
+    train_labels = merged_train.iloc[:, -3:]
+
+    merged_test = test_features.join(test_labels.iloc[:,1:])
+    merged_test = merged_test.sample(n=30000, random_state=42)
+    test_features = merged_test.iloc[:, :-3]
+    test_labels = merged_test.iloc[:, -3:]
+
+    train_features = train_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                     'turning angle [n.a]',
+                                     'acceleration rear axle [m*s^-2]',
+                                     'acceleration torque vectoring [rad*s^-2]']]
+    train_features = get_custom_features(train_features)
+    test_features = test_features[['vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]', 'pose vtheta [rad*s^-1]',
+                                   'turning angle [n.a]',
+                                   'acceleration rear axle [m*s^-2]',
+                                   'acceleration torque vectoring [rad*s^-2]']]
+    test_features = get_custom_features(test_features)
+
+    train_labels = train_labels[
+        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
+    test_labels = test_labels[
+        ['vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].reset_index(drop=True)
+
+    return train_features, train_labels, test_features, test_labels
+
 def get_data_set_for_sparsityNN():
     # path_data_set = os.path.join(config.directories['root'], 'Data/MLPDatasets/20190829-091021_final_data_set_dynamic_directinput')
     # path_data_set = os.path.join(config.directories['root'],
