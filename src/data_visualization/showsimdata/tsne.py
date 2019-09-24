@@ -13,6 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.stats import kde
 
 
 def main():
@@ -57,10 +58,17 @@ def main():
     index_counter = 0
     for title, topics in topic_lists:
         dataframe = dataframe.sample(n=10000, random_state=16)
-        dataframe_selection = dataframe[topics]
-        dataframe_symm = symmetry_dim_reduction(dataframe_selection)
-        train_stats = get_train_stats(dataframe_symm)
-        dataframe_symm_norm = normalize_data(train_stats, dataframe_symm)
+        # dataframe_symm = symmetry_dim_reduction(dataframe_selection)
+        dataframe_symm = mirror_data(dataframe)
+        dataframe_selection = dataframe_symm[topics]
+
+        mask1 = dataframe_selection['brake position effective [m]'] < 0.025
+        dataframe_selection.loc[mask1, ['brake position effective [m]']] = 0.025
+        mask2 = dataframe_selection['brake position effective [m]'] > 0.05
+        dataframe_selection.loc[mask2, ['brake position effective [m]']] = 0.05
+
+        train_stats = get_train_stats(dataframe_selection)
+        dataframe_symm_norm = normalize_data(train_stats, dataframe_selection)
 
         model = TSNE(n_components=2, random_state=0, perplexity=50, verbose=2)
 
@@ -77,7 +85,7 @@ def main():
             plt.title(title + ' ' + topic)
             index_counter += 1
 
-        file_path = os.path.join(simulation_folder, f'{title}_data_set_tsne_flattened_1.pkl')
+        file_path = os.path.join(simulation_folder, f'{title}_data_set_tsne_flattened_mirroreddata_brakelim.pkl')
         data_to_pkl(file_path, tsne_df)
 
         file_path = os.path.join(simulation_folder, f'{title}_data_set_mirroreddata_brakelim.pkl')
@@ -188,9 +196,13 @@ def look_at_results():
     # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
     simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190824-183606_trustworthy_bigdata_kinematic'
     simulation_file = 'state_space_data_set_1.pkl'
+    simulation_file = 'state_space_data_set_mirroreddata.pkl'
+    simulation_file = 'state_space_data_set_mirroreddata_brakelim.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     dataframe1 = getPKL(dataset_path)
     simulation_file = 'state_space_data_set_tsne_flattened_1.pkl'
+    simulation_file = 'state_space_data_set_tsne_flattened_mirroreddata.pkl'
+    simulation_file = 'state_space_data_set_tsne_flattened_mirroreddata_brakelim.pkl'
     dataset_path = os.path.join(simulation_folder, simulation_file)
     dataframe2 = getPKL(dataset_path)
 
@@ -212,7 +224,7 @@ def look_at_results():
         'motor torque cmd left [A_rms]',
         'motor torque cmd right [A_rms]',
         # 'disturbance vehicle ax local [m*s^-2]',
-        'disturbance vehicle ay local [m*s^-2]',
+        # 'disturbance vehicle ay local [m*s^-2]',
         # 'disturbance pose atheta [rad*s^-2]',
     ]
     u = 0
@@ -228,14 +240,19 @@ def look_at_results():
         u = u + 1
     dataframe1 = dataframe1.reset_index(drop=True)
     split = 3
-    dataframe2 = dataframe2[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
-    dataframe1 = dataframe1[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
+    # dataframe2 = dataframe2[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
+    # dataframe1 = dataframe1[dataframe1['disturbance vehicle ay local [m*s^-2]'].abs() > split]
     for topic in disturbance:
         plt.figure(u)
+        cmap = 'RdBu'
+
+        if topic in ['vehicle vx [m*s^-1]', 'brake position effective [m]']:
+            cmap = 'Reds'
+
         if topic in ['disturbance pose atheta [rad*s^-2]', 'disturbance vehicle ax local [m*s^-2]', 'disturbance vehicle ay local [m*s^-2]']:
-            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic].abs(), cmap='RdBu')
+            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic].abs(), cmap=cmap)
         else:
-            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic], cmap='RdBu')
+            sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'], c=dataframe1[topic], cmap=cmap)
         plt.title('results: ' + topic)
         if topic == 'vehicle vy [m*s^-1]':
             plt.clim(-0.6, 0.6)
@@ -245,18 +262,18 @@ def look_at_results():
         # if topic == 'disturbance vehicle ay local [m*s^-2]':
         #     plt.clim(-1, 1)
         u = u + 1
-    plt.figure(20)
-    sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
-                     c=(dataframe1['motor torque cmd right [A_rms]']-dataframe1['motor torque cmd left [A_rms]']), cmap='RdBu')
-    plt.title('results: TV')
-    plt.colorbar(sc)
-
-    plt.figure(21)
-    sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
-                     c=((dataframe1['motor torque cmd right [A_rms]'] + dataframe1['motor torque cmd left [A_rms]'])/2.0),
-                     cmap='RdBu')
-    plt.title('results: AB')
-    plt.colorbar(sc)
+    # plt.figure(20)
+    # sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
+    #                  c=(dataframe1['motor torque cmd right [A_rms]']-dataframe1['motor torque cmd left [A_rms]']), cmap='RdBu')
+    # plt.title('results: TV')
+    # plt.colorbar(sc)
+    #
+    # plt.figure(21)
+    # sc = plt.scatter(dataframe2['Dim_1'], dataframe2['Dim_2'],
+    #                  c=((dataframe1['motor torque cmd right [A_rms]'] + dataframe1['motor torque cmd left [A_rms]'])/2.0),
+    #                  cmap='RdBu')
+    # plt.title('results: AB')
+    # plt.colorbar(sc)
 
     plt.show()
 
@@ -270,6 +287,13 @@ def get_train_stats(training_features):
 def normalize_data(train_stats, features):
     return (features - train_stats['mean']) / train_stats['std']
 
+def mirror_data(df_features):
+    features = df_features.iloc[:,1:].copy()
+    mask = np.array([1.0,-1.0,-1.0,-1.0,1.0,1.0,1.0,1.0,-1.0,-1.0])
+    symm_features = features.multiply(mask)
+    symm_features.loc[:, ['motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']] = symm_features.loc[:, ['motor torque cmd right [A_rms]', 'motor torque cmd left [A_rms]']].values
+    features = features.append(symm_features)
+    return features
 
 def symmetry_dim_reduction(df_features):
     features = df_features.copy()
@@ -289,6 +313,7 @@ def look_at_data_set():
     print(dataframe['vehicle vx [m*s^-1]'].describe())
 
 if __name__ == '__main__':
-    main()
+    # main()
     # look_at_data_set()
     # look_at_results()
+    look_at_resulting_distributions()
