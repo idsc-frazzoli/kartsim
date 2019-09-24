@@ -80,9 +80,106 @@ def main():
         file_path = os.path.join(simulation_folder, f'{title}_data_set_tsne_flattened_1.pkl')
         data_to_pkl(file_path, tsne_df)
 
-        file_path = os.path.join(simulation_folder, f'{title}_data_set_1.pkl')
-        data_to_pkl(file_path, dataframe)
+        file_path = os.path.join(simulation_folder, f'{title}_data_set_mirroreddata_brakelim.pkl')
+        data_to_pkl(file_path, dataframe_symm)
 
+
+def look_at_resulting_distributions():
+    # ____________Look at results
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/Sampled/20190809-181131_trustworthy_bigdata_merged'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190813-141626_trustworthy_bigdata'
+    # simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190820-175323_trustworthy_bigdata_vxvyfilter'
+    simulation_folder = '/home/mvb/0_ETH/01_MasterThesis/kartsim_files/Data/MLPDatasets/20190824-183606_trustworthy_bigdata_kinematic'
+    simulation_file = 'state_space_data_set_1.pkl'
+    simulation_file = 'state_space_data_set_mirroreddata.pkl'
+    simulation_file = 'state_space_data_set_mirroreddata_brakelim.pkl'
+    dataset_path = os.path.join(simulation_folder, simulation_file)
+    dataframe1 = getPKL(dataset_path)
+    simulation_file = 'state_space_data_set_tsne_flattened_1.pkl'
+    simulation_file = 'state_space_data_set_tsne_flattened_mirroreddata.pkl'
+    simulation_file = 'state_space_data_set_tsne_flattened_mirroreddata_brakelim.pkl'
+    dataset_path = os.path.join(simulation_folder, simulation_file)
+    dataframe2 = getPKL(dataset_path)
+    print(dataframe1.shape)
+
+    data = dataframe2.values
+    x, y = data.T
+
+    dataframe1 = dataframe1[[
+        'vehicle vx [m*s^-1]',
+        'vehicle vy [m*s^-1]',
+        'pose vtheta [rad*s^-1]',
+        'steer position cal [n.a.]',
+        'brake position effective [m]',
+        'motor torque cmd left [A_rms]',
+        'motor torque cmd right [A_rms]',
+    ]]
+    mask1 = dataframe1['brake position effective [m]'] < 0.0
+    dataframe1.loc[mask1, ['brake position effective [m]']] = 0.0
+    mask2 = dataframe1['brake position effective [m]'] > 0.05
+    dataframe1.loc[mask2, ['brake position effective [m]']] = 0.05
+    dataframe1['brake position effective [m]'] *= 100
+    dataframe1 = dataframe1.rename(columns={'brake position effective [m]': 'brake position effective [m/100]'})
+    dataframe1['motor torque cmd left [A_rms]'] *= 0.001
+    dataframe1 = dataframe1.rename(columns={'motor torque cmd left [A_rms]': 'motor torque cmd left [A_rms*1000]'})
+    dataframe1['motor torque cmd right [A_rms]'] *= 0.001
+    dataframe1 = dataframe1.rename(columns={'motor torque cmd right [A_rms]': 'motor torque cmd right [A_rms*1000]'})
+
+    df = dataframe1.melt(var_name='groups', value_name='vals')
+
+    sns.set(style="whitegrid")
+    plt.figure(10)
+    ax = sns.violinplot(x="groups", y="vals", data=df, scale='width')
+    for item in ax.get_xticklabels():
+        item.set_rotation(10)
+    # plt.figure()
+    # ax = sns.boxplot(x=dataframe1['brake position effective [m/100]'])
+
+    # cmap = sns.cubehelix_palette(n_colors=10, start=0.5, rot=0.3, hue=1.5, as_cmap=True) #red
+    cmap = sns.cubehelix_palette(n_colors=10, start=0.7, rot=0.3, hue=1.5, as_cmap=True) #orange
+    # cmap = sns.cubehelix_palette(n_colors=10, start=1.6, rot=0.3, hue=1., as_cmap=True) #green
+    # cmap = sns.cubehelix_palette(n_colors=10, start=2.4, rot=0.3, hue=1.5, as_cmap=True) #blue
+    plt.figure(11)
+    sns.kdeplot(data, shade=True, cmap=cmap ,cbar=True,shade_lowest=False)
+    # sns.scatterplot(x='Dim_1', y='Dim_2', data=dataframe2, c="w", s=30, linewidth=1, marker="+")
+    sns.scatterplot(x='Dim_1', y='Dim_2', data=dataframe2.sample(n=1000, random_state=42), marker="+", color='w', alpha=0.5)
+
+    # nbins = 100
+    # k = kde.gaussian_kde(data.T)
+    # xi, yi = np.mgrid[x.min():x.max():nbins * 1j, y.min():y.max():nbins * 1j]
+    # zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+    # plt.figure(3)
+    # # plt.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.BuGn_r)
+    # sc = plt.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap='coolwarm')
+    # plt.contour(xi, yi, zi.reshape(xi.shape), colors='k')
+    # plt.colorbar(sc)
+    #
+    # import scipy.stats as st
+    # # Define the borders
+    # deltaX = (max(x) - min(x)) / 10
+    # deltaY = (max(y) - min(y)) / 10
+    # xmin = min(x) - deltaX
+    # xmax = max(x) + deltaX
+    # ymin = min(y) - deltaY
+    # ymax = max(y) + deltaY
+    # print(xmin, xmax, ymin, ymax)  # Create meshgrid
+    # xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+    # positions = np.vstack([xx.ravel(), yy.ravel()])
+    # values = np.vstack([x, y])
+    # kernel = st.gaussian_kde(values)
+    # f = np.reshape(kernel(positions).T, xx.shape)
+    # fig = plt.figure(figsize=(8, 8))
+    # ax = fig.gca()
+    # ax.set_xlim(xmin, xmax)
+    # ax.set_ylim(ymin, ymax)
+    # cfset = ax.contourf(xx, yy, f, cmap='coolwarm')
+    # ax.imshow(np.rot90(f), cmap='coolwarm', extent=[xmin, xmax, ymin, ymax])
+    # cset = ax.contour(xx, yy, f, colors='k')
+    # plt.colorbar(cfset, ax=ax)
+    # # ax.clabel(cset, inline=1, fontsize=10)
+    # ax.set_xlabel('X')
+    # ax.set_ylabel('Y')
+    # plt.title('2D Gaussian Kernel density estimation')
 
 def look_at_results():
     # ____________Look at results
