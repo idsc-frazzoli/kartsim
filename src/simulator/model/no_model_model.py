@@ -8,6 +8,7 @@ Created 14.06.19 15:50
 import tensorflow as tf
 import numpy as np
 from learned_model.ml_models.mlp_keras import MultiLayerPerceptron
+from learned_model.ml_models.mlp_keras_symmetric import MultiLayerPerceptronSymmetric
 from learned_model_for_mpc.ml_models.mlp_keras_mpc import MultiLayerPerceptronMPC
 from learned_model_for_mpc.ml_models.mlp_keras_mpc_additfeatures import MultiLayerPerceptronMPCAdditFeatures
 from learned_model_for_mpc.ml_models.mlp_keras_mpc_symmetric import MultiLayerPerceptronMPCSymmetric
@@ -30,17 +31,24 @@ class NoModelModel:
             else:
                 self.mlp = MultiLayerPerceptronMPC(model_name=model_name, predict_only=True)
         else:
-            self.mlp = MultiLayerPerceptron(model_name=model_name, predict_only=True)
+            if 'symmetric' in self.model_name:
+                self.mlp = MultiLayerPerceptronSymmetric(model_name=model_name, predict_only=True)
+            else:
+                self.mlp = MultiLayerPerceptron(model_name=model_name, predict_only=True)
         self.mlp.load_model()
         self.mlp.load_checkpoint('best')
         self.weights, self.biases = self.mlp.get_weights()
         if 'symmetric' in model_name:
-            if 'tanh' in model_name:
-                self.predictor = self.solve_NN_tanh_sym
-            elif 'softplus' in model_name:
-                self.predictor = self.solve_NN_softplus_sym
-            elif 'sigmoid' in model_name:
-                self.predictor = self.solve_NN_sigmoid_sym
+            if direct_input:
+                if 'tanh' in model_name:
+                    self.predictor = self.solve_NN_tanh_sym
+                elif 'softplus' in model_name:
+                    self.predictor = self.solve_NN_softplus_sym
+                elif 'sigmoid' in model_name:
+                    self.predictor = self.solve_NN_sigmoid_sym
+            else:
+                if 'tanh' in model_name:
+                    self.predictor = self.solve_NN_tanh_sym_nondirect
         else:
             if 'relu' in model_name:
                 self.predictor = self.solve_NN_relu
@@ -210,6 +218,28 @@ class NoModelModel:
                 sol_sym = np.matmul(w.transpose(), x_sym) + b
                 x = 0.5 * (1 + np.tanh(sol/2.0))
                 x_sym = 0.5 * (1 + np.tanh(sol_sym/2.0))
+            elif i < len(self.biases) - 1:
+                x_all = (x + x_sym) / 2.0
+                x_all = np.matmul(w.transpose(), x_all) + b
+            else:
+                x_odd = (x - x_sym) / 2.0
+                x_odd = np.matmul(w.transpose(), x_odd)
+                x_all = np.hstack((x_all,x_odd))
+
+        return x_all
+
+
+    def solve_NN_tanh_sym_nondirect(self, inputs):
+        x = inputs
+        x_sym = np.matmul(x, np.array([[1., 0., 0., 0., 0., 0., 0.], [0., -1., 0., 0., 0., 0., 0.], [0., 0., -1., 0., 0., 0., 0.],
+                         [0., 0., 0., -1., 0., 0., 0.], [0., 0., 0., 0., 1., 0., 0.], [0., 0., 0., 0., 0., 0., 1.],
+                         [0., 0., 0., 0., 0., 1., 0.]]))
+        for i, (w, b) in enumerate(zip(self.weights, self.biases)):
+            if i < len(self.biases) - 2:
+                sol = np.matmul(w.transpose(), x) + b
+                sol_sym = np.matmul(w.transpose(), x_sym) + b
+                x = np.tanh(sol)
+                x_sym = np.tanh(sol_sym)
             elif i < len(self.biases) - 1:
                 x_all = (x + x_sym) / 2.0
                 x_all = np.matmul(w.transpose(), x_all) + b
