@@ -45,12 +45,13 @@ pathRootSimData = '/home/mvb/0_ETH/01_MasterThesis/SimData/lookatlogs'
 # defaultSim = '20190907_kin_nn_vs_mpc'
 # defaultSim = 'test_mpc_dyn'
 # defaultSim = '20190912_mpc_almost_final_tests'
-# defaultSim = 'test'
+# defaultSim = 'mpc_circle_left_dyn_residual'
 # defaultSim = 'test1'
 # defaultSim = '20190909_mpc_vs_kin_nn_and_no_model'
 # defaultSim = '20190902_mpc_vs_dynamic_lessreg'
 # defaultSim = '20190916_mpc_final_evaluation'
-defaultSim = '20190921_final_battle'
+# defaultSim = '20190921_final_battle'
+defaultSim = '20190923_26_final_battle_new_tires'
 pathsimdata = pathRootSimData + '/' + defaultSim
 
 simfiles = []
@@ -60,18 +61,18 @@ for r, d, f in os.walk(pathsimdata):
         if '.csv' in file or '.pkl' in file:
             simfiles.append([os.path.join(r, file), file])
 simfiles.sort()
-colors = ['b', 'r', 'g', 'c', 'm', (255, 255, 0), (100, 0, 255), (255, 100, 0), (100, 100, 0),  'b', 'g', 'r', 'c', 'm', (200, 200, 0)]
+colors = ['b', 'r', 'g', 'c', 'm', (100, 0, 255), (255, 100, 0), (100, 100, 0),  'b', 'g', 'r', 'c', 'm', (200, 200, 0)]
 plot_this = [
     # 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]',
     # 'pose atheta [rad*s^-2]'
-    # 'vehicle vx [m*s^-1]',
+    'vehicle vx [m*s^-1]',
     # 'vehicle vy [m*s^-1]',
     # 'pose vtheta [rad*s^-1]',
     # 'steer position cal [n.a.]',
     # 'brake position effective [m]',
     # 'pose theta [rad]',
-    # 'turning angle [n.a]',
-    'acceleration rear axle [m*s^-2]',
+    'turning angle [n.a]',
+    # 'acceleration rear axle [m*s^-2]',
     # 'acceleration torque vectoring [rad*s^-2]',
     # 'motor torque cmd left [A_rms]',
     # 'motor torque cmd right [A_rms]',
@@ -84,18 +85,21 @@ pose_data = []
 # delay = np.array([[0,5.7], [1,6.7], [2,7.5], [3,5.0], [4,7.2], [5,7.2]]) #test_mpc_dyn
 # delay = np.array([[0,8.4], [1,20.6], [2,7.4], [3,7.3],])
 # delay = np.array([[0,27.8], [1,52.2]])
-# delay = np.array([[0,11.8], [1,12.9], [2,10.7]])
-delay = np.array([[0,0], [1,0], [2,0], [3,0], [4,0], [5,0]])
+delay = np.array([[0,0.85], [1,1.6], [2,0.0], [3,0.45]])
+
+# delay = np.array([[0,0.0], [1,1.0], [2,0.67], [3,1.1]])
+# delay = np.array([[0,0], [1,0], [2,0], [3,0], [4,0], [5,0]])
 for index, [file_path, file_name] in enumerate(simfiles):
     if '.csv' in file_path:
         data_frame = dataframe_from_csv(file_path)
     else:
         data_frame = getPKL(file_path)
+    dt = data_frame['time [s]'][1] - data_frame['time [s]'][0]
     if index in delay[:,0]:
-        data_frame = data_frame.iloc[int(delay[index,1]*10):,:]
+        data_frame = data_frame.iloc[int(delay[index,1]*int(1.0/dt)):,:]
         data_frame = data_frame.reset_index()
         data_frame['time [s]'] = data_frame['time [s]'].values - delay[index,1]
-    print(data_frame.head())
+    # print(data_frame.head())
     if 'steer position cal [n.a.]' in data_frame.columns:
         data_frame['turning angle [n.a]'], data_frame['acceleration rear axle [m*s^-2]'], data_frame[
             'acceleration torque vectoring [rad*s^-2]'] = KinematicVehicleMPC().transform_inputs(
@@ -105,16 +109,15 @@ for index, [file_path, file_name] in enumerate(simfiles):
             data_frame['motor torque cmd right [A_rms]'],
             data_frame['vehicle vx [m*s^-1]'],
         )
+    pose_data.append([file_name, data_frame[
+        ['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
+         'pose vtheta [rad*s^-1]', 'turning angle [n.a]',
+         'acceleration rear axle [m*s^-2]', 'acceleration torque vectoring [rad*s^-2]']]])
     # pose_data.append([file_name, data_frame[
     #     ['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
     #      'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]', 'brake position effective [m]',
-    #      'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]']]])
-    pose_data.append([file_name, data_frame[
-        ['time [s]', 'pose x [m]', 'pose y [m]', 'pose theta [rad]', 'vehicle vx [m*s^-1]', 'vehicle vy [m*s^-1]',
-         'pose vtheta [rad*s^-1]', 'steer position cal [n.a.]', 'brake position effective [m]',
-         'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]', 'turning angle [n.a]',
-         'acceleration rear axle [m*s^-2]', 'acceleration torque vectoring [rad*s^-2]']]])
-dt = data_frame['time [s]'][1] - data_frame['time [s]'][0]
+    #      'motor torque cmd left [A_rms]', 'motor torque cmd right [A_rms]', 'turning angle [n.a]',
+    #      'acceleration rear axle [m*s^-2]', 'acceleration torque vectoring [rad*s^-2]']]])
 # Switch to using white background and black foreground
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -218,7 +221,7 @@ def updatePlot():
     # plots['2'].clear()
     for i in range(len(x_pos_data)):
         try:
-            index = int(10 * plots['lr'].value())
+            index = int(int(1/dt) * plots['lr'].value())
             if index < 1:
                 index = 1
             x = x_pos_data[i][:index]
