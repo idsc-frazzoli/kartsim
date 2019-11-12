@@ -16,8 +16,11 @@ from subprocess import Popen, STDOUT
 import pandas as pd
 
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
+from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
+from simulator.model.no_model_model import NoModelModel
+from simulator.model.no_model_sparse_model import NoModelSparseModel
 
 import signal
 import sys
@@ -25,10 +28,12 @@ import sys
 
 def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle_model_name='', ):
     signal.signal(signal.SIGINT, signal_handler)
-    visualization = True
+    visualization = False
     logging = True
-    # evaluation_name = vehicle_model_type + '_' + vehicle_model_name
-    evaluation_name = 'test'
+    evaluation_name = vehicle_model_type + '_' + vehicle_model_name
+    # evaluation_name = 'test'
+    if '(copy)' in evaluation_data_set_path:
+        evaluation_name += '_single'
 
     save_root_path = os.path.join(config.directories['root'], 'Evaluation')
 
@@ -55,8 +60,15 @@ def evaluate(evaluation_data_set_path, vehicle_model_type='mpc_dynamic', vehicle
 
 def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder, simulation_files, save_path):
     save_path = os.path.join(save_path, 'open_loop_simulation_files')
-    if vehicle_model_type == 'mpc_dynamic':
-        vehicle_model = DynamicVehicleMPC()
+    if vehicle_model_type in ['mpc_dynamic', 'mpc_kinematic', 'mlp', 'no_model', 'no_model_sparse']:
+        if vehicle_model_type == 'mpc_dynamic':
+            vehicle_model = DynamicVehicleMPC(direct_input=False)
+        elif vehicle_model_type == 'mpc_kinematic':
+            vehicle_model = KinematicVehicleMPC(direct_input=False)
+        elif vehicle_model_type == 'mlp' or vehicle_model_type == 'no_model':
+            vehicle_model = NoModelModel(direct_input=False, model_name=vehicle_model_name)
+        elif vehicle_model_type == 'no_model_sparse':
+            vehicle_model = NoModelSparseModel(model_name=vehicle_model_name)
 
         for simulation_file in simulation_files:
             dataset_path = os.path.join(simulation_folder, simulation_file)
@@ -71,7 +83,6 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
             V = dataset[:, 1:4]
             U = dataset[:, -4:]
             accelerations = vehicle_model.get_accelerations(V, U)
-            accelerations = np.array(accelerations).transpose()
             final_dataframe = pd.DataFrame(np.hstack((dataset, accelerations)))
 
             if 'mirrored' in simulation_file:
@@ -90,9 +101,9 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
                                            'pose atheta [rad*s^-2]'])
     elif 'mlp' in vehicle_model_type or 'lstm' in vehicle_model_type:
         if 'mlp' in vehicle_model_type:
-            vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
-        elif 'lstm' in vehicle_model_type:
-            vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
+            vehicle_model = DataDrivenVehicleModel(model_type=vehicle_model_type, model_name=vehicle_model_name, direct_input=False)
+        # elif 'lstm' in vehicle_model_type:
+        #     vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
 
         for simulation_file in simulation_files:
             dataset_path = os.path.join(simulation_folder, simulation_file)
@@ -104,13 +115,12 @@ def simulate_open_loop(vehicle_model_type, vehicle_model_name, simulation_folder
                  'steer position cal [n.a.]',
                  'brake position effective [m]', 'motor torque cmd left [A_rms]',
                  'motor torque cmd right [A_rms]']].values
-            # 'vehicle ax local [m*s^-2]', 'vehicle ay local [m*s^-2]', 'pose atheta [rad*s^-2]']].values
             V = dataset[:, 1:4]
             U = dataset[:, -4:]
-            if 'mlp' in vehicle_model_type:
-                accelerations = vehicle_model.get_accelerations(V, U)
-            elif 'lstm' in vehicle_model_type:
-                accelerations = vehicle_model.get_accelerations(0, V, U)
+            # if 'mlp' in vehicle_model_type:
+            accelerations = vehicle_model.get_accelerations(V, U)
+            # elif 'lstm' in vehicle_model_type:
+            #     accelerations = vehicle_model.get_accelerations(0, V, U)
             # accelerations = np.array(accelerations).transpose()
             final_dataframe = pd.DataFrame(np.hstack((dataset, accelerations)))
 
@@ -377,28 +387,40 @@ def signal_handler(sig, frame):
 
 if __name__ == '__main__':
     vehicle_models = [
-        ['mpc_kinematic', ''],
+        # ['mpc_kinematic', ''],
         # ['mpc_dynamic', ''],
         # ['hybrid_mlp', '2x32_softplus_reg0p05_sym'],
         # ['hybrid_mlp', '2x32_softplus_reg0p05'],
-        # ['hybrid_mlp', '2x32_softplus_reg0p0001_sym'],
-        # ['hybrid_mlp', '5x64_relu_reg0p01_m'],
-        # ['hybrid_mlp', '2x32_linear_reg0p02'],
         # ['hybrid_lstm', '2x32_relu_reg0p1'],
 
+        # ['hybrid_mlp', '0x6_None_reg0p0_dyn_symmetric'],
+        ['hybrid_mlp', '1x16_tanh_reg0p0_dyn_symmetric'],
+        # ['hybrid_mlp', '2x16_softplus_reg0p01_dyn_symmetric'],
+
+        # ['hybrid_kinematic_mlp', '1x16_tanh_reg0p0_kin_symmetric'],
+        # ['hybrid_kinematic_mlp', '2x16_tanh_reg0p0_kin_symmetric'],
+        # ['hybrid_kinematic_mlp', '3x32_tanh_reg0p0_kin_symmetric'],
+        # ['hybrid_kinematic_mlp', '4x64_tanh_reg0p0_kin_symmetric'],
+
+        # ['no_model', '1x16_tanh_reg0p0_nomodel_symmetric'],
+        # ['no_model', '2x16_tanh_reg0p0_nomodel_symmetric'],
+        # ['no_model', '3x32_tanh_reg0p0_nomodel_symmetric'],
+        # ['no_model', '4x64_tanh_reg0p0_nomodel_symmetric'],
     ]
 
     for model_type, model_name in vehicle_models:
-        if 'mlp' in model_type or 'mpc' in model_type:
+        if 'mlp' in model_type or 'mpc' in model_type or 'no_model' in model_type:
             # evaluation_data_set_name = '20190813-141626_trustworthy_bigdata'
-            evaluation_data_set_name = '20190813-141626_trustworthy_bigdata (copy)'
+            # evaluation_data_set_name = '20190813-141626_trustworthy_bigdata (copy)'
+            # evaluation_data_set_name = '20190829-092236_final_data_set_nomodel_directinput'
+            evaluation_data_set_name = 'test'
             load_path = os.path.join(config.directories['root'], 'Data', 'MLPDatasets', evaluation_data_set_name,
                                      'test_log_files')
-        elif 'lstm' in model_type:
-            evaluation_data_set_name = '20190717-101005_trustworthy_data'
-            # evaluation_data_set_name = '20190717-101005_trustworthy_data (copy)'
-            load_path = os.path.join(config.directories['root'], 'Data', 'RNNDatasets', evaluation_data_set_name,
-                                     'test_log_files')
+        # elif 'lstm' in model_type:
+        #     evaluation_data_set_name = '20190717-101005_trustworthy_data'
+        #     # evaluation_data_set_name = '20190717-101005_trustworthy_data (copy)'
+        #     load_path = os.path.join(config.directories['root'], 'Data', 'RNNDatasets', evaluation_data_set_name,
+        #                              'test_log_files')
         try:
             evaluate(load_path, model_type, model_name)
         except ValueError:
