@@ -15,16 +15,16 @@ class SystemEquation:
         # print(vehicle_model.get_name())
         self.vehicle_model_name = vehicle_model.get_name()
         self.direct_input = vehicle_model.get_direct_input_mode()
-        if self.vehicle_model_name in ["mpc_kinematic", 'hybrid_kinematic_mlp']:
-            if self.direct_input:
-                self.get_input = get_kinematic_input_direct
-            else:
-                self.get_input = get_kinematic_input
+        # if self.vehicle_model_name in ["mpc_kinematic", 'hybrid_kinematic_mlp']:
+        #     if self.direct_input:
+        #         self.get_input = get_kinematic_input_direct
+        #     else:
+        #         self.get_input = get_kinematic_input
+        # else:
+        if self.direct_input:
+            self.get_input = get_input_direct
         else:
-            if self.direct_input:
-                self.get_input = get_input_direct
-            else:
-                self.get_input = get_input
+            self.get_input = get_input
 
     # def initialize_vehicle_model(model_object):
     #     global vehicle_model
