@@ -40,7 +40,7 @@ QtGui.QApplication.setGraphicsSystem('raster')
 app = QtGui.QApplication([])
 
 win = pg.GraphicsWindow(title="Basic plotting examples")
-win.resize(800,400)
+win.resize(1600,800)
 win.setWindowTitle('kartsim visualization')
 
 # Enable antialiasing for prettier plots
