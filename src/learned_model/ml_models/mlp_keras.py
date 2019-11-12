@@ -58,7 +58,7 @@ class MultiLayerPerceptron():
                 'coeff_of_determination': self.coeff_of_determination})
             # print('Model successfully loaded from', load_path)
         except:
-            print('Model could not be loaded from', self.model_dir)
+            print('Model could not be loaded from', load_path)
             raise
 
         try:
