@@ -31,12 +31,12 @@ def main():
     validationhorizon = 1  # [s] time inteval after which initial conditions are reset to values from log data
 
     # Simulation time after which result is returned from server
-    server_return_interval = 2  # [s]
+    server_return_interval = 3  # [s]
     # DO NOT CHANGE! Parameter used for real time simulation (default:0)
     _wait_for_real_time = 0  # [s]
 
     # Choose whether to simulate in real-time (mainly for visualization purposes)
-    real_time = False
+    real_time = True
     real_time_factor = 2
     if real_time:
         server_return_interval = 0.1 * real_time_factor  # [s] simulation time after which result is returned from server
