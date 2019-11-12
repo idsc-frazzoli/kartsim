@@ -61,9 +61,9 @@ def set_kinematic_input(U):
     interpBRAKE = interp1d(U[0], U[2], fill_value='extrapolate')
     interpMOTL = interp1d(U[0], U[3], fill_value='extrapolate')
     interpMOTR = interp1d(U[0], U[4], fill_value='extrapolate')
-    turning_angle = -0.63 * np.power(U[1], 3) + 0.94 * U[1]
-    dturning_angle = (turning_angle[1:] - turning_angle[:-1]) / (U[0][1:] - U[0][:-1])
-    interpDBETA = interp1d(np.array(U[0][:-1]) + (U[0][1] - U[0][0]) / 2.0, dturning_angle, fill_value='extrapolate')
+    # turning_angle = -0.63 * np.power(U[1], 3) + 0.94 * U[1]
+    # dturning_angle = (turning_angle[1:] - turning_angle[:-1]) / (U[0][1:] - U[0][:-1])
+    # interpDBETA = interp1d(np.array(U[0][:-1]) + (U[0][1] - U[0][0]) / 2.0, dturning_angle, fill_value='extrapolate')
 
 
 def set_kinematic_input_direct(U):
@@ -79,7 +79,7 @@ def set_kinematic_input_direct(U):
 
 
 def get_kinematic_input(time1):
-    return [interpSTEER(time1), interpBRAKE(time1), interpMOTL(time1), interpMOTR(time1), interpDBETA(time1)]
+    return [interpSTEER(time1), interpBRAKE(time1), interpMOTL(time1), interpMOTR(time1)]
 
 
 def get_kinematic_input_direct(time1):
