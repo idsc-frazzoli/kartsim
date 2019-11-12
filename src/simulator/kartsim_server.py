@@ -19,6 +19,9 @@ from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
 from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
+from simulator.model.no_model_model import NoModelModel
+from simulator.model.no_model_sparse_model import NoModelSparseModel
+from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.integrate.systemequation import SystemEquation
 from thread2 import Thread
 import tensorflow as tf
@@ -60,11 +63,19 @@ def main():
     if vehicle_model_type == 'mpc_dynamic':
         vehicle_model = DynamicVehicleMPC()
     elif vehicle_model_type == 'hybrid_mlp':
-        vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name)
-    elif vehicle_model_type == 'hybrid_lstm':
-        vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
+        vehicle_model = DataDrivenVehicleModel(model_name=vehicle_model_name, direct_input=False)
+    elif vehicle_model_type == 'hybrid_kinematic_mlp':
+        vehicle_model = DataDrivenVehicleModel(model_type='hybrid_kinematic_mlp', model_name=vehicle_model_name, direct_input=False)
     elif vehicle_model_type == 'mpc_kinematic':
         vehicle_model = KinematicVehicleMPC(direct_input=False)
+    elif vehicle_model_type == 'mlp':
+        vehicle_model = NoModelModel(direct_input=False, model_name=vehicle_model_name)
+    elif vehicle_model_type == 'no_model_sparse':
+        vehicle_model = NoModelSparseModel(model_name=vehicle_model_name)
+    elif vehicle_model_type == 'no_model':
+        vehicle_model = NoModelModel(model_name=vehicle_model_name, direct_input=False)
+    # elif vehicle_model_type == 'hybrid_lstm':
+    #     vehicle_model = HybridLSTMModel(model_name=vehicle_model_name)
 
     # vehicle_model = DynamicVehicleMPC(direct_input=True)
 
@@ -75,7 +86,7 @@ def main():
             vehicle_model.reinitialize_variables()
         system_equation = SystemEquation(vehicle_model)
         if visualization and vizConn is None:
-            # print("waiting for visualization connection at", visualizationAddress)
+            print("waiting for visualization connection at", visualizationAddress)
             vizConn = visualizationListener.accept()
             print('visualization connection accepted from', visualizationListener.last_accepted)
         else:
