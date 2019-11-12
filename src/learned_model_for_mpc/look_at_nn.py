@@ -43,7 +43,7 @@ import config
 # model_name = '2x16_softplus_reg0p1_directinput'
 # model_name = '2x16_softplus_reg0p01_directinput'
 # model_name = '1x16_tanh_reg0p0_directinput'
-# model_name = '1x16_softplus_reg0p01_directinput'
+# model_name = '1x16_reg0p01_directinput'
 # model_name = '2x16_tanh_reg0p0001_kin_directinput'
 # model_name = '2x16_softplus_reg0p0001_kin_directinput'
 # model_name = '1x16_tanh_reg0p0_kin_directinput'
@@ -60,8 +60,18 @@ model_names = [
     # '2x24_elu_reg0p0001_nomodel_directinput_mlpsymmetric',
     # '1x16_sigmoid_reg0p0001_nomodel_directinput',
     # '1x16_tanh_reg0p0_kin_directinput',
-    '1x16_tanh_reg0p0_nomodel_directinput',
-    '1x16_tanh_reg0p0_nomodel_directinput_fulldata_mlpsymmetric',
+    # '1x16_tanh_reg0p0_nomodel_directinput',
+    # '1x16_tanh_reg0p0_nomodel_directinput_fulldata_mlpsymmetric',
+
+    '1x16_softplus_reg0p01_directinput',
+    '1x16_softplus_reg0p0001_directinput',
+    '0x6_None_reg0p01_directinput',
+    # '1x16_tanh_reg0p001_dyn_directinput_fulldata_mlpsymmetric',
+    # '1x16_tanh_reg0p01_dyn_directinput_fulldata_mlpsymmetric',
+    # '1x16_tanh_reg0p05_dyn_directinput_fulldata_mlpsymmetric',
+    # '0x6_None_reg0p01_dyn_directinput_fulldata_mlpsymmetric',
+    # '0x6_None_reg0p001_dyn_directinput_fulldata_mlpsymmetric',
+
 ]
 
 for num, model_name in enumerate(model_names):
@@ -72,13 +82,13 @@ for num, model_name in enumerate(model_names):
 
     # plot this, ranges, constants  np.array([[5.,-0.1,0.5,0.25,-1.,2.]])
     ra_vx = ['vx',0,[0,10],5]
-    ra_vy = ['vy',0,[-4,4],-0.0]
-    ra_vtheta = ['vtheta',1,[-2,2],0.0]
+    ra_vy = ['vy',1,[-4,4],-0.0]
+    ra_vtheta = ['vtheta',0,[-2,2],0.0]
     ra_beta = ['BETA',1,[-0.44,0.44],0.0]
     ra_ab = ['AB',0,[-8,2],-1.0]
     ra_tv = ['TV',0,[-1.5,1.5],0.0]
-    disturbance_no = [0, 'disturbance ax']
-    # disturbance_no = [1, 'disturbance ay']
+    # disturbance_no = [0, 'disturbance ax']
+    disturbance_no = [1, 'disturbance ay']
     # disturbance_no = [2, 'disturbance atheta']
     params = [ra_vx, ra_vy, ra_vtheta, ra_beta, ra_ab, ra_tv]
 
@@ -87,9 +97,9 @@ for num, model_name in enumerate(model_names):
     xy = []
     x = True
     input = np.array(())
-    for (name, plot_this, range, constant) in params:
+    for (name, plot_this, ranges, constant) in params:
         if plot_this:
-            data = np.linspace(range[0],range[1],resolution)
+            data = np.linspace(ranges[0],ranges[1],resolution)
             if x:
                 data = np.repeat(data, resolution)
                 if len(input) > 0:
@@ -128,18 +138,30 @@ for num, model_name in enumerate(model_names):
     dist_plot = disturbance[:,disturbance_no[0]]
     dist_plot = dist_plot.reshape((resolution,-1))
 
-    fig = plt.figure(num)
+    fig = plt.figure(num, figsize=(5,5))
+    plt.rcParams["font.size"] = "12"
     ax = fig.gca(projection='3d')
     surf = ax.plot_surface(xy[0][1], xy[1][1], dist_plot, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False)
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    # if 'reg0p0001' in model_name:
+    #     fig.colorbar(surf, shrink=0.5, aspect=5)
     ax.set_xlabel(xy[0][0])
     ax.set_ylabel(xy[1][0])
+    # ax.set_zlim(-10,10)
     ax.set_zlabel(disturbance_no[1])
     ax.set_title(model_name)
-
-plt.show()
-
+    ax.set_xlabel('lateral vehicle velocity ' + r'$[\mathrm{m\,s^{-1}}]$')
+    ax.set_ylabel('steering position [SCE]')
+    ax.set_zlabel('output ' + r'$a_y$ ' + r'$[\mathrm{m\,s^{-2}}]$')
+    if 'reg0p01' in model_name:
+        ax.set_title('1x16 MLP, ' + r'$\lambda=0.01$')
+    elif 'reg0p0001' in model_name:
+        ax.set_title('1x16 MLP, ' + r'$\lambda=0.0001$')
+    # for angle in range(0, 360):
+    ax.view_init(30, -135)
+        # plt.draw()
+        # plt.pause(.001)
+# plt.show()
 
 
 # random_state = 45
