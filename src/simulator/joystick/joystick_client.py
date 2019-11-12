@@ -74,7 +74,7 @@ def main():
         # event = pygame.event.wait()
         # logitech_wheel = pygame.joystick.Joystick(0)
         # logitech_wheel.init()
-        wheel_angle = -logitech_wheel.get_axis(0) * 3
+        wheel_angle = -logitech_wheel.get_axis(0) * 2
         if wheel_angle < -0.44:
             wheel_angle = -0.44
         elif wheel_angle > 0.44:
