@@ -21,7 +21,7 @@ def main():
 
     # ____________User parameters____________
     # Choose a model_type for the data set
-    dataset_name = 'test'
+    dataset_name = 'final_battle_old_tires'
     random_seed = 42
 
     # Choose data that should be contained in the data set
@@ -102,8 +102,7 @@ def main():
         data_tagging.sort_out_data(required_data_list, required_tags_list, exclusion_tags_list)
         print('Data preprocessing started...')
         filtered_data_dict = prepare_dataset(root_path_raw_data, data_tagging, required_data_list,
-                                             # start_from='20190514')
-                                             start_from = '20190919')
+                                             start_from='20190514')
         print('Data preprocessing completed.')
 
         # parent directory where the preprocessed data should be saved to (separate folder will be created in this directory)
