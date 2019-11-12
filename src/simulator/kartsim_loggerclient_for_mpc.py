@@ -45,7 +45,6 @@ def main():
             else:
                 savePathName = os.path.join(savePath, fileNames[fileNameIndex][:18] +
                                               '_{}_closedloop.csv'.format(model_log_name))
-            # savePathName = savePath + '/' + fileNames[fileNameIndex][:-19] + '_{}_closedloop.csv'.format(model_log_name)
         except IndexError:
             pass
             # print('No more files to read. Closing logger.')
