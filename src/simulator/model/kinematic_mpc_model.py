@@ -44,7 +44,7 @@ class KinematicVehicleMPC:
         if not self.direct_input:
             if isinstance(velocities, list):
                 velx, vely, velrotz = velocities
-                steering_angle, brake_position, motor_current_l, motor_current_r, turning_rate = system_inputs
+                steering_angle, brake_position, motor_current_l, motor_current_r = system_inputs
             else:
                 velx = velocities[:, 0]
                 # vely = velocities[:, 1]
@@ -65,6 +65,7 @@ class KinematicVehicleMPC:
                 velx, vely, velrotz = velocities
                 if isinstance(velx, np.float64) or isinstance(velx, float):
                     turning_angle, acceleration_rear_axle, torque_tv = system_inputs
+                    acceleration_rear_axle = float(acceleration_rear_axle)
                     if abs(velx) < 0.25 and acceleration_rear_axle < 0:
                         acceleration_rear_axle *= velx * 4.0
             else:
@@ -87,7 +88,6 @@ class KinematicVehicleMPC:
 
         velrotz_target = velx/turn_circle_midpoint_steer
         k = 2.2
-
         dVELROTZ = k * (velrotz_target - velrotz)
         if isinstance(acceleration_rear_axle, float):
             return [acceleration_rear_axle, 0, dVELROTZ]
