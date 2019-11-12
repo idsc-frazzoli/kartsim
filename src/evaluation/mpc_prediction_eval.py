@@ -31,8 +31,10 @@ def main():
     # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190905/20190905T191253_06/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
     # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190909/20190909T174744_07/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
     # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190912/20190912T162356_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
-    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190916/20190916T175046_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
-
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190916/20190916T175046_05/mpc' #path where all the raw, sorted data is that you want to sample and or batch and or split
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190921/20190921T124329_10/mpc'
+    # pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190923/20190923T161636_03/mpc'
+    pathmpcsolutiondata = '/home/mvb/0_ETH/01_MasterThesis/Logs_GoKart/LogData/dynamics_newFormat/cuts/20190926/20190926T121623_05/mpc'
     mpcsolfiles = []
     for r, d, f in os.walk(pathmpcsolutiondata):
         for file in f:
@@ -58,7 +60,7 @@ def main():
     # for file_path, file_name in mpcsolfiles[130:150]:
     # for file_path, file_name in mpcsolfiles[100:150]:
     # for file_path, file_name in mpcsolfiles[220:280:5]:
-    for file_path, file_name in mpcsolfiles[-100::]:
+    for file_path, file_name in mpcsolfiles[:]:
         if t_abs0 is None:
             mpc_sol_data = pd.read_csv(str(mpcsolfiles[0][0]), header=None,
                                        names=["U wheel left", "U wheel right", "U dotS", "U brake", "X U AB", "time",
