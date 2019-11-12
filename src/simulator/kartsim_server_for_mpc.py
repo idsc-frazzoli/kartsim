@@ -17,6 +17,7 @@ import sys
 import time
 from simulator.model.dynamic_mpc_model import DynamicVehicleMPC
 from simulator.model.data_driven_model import DataDrivenVehicleModel
+from simulator.model.hybrid_lstm_model import HybridLSTMModel
 from simulator.model.kinematic_mpc_model import KinematicVehicleMPC
 from simulator.model.no_model_model import NoModelModel
 from simulator.model.no_model_sparse_model import NoModelSparseModel
@@ -60,16 +61,18 @@ def main():
         # vehicle_model_name = 'poly2_order14'
         # vehicle_model_name = 'poly2_sparse'
 
+        # vehicle_model_type = 'hybrid_mlp'
+        # vehicle_model_name = '0x6_None_reg0p1_dyn_directinput_fulldata_mlpsymmetric'
+
         vehicle_model_type = 'no_model'
-        # vehicle_model_name = '1x16_tanh_reg0p0_nomodel_directinput_test_mlpsymmetric'
-        vehicle_model_name = '1x16_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed' #stable; use for demo!
-        # vehicle_model_name = '1x24_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed' #stable; nice to drive
+        vehicle_model_name = '1x16_tanh_reg0p0_nomodel_directinput_mlpsymmetric_detailed'
 
         # vehicle_model_type = 'hybrid_kinematic_mlp'
-        # vehicle_model_name = '1x24_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed' #ustable
-        # vehicle_model_name = '1x24_tanh_reg0p0_kin_directinput_mlpsymmetric_detailed' #stable
         # vehicle_model_name = '1x16_softplus_reg0p0_kin_directinput_mlpsymmetric_detailed' #stable not much drift
 
+        # vehicle_model_type = 'mpc_dynamic'
+
+        # vehicle_model_type = 'mpc_kinematic'
 
         port = 6000
 
